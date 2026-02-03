@@ -15,10 +15,22 @@ import type {
   DemandLevels,
   PlaceResult,
   BudgetOpts,
+  FullCityStats,
+  CensusHistory,
 } from './types';
 
 // 1 month = 4 cityTime units. 1 cityTime = 16 phase ticks. So 1 month = 64 ticks.
 const TICKS_PER_MONTH = 64;
+
+const PROBLEM_NAMES: Record<number, string> = {
+  0: 'crime',
+  1: 'pollution',
+  2: 'housing',
+  3: 'taxes',
+  4: 'traffic',
+  5: 'unemployment',
+  6: 'fire',
+};
 
 const CITY_CLASS_NAMES: Record<string, string> = {
   VILLAGE: 'Village',
@@ -149,6 +161,77 @@ export class HeadlessGame {
       residential: this.sim._valves.resValve,
       commercial: this.sim._valves.comValve,
       industrial: this.sim._valves.indValve,
+    };
+  }
+
+  getFullStats(): FullCityStats {
+    const base = this.getStats();
+    const census = this.sim._census;
+    const evaluation = this.sim.evaluation;
+    const budget = this.sim.budget;
+
+    const problems: string[] = [];
+    for (let i = 0; i < 4; i++) {
+      const idx = evaluation.getProblemNumber(i);
+      if (idx !== null && PROBLEM_NAMES[idx] !== undefined) {
+        problems.push(PROBLEM_NAMES[idx]);
+      }
+    }
+
+    return {
+      ...base,
+      demand: this.getDemand(),
+      census: {
+        resPop: census.resPop,
+        comPop: census.comPop,
+        indPop: census.indPop,
+        roadTotal: census.roadTotal,
+        railTotal: census.railTotal,
+        poweredZoneCount: census.poweredZoneCount,
+        unpoweredZoneCount: census.unpoweredZoneCount,
+        policeStationPop: census.policeStationPop,
+        fireStationPop: census.fireStationPop,
+        coalPowerPop: census.coalPowerPop,
+        nuclearPowerPop: census.nuclearPowerPop,
+        seaportPop: census.seaportPop,
+        airportPop: census.airportPop,
+        stadiumPop: census.stadiumPop,
+        crimeAverage: census.crimeAverage,
+        pollutionAverage: census.pollutionAverage,
+        landValueAverage: census.landValueAverage,
+      },
+      evaluation: {
+        approval: evaluation.cityYes,
+        populationDelta: evaluation.cityPopDelta,
+        assessedValue: evaluation.cityAssessedValue,
+        scoreDelta: evaluation.cityScoreDelta,
+        problems,
+      },
+      budget: {
+        taxRate: budget.cityTax,
+        cashFlow: budget.cashFlow,
+        roadPercent: Math.round(budget.roadPercent * 100),
+        firePercent: Math.round(budget.firePercent * 100),
+        policePercent: Math.round(budget.policePercent * 100),
+        roadEffect: budget.roadEffect,
+        fireEffect: budget.fireEffect,
+        policeEffect: budget.policeEffect,
+        roadMaintenanceBudget: budget.roadMaintenanceBudget,
+        fireMaintenanceBudget: budget.fireMaintenanceBudget,
+        policeMaintenanceBudget: budget.policeMaintenanceBudget,
+      },
+    };
+  }
+
+  getCensusHistory(): CensusHistory {
+    const census = this.sim._census;
+    return {
+      residential: Array.from(census.resHist120),
+      commercial: Array.from(census.comHist120),
+      industrial: Array.from(census.indHist120),
+      crime: Array.from(census.crimeHist120),
+      pollution: Array.from(census.pollutionHist120),
+      money: Array.from(census.moneyHist120),
     };
   }
 

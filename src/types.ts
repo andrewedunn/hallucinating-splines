@@ -49,3 +49,61 @@ export interface BudgetOpts {
   police?: number;
   road?: number;
 }
+
+export interface CensusData {
+  resPop: number;
+  comPop: number;
+  indPop: number;
+  roadTotal: number;
+  railTotal: number;
+  poweredZoneCount: number;
+  unpoweredZoneCount: number;
+  policeStationPop: number;
+  fireStationPop: number;
+  coalPowerPop: number;
+  nuclearPowerPop: number;
+  seaportPop: number;
+  airportPop: number;
+  stadiumPop: number;
+  crimeAverage: number;
+  pollutionAverage: number;
+  landValueAverage: number;
+}
+
+export interface EvaluationData {
+  approval: number;
+  populationDelta: number;
+  assessedValue: number;
+  scoreDelta: number;
+  problems: string[];
+}
+
+export interface BudgetData {
+  taxRate: number;
+  cashFlow: number;
+  roadPercent: number;
+  firePercent: number;
+  policePercent: number;
+  roadEffect: number;
+  fireEffect: number;
+  policeEffect: number;
+  roadMaintenanceBudget: number;
+  fireMaintenanceBudget: number;
+  policeMaintenanceBudget: number;
+}
+
+export interface CensusHistory {
+  residential: number[];
+  commercial: number[];
+  industrial: number[];
+  crime: number[];
+  pollution: number[];
+  money: number[];
+}
+
+export interface FullCityStats extends CityStats {
+  demand: DemandLevels;
+  census: CensusData;
+  evaluation: EvaluationData;
+  budget: BudgetData;
+}

@@ -113,6 +113,95 @@ describe('HeadlessGame', () => {
       expect((game as any).sim.budget.cityTax).toBe(10);
     });
   });
+
+  describe('getFullStats', () => {
+    test('returns census, evaluation, and budget data after ticking', () => {
+      const game = HeadlessGame.fromSeed(42);
+      game.tick(12); // 1 year to populate evaluation/census
+      const stats = game.getFullStats();
+
+      // Base CityStats fields
+      expect(stats).toHaveProperty('population');
+      expect(stats).toHaveProperty('score');
+      expect(stats).toHaveProperty('funds');
+      expect(stats).toHaveProperty('year');
+
+      // Demand
+      expect(stats.demand).toHaveProperty('residential');
+      expect(stats.demand).toHaveProperty('commercial');
+      expect(stats.demand).toHaveProperty('industrial');
+
+      // Census
+      expect(typeof stats.census.resPop).toBe('number');
+      expect(typeof stats.census.comPop).toBe('number');
+      expect(typeof stats.census.indPop).toBe('number');
+      expect(typeof stats.census.roadTotal).toBe('number');
+      expect(typeof stats.census.railTotal).toBe('number');
+      expect(typeof stats.census.poweredZoneCount).toBe('number');
+      expect(typeof stats.census.unpoweredZoneCount).toBe('number');
+      expect(typeof stats.census.policeStationPop).toBe('number');
+      expect(typeof stats.census.fireStationPop).toBe('number');
+      expect(typeof stats.census.coalPowerPop).toBe('number');
+      expect(typeof stats.census.nuclearPowerPop).toBe('number');
+      expect(typeof stats.census.seaportPop).toBe('number');
+      expect(typeof stats.census.airportPop).toBe('number');
+      expect(typeof stats.census.stadiumPop).toBe('number');
+      expect(typeof stats.census.crimeAverage).toBe('number');
+      expect(typeof stats.census.pollutionAverage).toBe('number');
+      expect(typeof stats.census.landValueAverage).toBe('number');
+
+      // Evaluation
+      expect(stats.evaluation.approval).toBeGreaterThanOrEqual(0);
+      expect(stats.evaluation.approval).toBeLessThanOrEqual(100);
+      expect(typeof stats.evaluation.populationDelta).toBe('number');
+      expect(typeof stats.evaluation.assessedValue).toBe('number');
+      expect(typeof stats.evaluation.scoreDelta).toBe('number');
+      expect(Array.isArray(stats.evaluation.problems)).toBe(true);
+
+      // Budget
+      expect(typeof stats.budget.taxRate).toBe('number');
+      expect(typeof stats.budget.cashFlow).toBe('number');
+      expect(typeof stats.budget.roadPercent).toBe('number');
+      expect(typeof stats.budget.firePercent).toBe('number');
+      expect(typeof stats.budget.policePercent).toBe('number');
+      expect(typeof stats.budget.roadEffect).toBe('number');
+      expect(typeof stats.budget.fireEffect).toBe('number');
+      expect(typeof stats.budget.policeEffect).toBe('number');
+      expect(typeof stats.budget.roadMaintenanceBudget).toBe('number');
+      expect(typeof stats.budget.fireMaintenanceBudget).toBe('number');
+      expect(typeof stats.budget.policeMaintenanceBudget).toBe('number');
+    });
+
+    test('problems are human-readable strings', () => {
+      const game = HeadlessGame.fromSeed(42);
+      game.tick(12);
+      const stats = game.getFullStats();
+      const validProblems = ['crime', 'pollution', 'housing', 'taxes', 'traffic', 'unemployment', 'fire'];
+      for (const p of stats.evaluation.problems) {
+        expect(validProblems).toContain(p);
+      }
+    });
+  });
+
+  describe('getCensusHistory', () => {
+    test('returns six 120-entry arrays', () => {
+      const game = HeadlessGame.fromSeed(42);
+      game.tick(12);
+      const history = game.getCensusHistory();
+
+      expect(history.residential).toHaveLength(120);
+      expect(history.commercial).toHaveLength(120);
+      expect(history.industrial).toHaveLength(120);
+      expect(history.crime).toHaveLength(120);
+      expect(history.pollution).toHaveLength(120);
+      expect(history.money).toHaveLength(120);
+
+      // All entries are numbers
+      for (const key of ['residential', 'commercial', 'industrial', 'crime', 'pollution', 'money'] as const) {
+        expect(history[key].every((v: number) => typeof v === 'number')).toBe(true);
+      }
+    });
+  });
 });
 
 // Helper: find a clear NxN spot on the map for building placement
