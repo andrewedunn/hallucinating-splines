@@ -6,7 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "hallucinating-splines-db"
-database_id = "local"
+database_id = "16f4c004-8985-42ed-aa81-369ee29bb15a"
 
 [durable_objects]
 bindings = [
