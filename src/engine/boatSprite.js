@@ -16,7 +16,6 @@ import { SHIP_CRASHED, SOUND_HONKHONK } from './messages.ts';
 import { MiscUtils } from './miscUtils.js';
 import { Random } from './random.ts';
 import { SPRITE_SHIP } from './spriteConstants.ts';
-import { SpriteConstants } from './spriteConstants.ts';
 import { SpriteUtils } from './spriteUtils.js';
 import * as TileValues from "./tileValues.ts";
 
