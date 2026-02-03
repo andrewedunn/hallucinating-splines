@@ -1,0 +1,20 @@
+{
+  "name": "hallucinating-splines",
+  "version": "0.0.1",
+  "description": "Headless SimCity engine extracted from micropolisJS",
+  "type": "module",
+  "main": "dist/headlessGame.js",
+  "types": "dist/headlessGame.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "GPL-3.0",
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.0",
+    "typescript": "^5.5.0"
+  }
+}
