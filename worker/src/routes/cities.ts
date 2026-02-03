@@ -151,6 +151,52 @@ cities.get('/:id/demand', async (c) => {
   return c.json(demand);
 });
 
+// GET /v1/cities/:id/snapshots — List snapshots
+cities.get('/:id/snapshots', async (c) => {
+  const cityId = c.req.param('id');
+
+  const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
+    .bind(cityId).first();
+  if (!row) return errorResponse(c, 404, 'not_found', 'City not found');
+
+  const limit = Math.min(parseInt(c.req.query('limit') || '50'), 100);
+  const offset = parseInt(c.req.query('offset') || '0');
+
+  const snapshots = await c.env.DB.prepare(
+    `SELECT game_year, population, funds, created_at FROM snapshots
+     WHERE city_id = ? ORDER BY game_year ASC LIMIT ? OFFSET ?`
+  ).bind(cityId, limit, offset).all();
+
+  const total = await c.env.DB.prepare(
+    'SELECT COUNT(*) as count FROM snapshots WHERE city_id = ?'
+  ).bind(cityId).first<{ count: number }>();
+
+  return c.json({
+    snapshots: snapshots.results,
+    total: total?.count || 0,
+  });
+});
+
+// GET /v1/cities/:id/snapshots/:year — Get snapshot tile data from R2
+cities.get('/:id/snapshots/:year', async (c) => {
+  const cityId = c.req.param('id');
+  const year = parseInt(c.req.param('year'));
+
+  if (isNaN(year)) return errorResponse(c, 400, 'bad_request', 'Invalid year');
+
+  const meta = await c.env.DB.prepare(
+    'SELECT r2_key FROM snapshots WHERE city_id = ? AND game_year = ?'
+  ).bind(cityId, year).first<{ r2_key: string }>();
+
+  if (!meta) return errorResponse(c, 404, 'not_found', 'Snapshot not found');
+
+  const object = await c.env.SNAPSHOTS.get(meta.r2_key);
+  if (!object) return errorResponse(c, 404, 'not_found', 'Snapshot data missing');
+
+  const data = await object.json();
+  return c.json(data);
+});
+
 // GET /v1/cities/:id — Get city summary (public)
 cities.get('/:id', async (c) => {
   const cityId = c.req.param('id');
