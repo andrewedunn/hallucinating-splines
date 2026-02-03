@@ -64,6 +64,32 @@ app.get('/v1/leaderboard', async (c) => {
   });
 });
 
+app.get('/v1/mayors/:id', async (c) => {
+  const keyId = c.req.param('id');
+  const mayor = await c.env.DB.prepare(
+    'SELECT id, mayor_name, created_at FROM api_keys WHERE id = ?'
+  ).bind(keyId).first();
+  if (!mayor) return errorResponse(c, 404, 'not_found', 'Mayor not found');
+
+  const citiesResult = await c.env.DB.prepare(
+    `SELECT id, name, population, game_year, score, status, seed
+     FROM cities WHERE api_key_id = ? ORDER BY created_at DESC`
+  ).bind(keyId).all();
+
+  const stats = await c.env.DB.prepare(
+    `SELECT COUNT(*) as total_cities, MAX(population) as best_population, MAX(score) as best_score
+     FROM cities WHERE api_key_id = ?`
+  ).bind(keyId).first<{ total_cities: number; best_population: number; best_score: number }>();
+
+  return c.json({
+    id: mayor.id,
+    name: mayor.mayor_name,
+    created_at: mayor.created_at,
+    stats: stats || { total_cities: 0, best_population: 0, best_score: 0 },
+    cities: citiesResult.results,
+  });
+});
+
 app.all('*', (c) => errorResponse(c, 404, 'not_found', 'Endpoint not found'));
 
 export { CityDO } from './cityDO';
