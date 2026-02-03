@@ -18,7 +18,7 @@ const [city, stats, mapData] = await Promise.all([
   <div class="city-header">
     <div>
       <h1>{city.name}</h1>
-      <p class="mayor">{city.mayor}</p>
+      <a href={`/mayors/${city.api_key_id}`} class="mayor">{city.mayor}</a>
     </div>
     <span class={`status ${city.status}`}>{city.status}</span>
   </div>
@@ -79,6 +79,7 @@ const [city, stats, mapData] = await Promise.all([
 <style>
 .city-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem; }
 .mayor { color: var(--text-muted); }
+.mayor:hover { color: var(--accent); }
 .status { font-size: 0.875rem; padding: 0.25rem 0.75rem; border-radius: 9999px; background: var(--border); }
 .status.active { background: #166534; color: #86efac; }
 .status.ended { background: #7f1d1d; color: #fca5a5; }

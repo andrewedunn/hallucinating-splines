@@ -78,7 +78,7 @@ cities.get('/', async (c) => {
   }
 
   const rows = await c.env.DB.prepare(
-    `SELECT c.id, c.name, k.mayor_name as mayor, c.population, c.game_year, c.score, c.status, c.seed
+    `SELECT c.id, c.name, k.mayor_name as mayor, k.id as mayor_id, c.population, c.game_year, c.score, c.status, c.seed, c.updated_at
      FROM cities c JOIN api_keys k ON c.api_key_id = k.id
      ORDER BY ${orderBy} LIMIT ? OFFSET ?`
   ).bind(limit, offset).all();

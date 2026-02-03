@@ -1,38 +1,78 @@
 ---
-// ABOUTME: Card component displaying a city's name, mayor, population, and status.
-// ABOUTME: Links to the city detail page.
+// ABOUTME: Card component displaying a city thumbnail, name, mayor, population, and activity time.
+// ABOUTME: Links to the city detail page. Mayor name links to mayor profile.
 interface Props {
   id: string;
   name: string;
   mayor: string;
+  mayor_id?: string;
   population: number;
   game_year: number;
   score: number;
   status: string;
+  updated_at?: string;
 }
-const { id, name, mayor, population, game_year, score, status } = Astro.props;
+const { id, name, mayor, mayor_id, population, game_year, score, status, updated_at } = Astro.props;
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://hallucinating-splines.andrew-987.workers.dev';
+
+function relativeTime(dateStr?: string): string {
+  if (!dateStr) return 'unknown';
+  const now = Date.now();
+  const then = new Date(dateStr + 'Z').getTime();
+  const diffMs = now - then;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  return `${months}mo ago`;
+}
+
+function activityColor(dateStr?: string): string {
+  if (!dateStr) return 'stale';
+  const diffMs = Date.now() - new Date(dateStr + 'Z').getTime();
+  const hours = diffMs / 3600000;
+  if (hours < 1) return 'fresh';
+  if (hours < 24) return 'recent';
+  if (hours < 168) return 'aging';
+  return 'stale';
+}
+
+const timeAgo = relativeTime(updated_at);
+const freshness = activityColor(updated_at);
 ---
-<a href={`/cities/${id}`} class="city-card">
-  <div class="card-header">
-    <span class="city-name">{name}</span>
-    <span class={`status ${status}`}>{status}</span>
+<div class="city-card">
+  <a href={`/cities/${id}`} class="card-thumb" data-city-id={id} data-api-base={API_BASE}>
+  </a>
+  <div class="card-body">
+    <div class="card-header">
+      <a href={`/cities/${id}`} class="city-name">{name}</a>
+      <span class={`activity ${freshness}`}>{timeAgo}</span>
+    </div>
+    {mayor_id ? (
+      <a href={`/mayors/${mayor_id}`} class="card-mayor">{mayor}</a>
+    ) : (
+      <span class="card-mayor">{mayor}</span>
+    )}
+    <div class="card-stats">
+      <div class="stat">
+        <span class="stat-value">{population.toLocaleString()}</span>
+        <span class="stat-label">pop</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">{game_year}</span>
+        <span class="stat-label">year</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">{score}</span>
+        <span class="stat-label">score</span>
+      </div>
+    </div>
   </div>
-  <div class="card-mayor">{mayor}</div>
-  <div class="card-stats">
-    <div class="stat">
-      <span class="stat-value">{population.toLocaleString()}</span>
-      <span class="stat-label">pop</span>
-    </div>
-    <div class="stat">
-      <span class="stat-value">{game_year}</span>
-      <span class="stat-label">year</span>
-    </div>
-    <div class="stat">
-      <span class="stat-value">{score}</span>
-      <span class="stat-label">score</span>
-    </div>
-  </div>
-</a>
+</div>
 
 <style>
 .city-card {
@@ -40,17 +80,28 @@ const { id, name, mayor, population, game_year, score, status } = Astro.props;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 1.25rem;
+  overflow: hidden;
   color: var(--text);
   transition: border-color 0.2s;
 }
 .city-card:hover { border-color: var(--accent); }
+.card-thumb {
+  display: block;
+  width: 100%;
+  height: 140px;
+  background: var(--border);
+}
+.card-body { padding: 1rem; }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
-.city-name { font-weight: 600; font-size: 1.1rem; }
-.status { font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 9999px; background: var(--border); }
-.status.active { background: #166534; color: #86efac; }
-.status.ended { background: #7f1d1d; color: #fca5a5; }
-.card-mayor { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.75rem; }
+.city-name { font-weight: 600; font-size: 1.1rem; color: var(--text); }
+.city-name:hover { color: var(--accent); }
+.activity { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 9999px; white-space: nowrap; }
+.activity.fresh { background: #166534; color: #86efac; }
+.activity.recent { background: #1e3a5f; color: #93c5fd; }
+.activity.aging { background: #78350f; color: #fde68a; }
+.activity.stale { background: var(--border); color: var(--text-muted); }
+.card-mayor { display: block; color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.75rem; }
+a.card-mayor:hover { color: var(--accent); }
 .card-stats { display: flex; gap: 1.5rem; }
 .stat { display: flex; flex-direction: column; }
 .stat-value { font-weight: 600; font-size: 1rem; }

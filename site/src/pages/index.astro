@@ -1,6 +1,6 @@
 ---
 // ABOUTME: Homepage showing a gallery of cities sorted by population, score, or newest.
-// ABOUTME: Fetches city list from the API and renders as a card grid.
+// ABOUTME: Fetches city list from the API and renders as a card grid with map thumbnails.
 import Base from '../layouts/Base.astro';
 import CityCard from '../components/CityCard.astro';
 import { apiFetch } from '../lib/api';
@@ -28,6 +28,64 @@ const data = await apiFetch<{ cities: any[]; total: number }>(`/v1/cities?sort=$
     </div>
   )}
 </Base>
+
+<script>
+  import { loadSpriteSheet, TILE_SIZE, tileIdFromRaw, spriteCoords } from '../lib/sprites';
+
+  let spriteSheet: HTMLImageElement | null = null;
+
+  async function renderThumbnail(el: HTMLElement) {
+    const cityId = el.dataset.cityId;
+    const apiBase = el.dataset.apiBase;
+    if (!cityId || !apiBase) return;
+
+    const [sheet, mapRes] = await Promise.all([
+      spriteSheet ? Promise.resolve(spriteSheet) : loadSpriteSheet('/tiles.png').then(img => { spriteSheet = img; return img; }),
+      fetch(`${apiBase}/v1/cities/${cityId}/map`).then(r => r.json()),
+    ]);
+
+    const canvas = document.createElement('canvas');
+    const mapWidth = mapRes.width;
+    const mapHeight = mapRes.height;
+
+    // Draw full map offscreen
+    const offscreen = document.createElement('canvas');
+    offscreen.width = mapWidth * TILE_SIZE;
+    offscreen.height = mapHeight * TILE_SIZE;
+    const offCtx = offscreen.getContext('2d')!;
+    for (let y = 0; y < mapHeight; y++) {
+      for (let x = 0; x < mapWidth; x++) {
+        const raw = mapRes.tiles[y * mapWidth + x];
+        const tileId = tileIdFromRaw(raw);
+        const { sx, sy } = spriteCoords(tileId);
+        offCtx.drawImage(sheet, sx, sy, TILE_SIZE, TILE_SIZE, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+      }
+    }
+
+    // Scale to thumbnail
+    canvas.width = el.clientWidth * 2;
+    canvas.height = el.clientHeight * 2;
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.display = 'block';
+    const ctx = canvas.getContext('2d')!;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(offscreen, 0, 0, canvas.width, canvas.height);
+    el.appendChild(canvas);
+  }
+
+  // Use IntersectionObserver for lazy loading
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        observer.unobserve(entry.target);
+        renderThumbnail(entry.target as HTMLElement);
+      }
+    }
+  }, { rootMargin: '200px' });
+
+  document.querySelectorAll('.card-thumb').forEach(el => observer.observe(el));
+</script>
 
 <style>
 .gallery-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
