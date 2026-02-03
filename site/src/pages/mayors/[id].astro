@@ -38,11 +38,15 @@ const mayor = await apiFetch<any>(`/v1/mayors/${id}`);
 </Base>
 
 <style>
-.mayor-stats { display: flex; gap: 2rem; margin: 1.5rem 0; }
+.mayor-stats { display: flex; gap: 2rem; margin: 1.5rem 0; flex-wrap: wrap; }
 .stat { display: flex; flex-direction: column; }
 .stat-value { font-size: 1.5rem; font-weight: 700; }
 .stat-label { color: var(--text-muted); font-size: 0.875rem; }
 h2 { margin-bottom: 1rem; }
-.city-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.city-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
 .empty { color: var(--text-muted); }
+@media (max-width: 480px) {
+  .mayor-stats { gap: 1.5rem; }
+  .stat-value { font-size: 1.25rem; }
+}
 </style>

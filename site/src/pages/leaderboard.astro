@@ -76,8 +76,12 @@ try {
 <style>
 .boards { display: flex; flex-direction: column; gap: 2rem; }
 section h2 { margin-bottom: 0.75rem; font-size: 1.1rem; }
-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 8px; overflow: hidden; }
-th, td { padding: 0.6rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+section { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 8px; overflow: hidden; min-width: 400px; }
+th, td { padding: 0.6rem 1rem; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
 th { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 500; }
 td:first-child, th:first-child { width: 3rem; text-align: center; }
+@media (max-width: 480px) {
+  th, td { padding: 0.5rem 0.625rem; font-size: 0.8125rem; }
+}
 </style>

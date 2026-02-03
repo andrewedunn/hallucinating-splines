@@ -84,7 +84,13 @@ const [city, stats, mapData, actionsData] = await Promise.all([
 .status { font-size: 0.875rem; padding: 0.25rem 0.75rem; border-radius: 9999px; background: var(--border); }
 .status.active { background: #166534; color: #86efac; }
 .status.ended { background: #7f1d1d; color: #fca5a5; }
-.city-layout { display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; }
+.city-layout { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; }
 .map-column { min-width: 0; }
-@media (max-width: 768px) { .city-layout { grid-template-columns: 1fr; } }
+@media (max-width: 900px) {
+  .city-layout { grid-template-columns: 1fr; }
+  .stats-column { order: -1; }
+}
+@media (max-width: 480px) {
+  .city-header { flex-direction: column; gap: 0.5rem; }
+}
 </style>

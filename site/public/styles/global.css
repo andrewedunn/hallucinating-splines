@@ -32,6 +32,8 @@ a:hover { color: var(--accent-hover); }
   padding: 1rem 2rem;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .nav-logo { font-size: 1.2rem; font-weight: 700; color: var(--text); }
@@ -45,4 +47,16 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
   color: var(--text-muted);
   border-top: 1px solid var(--border);
   font-size: 0.875rem;
+}
+
+@media (max-width: 640px) {
+  .history-charts-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+@media (max-width: 480px) {
+  .nav { padding: 0.75rem 1rem; }
+  .nav-logo { font-size: 1rem; }
+  .nav-links { gap: 1rem; font-size: 0.875rem; }
+  main { padding: 1rem; }
+  .history-charts-grid { grid-template-columns: 1fr !important; }
 }

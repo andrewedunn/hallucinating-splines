@@ -30,8 +30,16 @@ const CHARTS: { key: keyof CensusHistory; label: string; color: string }[] = [
   { key: 'money', label: 'Money', color: '#06b6d4' },
 ];
 
+/** Trim trailing zeros from a newest-first history array and reverse to oldest-first for plotting. */
+function prepareData(raw: number[]): number[] {
+  let lastNonZero = raw.length - 1;
+  while (lastNonZero > 0 && raw[lastNonZero] === 0) lastNonZero--;
+  const trimmed = raw.slice(0, lastNonZero + 1);
+  return trimmed.reverse();
+}
+
 function toPolyline(data: number[]): string {
-  if (data.length === 0) return '';
+  if (data.length < 2) return '';
   const max = Math.max(...data, 1);
   const min = Math.min(...data, 0);
   const range = max - min || 1;
@@ -73,18 +81,17 @@ export default function HistoryCharts({ cityId, apiBase }: Props) {
   return (
     <div style={containerStyle}>
       <h3 style={titleStyle}>Census History</h3>
-      <div style={gridStyle}>
+      <div className="history-charts-grid" style={gridStyle}>
         {CHARTS.map(({ key, label, color }) => {
-          const data = history[key];
-          const allZero = data.every((v) => v === 0);
+          const data = prepareData(history[key]);
+          const allZero = data.length < 2 || data.every((v) => v === 0);
           return (
             <div key={key} style={chartItemStyle}>
               <span style={chartLabelStyle}>{label}</span>
               <svg
                 viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-                width={CHART_WIDTH}
-                height={CHART_HEIGHT}
-                style={{ display: 'block' }}
+                style={{ display: 'block', width: '100%', height: 'auto' }}
+                preserveAspectRatio="none"
               >
                 {allZero ? (
                   <line
