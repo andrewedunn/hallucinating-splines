@@ -1,0 +1,18 @@
+name = "hallucinating-splines"
+main = "src/index.ts"
+compatibility_date = "2026-01-16"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "hallucinating-splines-db"
+database_id = "local"
+
+[durable_objects]
+bindings = [
+  { name = "CITY", class_name = "CityDO" }
+]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["CityDO"]
