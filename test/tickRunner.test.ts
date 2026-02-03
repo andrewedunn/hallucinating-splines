@@ -3,8 +3,8 @@
 
 import { MapGenerator } from '../src/engine/mapGenerator.js';
 import { Simulation } from '../src/engine/simulation.js';
-import { TickRunner } from '../src/tickRunner.js';
-import { withSeed } from '../src/seededRandom.js';
+import { TickRunner } from '../src/tickRunner';
+import { withSeed } from '../src/seededRandom';
 
 function createSimulation() {
   const map = withSeed(42, () => MapGenerator(120, 100));

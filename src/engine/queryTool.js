@@ -11,7 +11,7 @@
  *
  */
 
-import $ from "jquery";
+// Headless patch: jQuery removed, DOM writes replaced with no-ops.
 
 import { BaseTool } from './baseTool.js';
 import { Config } from './config.js';
@@ -28,72 +28,38 @@ var QueryTool = EventEmitter(makeTool(function(map) {
 
 QueryTool.prototype.classifyPopulationDensity = function(x, y, blockMaps) {
   var density = blockMaps.populationDensityMap.worldGet(x, y);
-  if (Config.debug || Config.queryDebug)
-    $('#queryDensityRaw').text(density);
   density = density >> 6;
   density = density & 3;
-  $('#queryDensity').text(Text.densityStrings[density]);
 };
 
 
 QueryTool.prototype.classifyLandValue = function(x, y, blockMaps) {
    var landValue = blockMaps.landValueMap.worldGet(x, y);
-   if (Config.debug || Config.queryDebug)
-     $('#queryLandValueRaw').text(landValue);
-
-   var i = 0;
-   if (landValue >= 150)
-     i = 3;
-   else if (landValue >= 80)
-     i = 2;
-   else if (landValue >= 30)
-     i = 1;
-
-   var text = Text.landValueStrings[i];
-   $('#queryLandValue').text(text);
 };
 
 
 QueryTool.prototype.classifyCrime = function(x, y, blockMaps) {
   var crime = blockMaps.crimeRateMap.worldGet(x, y);
-  if (Config.debug || Config.queryDebug)
-    $('#queryCrimeRaw').text(crime);
   crime = crime >> 6;
   crime = crime & 3;
-  $('#queryCrime').text(Text.crimeStrings[crime]);
 };
 
 
 QueryTool.prototype.classifyPollution = function(x, y, blockMaps) {
   var pollution = blockMaps.pollutionDensityMap.worldGet(x, y);
-  if (Config.debug || Config.queryDebug)
-    $('#queryPollutionRaw').text(pollution);
   pollution = pollution >> 6;
   pollution = pollution & 3;
-  $('#queryPollution').text(Text.pollutionStrings[pollution]);
 };
 
 
 QueryTool.prototype.classifyRateOfGrowth = function(x, y, blockMaps) {
   var rate = blockMaps.rateOfGrowthMap.worldGet(x, y);
-  if (Config.debug || Config.queryDebug)
-    $('#queryRateRaw').text(rate);
   rate = rate >> 6;
   rate = rate & 3;
-  $('#queryRate').text(Text.rateStrings[rate]);
 };
 
 
 QueryTool.prototype.classifyDebug = function(x, y, blockMaps) {
-  if (!Config.debug && !Config.queryDebug)
-    return;
-  $('#queryFireStationRaw').text(blockMaps.fireStationMap.worldGet(x, y));
-  $('#queryFireStationEffectRaw').text(blockMaps.fireStationEffectMap.worldGet(x, y));
-  $('#queryPoliceStationRaw').text(blockMaps.policeStationMap.worldGet(x, y));
-  $('#queryPoliceStationEffectRaw').text(blockMaps.policeStationEffectMap.worldGet(x, y));
-  $('#queryTerrainDensityRaw').text(blockMaps.terrainDensityMap.worldGet(x, y));
-  $('#queryTrafficDensityRaw').text(blockMaps.trafficDensityMap.worldGet(x, y));
-  $('#queryComRateRaw').text(blockMaps.cityCentreDistScoreMap.worldGet(x, y));
 };
 
 
@@ -116,27 +82,10 @@ QueryTool.prototype.classifyZone = function(x, y) {
     if (tileValue < baseTiles[index + 1])
       break;
   }
-
-  $('#queryZoneType').text(Text.zoneTypes[index]);
 };
 
 
 QueryTool.prototype.doTool = function(x, y, blockMaps) {
-  var text = 'Position (' + x + ', ' + y + ')';
-  text += ' TileValue: ' + this._map.getTileValue(x, y);
-
-  if (Config.debug || Config.queryDebug) {
-    var tile = this._map.getTile(x, y);
-    $('#queryTile').text([x,y].join(', '));
-    $('#queryTileValue').text(tile.getValue());
-    $('#queryTileBurnable').text(tile.isCombustible() ? '\u2714' : '\u2718');
-    $('#queryTileBulldozable').text(tile.isBulldozable() ? '\u2714' : '\u2718');
-    $('#queryTileCond').text(tile.isConductive() ? '\u2714' : '\u2718');
-    $('#queryTileAnim').text(tile.isAnimated() ? '\u2714' : '\u2718');
-    $('#queryTilePowered').text(tile.isPowered() ? '\u2714' : '\u2718');
-    $('#queryTileZone').text(tile.isZone() ? '\u2714' : '\u2718');
-  }
-
   this.classifyZone(x, y);
   this.classifyPopulationDensity(x, y, blockMaps);
   this.classifyLandValue(x, y, blockMaps);

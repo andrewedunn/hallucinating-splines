@@ -1,7 +1,7 @@
 // ABOUTME: Tests for the seeded PRNG module.
 // ABOUTME: Verifies deterministic sequences and Math.random replacement via withSeed().
 
-import { mulberry32, withSeed } from '../src/seededRandom.js';
+import { mulberry32, withSeed } from '../src/seededRandom';
 
 describe('mulberry32', () => {
   test('same seed produces same sequence', () => {

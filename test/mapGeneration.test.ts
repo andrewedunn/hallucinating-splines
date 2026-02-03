@@ -2,7 +2,7 @@
 // ABOUTME: Verifies MapGenerator works without DOM and that seeded generation is reproducible.
 
 import { MapGenerator } from '../src/engine/mapGenerator.js';
-import { withSeed } from '../src/seededRandom.js';
+import { withSeed } from '../src/seededRandom';
 
 describe('MapGenerator', () => {
   test('generates a map with correct dimensions', () => {
