@@ -91,6 +91,66 @@ cities.get('/', async (c) => {
   });
 });
 
+// GET /v1/cities/:id/stats — Live stats from DO
+cities.get('/:id/stats', async (c) => {
+  const cityId = c.req.param('id');
+
+  const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
+    .bind(cityId).first();
+  if (!row) return errorResponse(c, 404, 'not_found', 'City not found');
+
+  const doId = c.env.CITY.idFromName(cityId);
+  const stub = c.env.CITY.get(doId);
+  const stats = await stub.getStats();
+  return c.json(stats);
+});
+
+// GET /v1/cities/:id/map — Full tile map
+cities.get('/:id/map', async (c) => {
+  const cityId = c.req.param('id');
+
+  const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
+    .bind(cityId).first();
+  if (!row) return errorResponse(c, 404, 'not_found', 'City not found');
+
+  const doId = c.env.CITY.idFromName(cityId);
+  const stub = c.env.CITY.get(doId);
+  const mapData = await stub.getMapData();
+  return c.json(mapData);
+});
+
+// GET /v1/cities/:id/map/region — Tile subregion
+cities.get('/:id/map/region', async (c) => {
+  const cityId = c.req.param('id');
+  const x = parseInt(c.req.query('x') || '0');
+  const y = parseInt(c.req.query('y') || '0');
+  const w = Math.min(parseInt(c.req.query('w') || '20'), 40);
+  const h = Math.min(parseInt(c.req.query('h') || '20'), 40);
+
+  const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
+    .bind(cityId).first();
+  if (!row) return errorResponse(c, 404, 'not_found', 'City not found');
+
+  const doId = c.env.CITY.idFromName(cityId);
+  const stub = c.env.CITY.get(doId);
+  const region = await stub.getMapRegion(x, y, w, h);
+  return c.json(region);
+});
+
+// GET /v1/cities/:id/demand — RCI demand
+cities.get('/:id/demand', async (c) => {
+  const cityId = c.req.param('id');
+
+  const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
+    .bind(cityId).first();
+  if (!row) return errorResponse(c, 404, 'not_found', 'City not found');
+
+  const doId = c.env.CITY.idFromName(cityId);
+  const stub = c.env.CITY.get(doId);
+  const demand = await stub.getDemandData();
+  return c.json(demand);
+});
+
 // GET /v1/cities/:id — Get city summary (public)
 cities.get('/:id', async (c) => {
   const cityId = c.req.param('id');
