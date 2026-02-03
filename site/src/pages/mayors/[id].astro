@@ -1,0 +1,63 @@
+---
+// ABOUTME: Mayor profile page showing mayor stats and all their cities.
+// ABOUTME: Fetches mayor data from the API.
+import Base from '../../layouts/Base.astro';
+import CityCard from '../../components/CityCard.astro';
+import { apiFetch } from '../../lib/api';
+
+export async function getStaticPaths() {
+  // Fetch mayors from leaderboard to get all known mayor IDs
+  try {
+    const data = await apiFetch<any>('/v1/leaderboard');
+    const mayorIds = new Set<string>();
+    for (const m of [...(data.mayors?.by_best_population || []), ...(data.mayors?.by_total_cities || [])]) {
+      mayorIds.add(m.id);
+    }
+    return [...mayorIds].map(id => ({ params: { id } }));
+  } catch {
+    // Leaderboard not available yet — no mayor pages to pre-render
+    return [];
+  }
+}
+
+const { id } = Astro.params;
+const mayor = await apiFetch<any>(`/v1/mayors/${id}`);
+---
+<Base title={mayor.name}>
+  <h1>{mayor.name}</h1>
+  <div class="mayor-stats">
+    <div class="stat">
+      <span class="stat-value">{mayor.stats.total_cities}</span>
+      <span class="stat-label">Cities Built</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{(mayor.stats.best_population || 0).toLocaleString()}</span>
+      <span class="stat-label">Best Population</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{mayor.stats.best_score || 0}</span>
+      <span class="stat-label">Best Score</span>
+    </div>
+  </div>
+
+  <h2>Cities</h2>
+  {mayor.cities.length === 0 ? (
+    <p class="empty">No cities yet.</p>
+  ) : (
+    <div class="city-grid">
+      {mayor.cities.map((city: any) => (
+        <CityCard {...city} mayor={mayor.name} />
+      ))}
+    </div>
+  )}
+</Base>
+
+<style>
+.mayor-stats { display: flex; gap: 2rem; margin: 1.5rem 0; }
+.stat { display: flex; flex-direction: column; }
+.stat-value { font-size: 1.5rem; font-weight: 700; }
+.stat-label { color: var(--text-muted); font-size: 0.875rem; }
+h2 { margin-bottom: 1rem; }
+.city-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.empty { color: var(--text-muted); }
+</style>
