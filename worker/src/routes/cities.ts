@@ -131,6 +131,32 @@ cities.get('/:id/map/summary', async (c) => {
   return c.json(summary);
 });
 
+// GET /v1/cities/:id/map/buildable — Buildability mask
+cities.get('/:id/map/buildable', async (c) => {
+  const cityId = c.req.param('id');
+  const action = c.req.query('action');
+  if (!action) return errorResponse(c, 400, 'bad_request', 'Missing action query parameter');
+
+  const TOOL_MAP: Record<string, string> = {
+    zone_residential: 'residential', zone_commercial: 'commercial', zone_industrial: 'industrial',
+    build_road: 'road', build_rail: 'rail', build_power_line: 'wire', build_park: 'park',
+    build_fire_station: 'fire', build_police_station: 'police',
+    build_coal_power: 'coal', build_nuclear_power: 'nuclear',
+    build_seaport: 'port', build_airport: 'airport', build_stadium: 'stadium', bulldoze: 'bulldozer',
+  };
+  const toolName = TOOL_MAP[action];
+  if (!toolName) return errorResponse(c, 400, 'bad_request', `Unknown action: ${action}`);
+
+  const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
+    .bind(cityId).first();
+  if (!row) return errorResponse(c, 404, 'not_found', 'City not found');
+
+  const doId = c.env.CITY.idFromName(cityId);
+  const stub = c.env.CITY.get(doId);
+  const result = await stub.getBuildablePositions(toolName);
+  return c.json({ action, ...result });
+});
+
 // GET /v1/cities/:id/map/region — Tile subregion
 cities.get('/:id/map/region', async (c) => {
   const cityId = c.req.param('id');

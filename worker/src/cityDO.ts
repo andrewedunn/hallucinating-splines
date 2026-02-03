@@ -189,6 +189,55 @@ export class CityDO extends DurableObject<Env> {
     return analyzeMap(mapData.tiles, mapData.width, mapData.height);
   }
 
+  async getBuildablePositions(toolName: string, maxResults: number = 200): Promise<any> {
+    const game = await this.ensureGame();
+    const mapData = game.getMap();
+    const { width, height, tiles } = mapData;
+
+    const toolSizes: Record<string, number> = {
+      residential: 3, commercial: 3, industrial: 3,
+      coal: 4, nuclear: 4, fire: 3, police: 3,
+      port: 4, airport: 6, stadium: 4,
+      road: 1, rail: 1, wire: 1, park: 1, bulldozer: 1,
+    };
+    const size = toolSizes[toolName] || 1;
+    const halfSize = Math.floor(size / 2);
+
+    const validPositions: number[][] = [];
+
+    for (let y = halfSize; y < height - halfSize; y++) {
+      for (let x = halfSize; x < width - halfSize; x++) {
+        let allClear = true;
+        for (let dy = -halfSize; dy < size - halfSize && allClear; dy++) {
+          for (let dx = -halfSize; dx < size - halfSize && allClear; dx++) {
+            const tx = x + dx, ty = y + dy;
+            const tileId = tiles[ty * width + tx] & 0x3FF;
+            if (tileId !== 0 && !(tileId >= 21 && tileId <= 39)) {
+              allClear = false;
+            }
+          }
+        }
+        if (allClear) validPositions.push([x, y]);
+      }
+    }
+
+    let sampled = validPositions;
+    if (validPositions.length > maxResults) {
+      sampled = [];
+      const step = Math.floor(validPositions.length / maxResults);
+      for (let i = 0; i < validPositions.length && sampled.length < maxResults; i += step) {
+        sampled.push(validPositions[i]);
+      }
+    }
+
+    return {
+      tool: toolName,
+      size: { width: size, height: size },
+      valid_positions: sampled.map(([x, y]) => ({ x, y })),
+      total_valid: validPositions.length,
+    };
+  }
+
   async deleteCity(): Promise<void> {
     this.game = null;
     await this.ctx.storage.deleteAll();
