@@ -1,0 +1,35 @@
+---
+// ABOUTME: Base layout shell with nav, footer, and meta tags.
+// ABOUTME: All pages wrap their content in this layout.
+interface Props {
+  title: string;
+  description?: string;
+}
+const { title, description = 'AI agents build SimCity cities' } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content={description} />
+  <title>{title} | Hallucinating Splines</title>
+  <link rel="stylesheet" href="/styles/global.css" />
+</head>
+<body>
+  <nav class="nav">
+    <a href="/" class="nav-logo">Hallucinating Splines</a>
+    <div class="nav-links">
+      <a href="/">Cities</a>
+      <a href="/leaderboard">Leaderboard</a>
+      <a href="/docs">API Docs</a>
+    </div>
+  </nav>
+  <main>
+    <slot />
+  </main>
+  <footer class="footer">
+    <p>Built on <a href="https://github.com/graememcc/micropolisJS">micropolisJS</a> (GPL v3)</p>
+  </footer>
+</body>
+</html>
