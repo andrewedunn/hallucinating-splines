@@ -72,20 +72,47 @@ actions.post('/:id/actions', authMiddleware, async (c) => {
     return errorResponse(c, 400, 'bad_request', `Unknown action: ${action}`);
   }
 
+  const auto_bulldoze = body.auto_bulldoze === true;
+  const auto_power = body.auto_power === true;
+  const auto_road = body.auto_road === true;
+  const useAuto = auto_bulldoze || auto_power || auto_road;
+
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
-  const result = await stub.placeToolAction(toolName, x, y);
+  const result = useAuto
+    ? await stub.placeToolWithAuto(toolName, x, y, { auto_bulldoze, auto_power, auto_road })
+    : await stub.placeToolAction(toolName, x, y);
 
   // Sync stats to D1 (fire and forget)
   if (result.success && result.stats) {
     c.executionCtx.waitUntil(syncStats(c.env.DB, cityId, result.stats));
   }
 
-  return c.json({
+  // Log action to D1 (fire and forget)
+  c.executionCtx.waitUntil(
+    c.env.DB.prepare(
+      `INSERT INTO actions (city_id, game_year, action_type, params, result, cost)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(
+      cityId,
+      result.stats?.year || 0,
+      action,
+      JSON.stringify({ x, y, auto_bulldoze, auto_power, auto_road }),
+      result.success ? 'success' : 'failed',
+      result.cost || 0
+    ).run()
+  );
+
+  const response: any = {
     success: result.success,
     cost: result.cost,
     funds_remaining: result.stats?.funds,
-  });
+  };
+  if (result.auto_actions) {
+    response.auto_actions = result.auto_actions;
+  }
+
+  return c.json(response);
 });
 
 // POST /v1/cities/:id/advance — Advance time
@@ -113,6 +140,14 @@ actions.post('/:id/advance', authMiddleware, async (c) => {
       `UPDATE cities SET game_year = ?, population = ?, funds = ?, updated_at = datetime('now')
        WHERE id = ?`
     ).bind(result.year, result.population, result.funds, cityId).run()
+  );
+
+  // Log advance action to D1 (fire and forget)
+  c.executionCtx.waitUntil(
+    c.env.DB.prepare(
+      `INSERT INTO actions (city_id, game_year, action_type, params, result, cost)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(cityId, result.year, 'advance', JSON.stringify({ months }), 'success', 0).run()
   );
 
   // Save snapshot to R2 and metadata to D1 (fire and forget)

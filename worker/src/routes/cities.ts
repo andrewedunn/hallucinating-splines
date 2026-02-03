@@ -235,6 +235,34 @@ cities.get('/:id/snapshots/:year', async (c) => {
   return c.json(data);
 });
 
+// GET /v1/cities/:id/actions — Action history
+cities.get('/:id/actions', async (c) => {
+  const cityId = c.req.param('id');
+  const limit = Math.min(parseInt(c.req.query('limit') || '50'), 100);
+  const offset = parseInt(c.req.query('offset') || '0');
+
+  const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
+    .bind(cityId).first();
+  if (!row) return errorResponse(c, 404, 'not_found', 'City not found');
+
+  const actionsResult = await c.env.DB.prepare(
+    `SELECT id, game_year, action_type, params, result, cost, created_at
+     FROM actions WHERE city_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`
+  ).bind(cityId, limit, offset).all();
+
+  const total = await c.env.DB.prepare(
+    'SELECT COUNT(*) as count FROM actions WHERE city_id = ?'
+  ).bind(cityId).first<{ count: number }>();
+
+  return c.json({
+    actions: actionsResult.results.map((a: any) => ({
+      ...a,
+      params: JSON.parse(a.params),
+    })),
+    total: total?.count || 0,
+  });
+});
+
 // GET /v1/cities/:id — Get city summary (public)
 cities.get('/:id', async (c) => {
   const cityId = c.req.param('id');
