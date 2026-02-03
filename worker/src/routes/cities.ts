@@ -6,7 +6,7 @@ import { authMiddleware } from '../auth';
 import { generateCityName } from '../names';
 import { errorResponse } from '../errors';
 
-type Bindings = { DB: D1Database; CITY: DurableObjectNamespace };
+type Bindings = { DB: D1Database; CITY: DurableObjectNamespace; SNAPSHOTS: R2Bucket };
 type Variables = { keyId: string; mayorName: string };
 
 const cities = new Hono<{ Bindings: Bindings; Variables: Variables }>();

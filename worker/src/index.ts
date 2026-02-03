@@ -12,6 +12,7 @@ import { errorResponse } from './errors';
 type Bindings = {
   DB: D1Database;
   CITY: DurableObjectNamespace;
+  SNAPSHOTS: R2Bucket;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();

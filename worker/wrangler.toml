@@ -16,3 +16,10 @@ bindings = [
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["CityDO"]
+
+[[migrations]]
+tag = "v2"
+
+[[r2_buckets]]
+binding = "SNAPSHOTS"
+bucket_name = "hallucinating-splines-snapshots"

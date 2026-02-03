@@ -14,6 +14,7 @@ interface CityState {
 type Env = {
   DB: D1Database;
   CITY: DurableObjectNamespace;
+  SNAPSHOTS: R2Bucket;
 };
 
 export class CityDO extends DurableObject<Env> {
