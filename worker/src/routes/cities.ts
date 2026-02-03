@@ -119,6 +119,18 @@ cities.get('/:id/map', async (c) => {
   return c.json(mapData);
 });
 
+// GET /v1/cities/:id/map/summary — Semantic map analysis
+cities.get('/:id/map/summary', async (c) => {
+  const cityId = c.req.param('id');
+  const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
+    .bind(cityId).first();
+  if (!row) return errorResponse(c, 404, 'not_found', 'City not found');
+  const doId = c.env.CITY.idFromName(cityId);
+  const stub = c.env.CITY.get(doId);
+  const summary = await stub.getMapSummary();
+  return c.json(summary);
+});
+
 // GET /v1/cities/:id/map/region — Tile subregion
 cities.get('/:id/map/region', async (c) => {
   const cityId = c.req.param('id');

@@ -4,6 +4,9 @@
 import { DurableObject } from 'cloudflare:workers';
 import { HeadlessGame } from '../../src/headlessGame';
 import { withSeed } from '../../src/seededRandom';
+import { autoBulldoze, autoPower, autoRoad } from './autoInfra';
+import type { AutoAction } from './autoInfra';
+import { analyzeMap } from './mapAnalysis';
 
 interface CityState {
   seed: number;
@@ -68,6 +71,64 @@ export class CityDO extends DurableObject<Env> {
     return { ...result, stats: this.getStatsInternal() };
   }
 
+  async placeToolWithAuto(
+    toolName: string,
+    x: number,
+    y: number,
+    flags: { auto_bulldoze?: boolean; auto_power?: boolean; auto_road?: boolean },
+  ): Promise<any> {
+    const game = await this.ensureGame();
+    const autoActions: AutoAction[] = [];
+
+    // Tool size lookup for auto-bulldoze footprint
+    const TOOL_SIZES: Record<string, number> = {
+      residential: 3, commercial: 3, industrial: 3,
+      coal: 4, nuclear: 4, port: 4, stadium: 4,
+      airport: 6,
+    };
+    const toolSize = TOOL_SIZES[toolName] ?? 1;
+
+    // Step 1: auto-bulldoze before placement
+    if (flags.auto_bulldoze) {
+      const bdResult = autoBulldoze(game, x, y, toolSize);
+      if (bdResult.tiles && bdResult.tiles.length > 0) {
+        autoActions.push(bdResult);
+      }
+    }
+
+    // Step 2: primary placement
+    const result = game.placeTool(toolName, x, y);
+
+    if (result.success) {
+      // Step 3: auto-power after successful placement
+      if (flags.auto_power) {
+        const pwResult = autoPower(game, x, y);
+        if (!pwResult.failed) {
+          autoActions.push(pwResult);
+        }
+      }
+
+      // Step 4: auto-road after successful placement
+      if (flags.auto_road) {
+        const rdResult = autoRoad(game, x, y);
+        if (!rdResult.failed) {
+          autoActions.push(rdResult);
+        }
+      }
+
+      await this.persist();
+    }
+
+    const autoCost = autoActions.reduce((sum, a) => sum + a.cost, 0);
+
+    return {
+      ...result,
+      cost: result.cost + autoCost,
+      auto_actions: autoActions,
+      stats: this.getStatsInternal(),
+    };
+  }
+
   async advance(months: number): Promise<any> {
     const game = await this.ensureGame();
     const tickResult = game.tick(months);
@@ -120,6 +181,12 @@ export class CityDO extends DurableObject<Env> {
       score: stats.score,
       tiles: mapData.tiles,
     };
+  }
+
+  async getMapSummary(): Promise<any> {
+    const game = await this.ensureGame();
+    const mapData = game.getMap();
+    return analyzeMap(mapData.tiles, mapData.width, mapData.height);
   }
 
   async deleteCity(): Promise<void> {
