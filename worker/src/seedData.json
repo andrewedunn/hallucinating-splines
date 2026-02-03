@@ -1,0 +1,261 @@
+[
+  {
+    "seed": 12,
+    "terrain": "island",
+    "water_pct": 55,
+    "buildable_pct": 45,
+    "description": "Island terrain with 55% water, challenging build space"
+  },
+  {
+    "seed": 16,
+    "terrain": "coastal",
+    "water_pct": 21,
+    "buildable_pct": 79,
+    "description": "Coastal map with 21% water and natural harbors"
+  },
+  {
+    "seed": 45,
+    "terrain": "coastal",
+    "water_pct": 21,
+    "buildable_pct": 79,
+    "description": "Coastal map with 21% water and natural harbors"
+  },
+  {
+    "seed": 65,
+    "terrain": "coastal",
+    "water_pct": 21,
+    "buildable_pct": 79,
+    "description": "Coastal map with 21% water and natural harbors"
+  },
+  {
+    "seed": 66,
+    "terrain": "island",
+    "water_pct": 55,
+    "buildable_pct": 45,
+    "description": "Island terrain with 55% water, challenging build space"
+  },
+  {
+    "seed": 75,
+    "terrain": "island",
+    "water_pct": 55,
+    "buildable_pct": 45,
+    "description": "Island terrain with 55% water, challenging build space"
+  },
+  {
+    "seed": 101,
+    "terrain": "coastal",
+    "water_pct": 21,
+    "buildable_pct": 79,
+    "description": "Coastal map with 21% water and natural harbors"
+  },
+  {
+    "seed": 130,
+    "terrain": "coastal",
+    "water_pct": 21,
+    "buildable_pct": 79,
+    "description": "Coastal map with 21% water and natural harbors"
+  },
+  {
+    "seed": 138,
+    "terrain": "coastal",
+    "water_pct": 21,
+    "buildable_pct": 79,
+    "description": "Coastal map with 21% water and natural harbors"
+  },
+  {
+    "seed": 142,
+    "terrain": "coastal",
+    "water_pct": 21,
+    "buildable_pct": 79,
+    "description": "Coastal map with 21% water and natural harbors"
+  },
+  {
+    "seed": 147,
+    "terrain": "coastal",
+    "water_pct": 21,
+    "buildable_pct": 79,
+    "description": "Coastal map with 21% water and natural harbors"
+  },
+  {
+    "seed": 148,
+    "terrain": "coastal",
+    "water_pct": 21,
+    "buildable_pct": 79,
+    "description": "Coastal map with 21% water and natural harbors"
+  },
+  {
+    "seed": 273,
+    "terrain": "river_valley",
+    "water_pct": 11,
+    "buildable_pct": 89,
+    "description": "River valley with 11% water, good balance of land and water"
+  },
+  {
+    "seed": 317,
+    "terrain": "island",
+    "water_pct": 32,
+    "buildable_pct": 68,
+    "description": "Island terrain with 32% water, challenging build space"
+  },
+  {
+    "seed": 395,
+    "terrain": "peninsula",
+    "water_pct": 10,
+    "buildable_pct": 90,
+    "description": "Mostly land with some water features (10% water)"
+  },
+  {
+    "seed": 497,
+    "terrain": "island",
+    "water_pct": 55,
+    "buildable_pct": 45,
+    "description": "Island terrain with 55% water, challenging build space"
+  },
+  {
+    "seed": 509,
+    "terrain": "river_valley",
+    "water_pct": 11,
+    "buildable_pct": 89,
+    "description": "River valley with 11% water, good balance of land and water"
+  },
+  {
+    "seed": 557,
+    "terrain": "island",
+    "water_pct": 54,
+    "buildable_pct": 46,
+    "description": "Island terrain with 54% water, challenging build space"
+  },
+  {
+    "seed": 729,
+    "terrain": "river_valley",
+    "water_pct": 11,
+    "buildable_pct": 89,
+    "description": "River valley with 11% water, good balance of land and water"
+  },
+  {
+    "seed": 814,
+    "terrain": "river_valley",
+    "water_pct": 11,
+    "buildable_pct": 89,
+    "description": "River valley with 11% water, good balance of land and water"
+  },
+  {
+    "seed": 825,
+    "terrain": "river_valley",
+    "water_pct": 11,
+    "buildable_pct": 89,
+    "description": "River valley with 11% water, good balance of land and water"
+  },
+  {
+    "seed": 906,
+    "terrain": "river_valley",
+    "water_pct": 11,
+    "buildable_pct": 89,
+    "description": "River valley with 11% water, good balance of land and water"
+  },
+  {
+    "seed": 911,
+    "terrain": "island",
+    "water_pct": 54,
+    "buildable_pct": 46,
+    "description": "Island terrain with 54% water, challenging build space"
+  },
+  {
+    "seed": 944,
+    "terrain": "river_valley",
+    "water_pct": 11,
+    "buildable_pct": 89,
+    "description": "River valley with 11% water, good balance of land and water"
+  },
+  {
+    "seed": 1116,
+    "terrain": "island",
+    "water_pct": 55,
+    "buildable_pct": 45,
+    "description": "Island terrain with 55% water, challenging build space"
+  },
+  {
+    "seed": 1467,
+    "terrain": "river_valley",
+    "water_pct": 11,
+    "buildable_pct": 89,
+    "description": "River valley with 11% water, good balance of land and water"
+  },
+  {
+    "seed": 1523,
+    "terrain": "river_valley",
+    "water_pct": 11,
+    "buildable_pct": 89,
+    "description": "River valley with 11% water, good balance of land and water"
+  },
+  {
+    "seed": 1738,
+    "terrain": "peninsula",
+    "water_pct": 9,
+    "buildable_pct": 91,
+    "description": "Mostly land with some water features (9% water)"
+  },
+  {
+    "seed": 1821,
+    "terrain": "island",
+    "water_pct": 33,
+    "buildable_pct": 67,
+    "description": "Island terrain with 33% water, challenging build space"
+  },
+  {
+    "seed": 1893,
+    "terrain": "river_valley",
+    "water_pct": 11,
+    "buildable_pct": 89,
+    "description": "River valley with 11% water, good balance of land and water"
+  },
+  {
+    "seed": 2227,
+    "terrain": "island",
+    "water_pct": 54,
+    "buildable_pct": 46,
+    "description": "Island terrain with 54% water, challenging build space"
+  },
+  {
+    "seed": 2325,
+    "terrain": "peninsula",
+    "water_pct": 10,
+    "buildable_pct": 90,
+    "description": "Mostly land with some water features (10% water)"
+  },
+  {
+    "seed": 2344,
+    "terrain": "peninsula",
+    "water_pct": 10,
+    "buildable_pct": 90,
+    "description": "Mostly land with some water features (10% water)"
+  },
+  {
+    "seed": 2393,
+    "terrain": "peninsula",
+    "water_pct": 10,
+    "buildable_pct": 90,
+    "description": "Mostly land with some water features (10% water)"
+  },
+  {
+    "seed": 3639,
+    "terrain": "peninsula",
+    "water_pct": 10,
+    "buildable_pct": 90,
+    "description": "Mostly land with some water features (10% water)"
+  },
+  {
+    "seed": 4848,
+    "terrain": "peninsula",
+    "water_pct": 10,
+    "buildable_pct": 90,
+    "description": "Mostly land with some water features (10% water)"
+  },
+  {
+    "seed": 4967,
+    "terrain": "coastal",
+    "water_pct": 21,
+    "buildable_pct": 80,
+    "description": "Coastal map with 21% water and natural harbors"
+  }
+]
