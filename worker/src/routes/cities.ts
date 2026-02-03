@@ -235,6 +235,20 @@ cities.get('/:id/snapshots/:year', async (c) => {
   return c.json(data);
 });
 
+// GET /v1/cities/:id/history — Census history arrays
+cities.get('/:id/history', async (c) => {
+  const cityId = c.req.param('id');
+
+  const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
+    .bind(cityId).first();
+  if (!row) return errorResponse(c, 404, 'not_found', 'City not found');
+
+  const doId = c.env.CITY.idFromName(cityId);
+  const stub = c.env.CITY.get(doId);
+  const history = await stub.getCensusHistory();
+  return c.json(history);
+});
+
 // GET /v1/cities/:id/actions — Action history
 cities.get('/:id/actions', async (c) => {
   const cityId = c.req.param('id');

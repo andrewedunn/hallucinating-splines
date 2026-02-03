@@ -7,6 +7,7 @@ import { withSeed } from '../../src/seededRandom';
 import { autoBulldoze, autoPower, autoRoad } from './autoInfra';
 import type { AutoAction } from './autoInfra';
 import { analyzeMap } from './mapAnalysis';
+import type { BudgetOpts } from '../../src/types';
 
 interface CityState {
   seed: number;
@@ -284,10 +285,34 @@ export class CityDO extends DurableObject<Env> {
     await this.ctx.storage.deleteAll();
   }
 
+  async getCensusHistory(): Promise<any> {
+    const game = await this.ensureGame();
+    return game.getCensusHistory();
+  }
+
+  async setBudgetSettings(settings: {
+    taxRate?: number;
+    fire?: number;
+    police?: number;
+    road?: number;
+  }): Promise<any> {
+    const game = await this.ensureGame();
+    if (settings.taxRate !== undefined) {
+      game.setTaxRate(settings.taxRate);
+    }
+    const budgetOpts: BudgetOpts = {};
+    if (settings.fire !== undefined) budgetOpts.fire = settings.fire;
+    if (settings.police !== undefined) budgetOpts.police = settings.police;
+    if (settings.road !== undefined) budgetOpts.road = settings.road;
+    if (Object.keys(budgetOpts).length > 0) {
+      game.setBudget(budgetOpts);
+    }
+    await this.persist();
+    return this.getStatsInternal();
+  }
+
   private getStatsInternal(): any {
     if (!this.game) return null;
-    const stats = this.game.getStats();
-    const demand = this.game.getDemand();
-    return { ...stats, demand };
+    return this.game.getFullStats();
   }
 }

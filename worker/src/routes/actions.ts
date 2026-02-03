@@ -119,6 +119,67 @@ actions.post('/:id/actions', authMiddleware, async (c) => {
   return c.json(response);
 });
 
+// POST /v1/cities/:id/budget — Update budget settings
+actions.post('/:id/budget', authMiddleware, async (c) => {
+  const cityId = c.req.param('id');
+
+  if (!await verifyCityOwner(c, cityId)) {
+    return errorResponse(c, 403, 'forbidden', 'City not found or not owned by you');
+  }
+
+  const body = await c.req.json();
+  const { tax_rate, fire_percent, police_percent, road_percent } = body;
+
+  // Validate ranges
+  if (tax_rate !== undefined && (typeof tax_rate !== 'number' || tax_rate < 0 || tax_rate > 20)) {
+    return errorResponse(c, 400, 'bad_request', 'tax_rate must be 0-20');
+  }
+  if (fire_percent !== undefined && (typeof fire_percent !== 'number' || fire_percent < 0 || fire_percent > 100)) {
+    return errorResponse(c, 400, 'bad_request', 'fire_percent must be 0-100');
+  }
+  if (police_percent !== undefined && (typeof police_percent !== 'number' || police_percent < 0 || police_percent > 100)) {
+    return errorResponse(c, 400, 'bad_request', 'police_percent must be 0-100');
+  }
+  if (road_percent !== undefined && (typeof road_percent !== 'number' || road_percent < 0 || road_percent > 100)) {
+    return errorResponse(c, 400, 'bad_request', 'road_percent must be 0-100');
+  }
+
+  const doId = c.env.CITY.idFromName(cityId);
+  const stub = c.env.CITY.get(doId);
+  const stats = await stub.setBudgetSettings({
+    taxRate: tax_rate,
+    fire: fire_percent,
+    police: police_percent,
+    road: road_percent,
+  });
+
+  // Log action
+  c.executionCtx.waitUntil(
+    c.env.DB.prepare(
+      `INSERT INTO actions (city_id, game_year, action_type, params, result, cost)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(
+      cityId,
+      stats?.year || 0,
+      'set_budget',
+      JSON.stringify({ tax_rate, fire_percent, police_percent, road_percent }),
+      'success',
+      0
+    ).run()
+  );
+
+  // Sync stats
+  if (stats) {
+    c.executionCtx.waitUntil(syncStats(c.env.DB, cityId, stats));
+  }
+
+  return c.json({
+    success: true,
+    budget: stats?.budget,
+    funds: stats?.funds,
+  });
+});
+
 // POST /v1/cities/:id/advance — Advance time
 actions.post('/:id/advance', authMiddleware, async (c) => {
   const cityId = c.req.param('id');
