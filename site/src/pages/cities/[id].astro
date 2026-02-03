@@ -7,7 +7,7 @@ import ActionLog from '../../components/ActionLog.astro';
 import { apiFetch } from '../../lib/api';
 
 const { id } = Astro.params;
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://hallucinating-splines.andrew-987.workers.dev';
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 
 const [city, stats, mapData, actionsData] = await Promise.all([
   apiFetch<any>(`/v1/cities/${id}`),

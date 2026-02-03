@@ -13,7 +13,7 @@ interface Props {
   updated_at?: string;
 }
 const { id, name, mayor, mayor_id, population, game_year, score, status, updated_at } = Astro.props;
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://hallucinating-splines.andrew-987.workers.dev';
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 
 function relativeTime(dateStr?: string): string {
   if (!dateStr) return 'unknown';
