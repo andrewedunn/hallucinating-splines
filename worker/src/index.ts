@@ -2,6 +2,8 @@
 // ABOUTME: Stateless — delegates city operations to Durable Objects.
 
 import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { keys } from './routes/keys';
 
 type Bindings = {
   DB: D1Database;
@@ -10,7 +12,11 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
+app.use('*', cors());
+
 app.get('/health', (c) => c.json({ status: 'ok' }));
+
+app.route('/v1/keys', keys);
 
 // Stub: real implementation in a later task
 export class CityDO {
