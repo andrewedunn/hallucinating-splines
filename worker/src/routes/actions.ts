@@ -160,6 +160,15 @@ actions.post('/:id/advance', authMiddleware, async (c) => {
     ).bind(cityId, snapshot.game_year, r2Key, snapshot.population, snapshot.funds).run();
   })());
 
+  // End city on bankruptcy
+  if (result.city_ended) {
+    c.executionCtx.waitUntil(
+      c.env.DB.prepare(
+        "UPDATE cities SET status = 'ended', updated_at = datetime('now') WHERE id = ?"
+      ).bind(cityId).run()
+    );
+  }
+
   return c.json(result);
 });
 

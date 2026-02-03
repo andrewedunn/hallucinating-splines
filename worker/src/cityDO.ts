@@ -12,6 +12,7 @@ interface CityState {
   seed: number;
   cityId: string;
   saveData: any;
+  zeroFundsMonths: number;
 }
 
 type Env = {
@@ -24,6 +25,7 @@ export class CityDO extends DurableObject<Env> {
   private game: HeadlessGame | null = null;
   private cityId: string | null = null;
   private seed: number | null = null;
+  private zeroFundsMonths: number = 0;
 
   private async ensureGame(): Promise<HeadlessGame> {
     if (this.game) return this.game;
@@ -32,6 +34,7 @@ export class CityDO extends DurableObject<Env> {
     if (stored) {
       this.cityId = stored.cityId;
       this.seed = stored.seed;
+      this.zeroFundsMonths = stored.zeroFundsMonths || 0;
       this.game = HeadlessGame.fromSave(stored.saveData);
     }
 
@@ -48,6 +51,7 @@ export class CityDO extends DurableObject<Env> {
       seed: this.seed,
       cityId: this.cityId,
       saveData: this.game.save(),
+      zeroFundsMonths: this.zeroFundsMonths,
     };
     await this.ctx.storage.put('state', state);
   }
@@ -132,11 +136,24 @@ export class CityDO extends DurableObject<Env> {
   async advance(months: number): Promise<any> {
     const game = await this.ensureGame();
     const tickResult = game.tick(months);
+
+    // Track bankruptcy (funds are clamped to 0, never negative)
+    const stats = game.getStats();
+    if (stats.funds === 0) {
+      this.zeroFundsMonths += months;
+    } else {
+      this.zeroFundsMonths = 0;
+    }
+
+    const bankrupt = this.zeroFundsMonths >= 12;
+
     await this.persist();
     return {
       months_advanced: months,
       ...tickResult,
       demand: game.getDemand(),
+      city_ended: bankrupt,
+      ended_reason: bankrupt ? 'bankruptcy' : undefined,
     };
   }
 

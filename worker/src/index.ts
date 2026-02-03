@@ -30,4 +30,12 @@ app.all('*', (c) => errorResponse(c, 404, 'not_found', 'Endpoint not found'));
 
 export { CityDO } from './cityDO';
 
-export default app;
+export default {
+  fetch: app.fetch,
+  async scheduled(event: ScheduledEvent, env: { DB: D1Database }, ctx: ExecutionContext) {
+    await env.DB.prepare(
+      `UPDATE cities SET status = 'ended'
+       WHERE status = 'active' AND updated_at < datetime('now', '-14 days')`
+    ).run();
+  },
+};
