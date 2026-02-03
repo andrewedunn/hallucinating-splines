@@ -17,7 +17,8 @@ import type {
   BudgetOpts,
 } from './types';
 
-const TICKS_PER_MONTH = 4;
+// 1 month = 4 cityTime units. 1 cityTime = 16 phase ticks. So 1 month = 64 ticks.
+const TICKS_PER_MONTH = 64;
 
 const CITY_CLASS_NAMES: Record<string, string> = {
   VILLAGE: 'Village',
