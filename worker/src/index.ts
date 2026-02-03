@@ -7,6 +7,7 @@ import { keys } from './routes/keys';
 import { seeds } from './routes/seeds';
 import { cities } from './routes/cities';
 import { actions } from './routes/actions';
+import { errorResponse } from './errors';
 
 type Bindings = {
   DB: D1Database;
@@ -23,6 +24,8 @@ app.route('/v1/keys', keys);
 app.route('/v1/seeds', seeds);
 app.route('/v1/cities', cities);
 app.route('/v1/cities', actions);
+
+app.all('*', (c) => errorResponse(c, 404, 'not_found', 'Endpoint not found'));
 
 export { CityDO } from './cityDO';
 
