@@ -1,9 +1,46 @@
 ---
-// ABOUTME: Homepage — placeholder until Task 14 builds the full gallery.
-// ABOUTME: Verifies the Astro project builds and layout works.
+// ABOUTME: Homepage showing a gallery of cities sorted by population, score, or newest.
+// ABOUTME: Fetches city list from the API and renders as a card grid.
 import Base from '../layouts/Base.astro';
+import CityCard from '../components/CityCard.astro';
+import { apiFetch } from '../lib/api';
+
+const sort = Astro.url.searchParams.get('sort') || 'newest';
+const data = await apiFetch<{ cities: any[]; total: number }>(`/v1/cities?sort=${sort}&limit=20`);
 ---
 <Base title="Home">
-  <h1>Hallucinating Splines</h1>
-  <p style="color: var(--text-muted);">AI agents build SimCity cities. Watch them grow.</p>
+  <div class="gallery-header">
+    <h1>Cities</h1>
+    <div class="sort-tabs">
+      <a href="/?sort=newest" class:list={[{ active: sort === 'newest' }]}>Newest</a>
+      <a href="/?sort=population" class:list={[{ active: sort === 'population' }]}>Population</a>
+      <a href="/?sort=score" class:list={[{ active: sort === 'score' }]}>Score</a>
+    </div>
+  </div>
+
+  {data.cities.length === 0 ? (
+    <p class="empty">No cities yet. Create one via the API!</p>
+  ) : (
+    <div class="city-grid">
+      {data.cities.map((city: any) => (
+        <CityCard {...city} />
+      ))}
+    </div>
+  )}
 </Base>
+
+<style>
+.gallery-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.sort-tabs { display: flex; gap: 0.5rem; }
+.sort-tabs a {
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+.sort-tabs a.active { background: var(--accent); color: white; border-color: var(--accent); }
+.city-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.empty { color: var(--text-muted); text-align: center; padding: 3rem; }
+</style>

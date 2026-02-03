@@ -1,0 +1,58 @@
+---
+// ABOUTME: Card component displaying a city's name, mayor, population, and status.
+// ABOUTME: Links to the city detail page.
+interface Props {
+  id: string;
+  name: string;
+  mayor: string;
+  population: number;
+  game_year: number;
+  score: number;
+  status: string;
+}
+const { id, name, mayor, population, game_year, score, status } = Astro.props;
+---
+<a href={`/cities/${id}`} class="city-card">
+  <div class="card-header">
+    <span class="city-name">{name}</span>
+    <span class={`status ${status}`}>{status}</span>
+  </div>
+  <div class="card-mayor">{mayor}</div>
+  <div class="card-stats">
+    <div class="stat">
+      <span class="stat-value">{population.toLocaleString()}</span>
+      <span class="stat-label">pop</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{game_year}</span>
+      <span class="stat-label">year</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{score}</span>
+      <span class="stat-label">score</span>
+    </div>
+  </div>
+</a>
+
+<style>
+.city-card {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  color: var(--text);
+  transition: border-color 0.2s;
+}
+.city-card:hover { border-color: var(--accent); }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+.city-name { font-weight: 600; font-size: 1.1rem; }
+.status { font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 9999px; background: var(--border); }
+.status.active { background: #166534; color: #86efac; }
+.status.ended { background: #7f1d1d; color: #fca5a5; }
+.card-mayor { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.75rem; }
+.card-stats { display: flex; gap: 1.5rem; }
+.stat { display: flex; flex-direction: column; }
+.stat-value { font-weight: 600; font-size: 1rem; }
+.stat-label { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
+</style>
