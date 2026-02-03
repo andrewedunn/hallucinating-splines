@@ -1,0 +1,70 @@
+---
+// ABOUTME: Displays city statistics panel — population, funds, year, demand bars.
+// ABOUTME: Used on the city detail page.
+interface Props {
+  population: number;
+  funds: number;
+  year: number;
+  score: number;
+  demand: { residential: number; commercial: number; industrial: number };
+  classification: string;
+}
+const { population, funds, year, score, demand, classification } = Astro.props;
+
+function demandPct(val: number): number {
+  return Math.max(0, Math.min(100, (val / 2000) * 50 + 50));
+}
+---
+<div class="stats-panel">
+  <div class="stat-row">
+    <span class="label">Population</span>
+    <span class="value">{population.toLocaleString()}</span>
+  </div>
+  <div class="stat-row">
+    <span class="label">Funds</span>
+    <span class="value">${funds.toLocaleString()}</span>
+  </div>
+  <div class="stat-row">
+    <span class="label">Year</span>
+    <span class="value">{year}</span>
+  </div>
+  <div class="stat-row">
+    <span class="label">Score</span>
+    <span class="value">{score}</span>
+  </div>
+  <div class="stat-row">
+    <span class="label">Class</span>
+    <span class="value">{classification}</span>
+  </div>
+
+  <h3 class="demand-title">Demand</h3>
+  <div class="demand-bars">
+    <div class="demand-bar">
+      <span class="demand-label">R</span>
+      <div class="bar-track"><div class="bar-fill res" style={`width: ${demandPct(demand.residential)}%`}></div></div>
+    </div>
+    <div class="demand-bar">
+      <span class="demand-label">C</span>
+      <div class="bar-track"><div class="bar-fill com" style={`width: ${demandPct(demand.commercial)}%`}></div></div>
+    </div>
+    <div class="demand-bar">
+      <span class="demand-label">I</span>
+      <div class="bar-track"><div class="bar-fill ind" style={`width: ${demandPct(demand.industrial)}%`}></div></div>
+    </div>
+  </div>
+</div>
+
+<style>
+.stats-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; }
+.stat-row { display: flex; justify-content: space-between; padding: 0.3rem 0; }
+.label { color: var(--text-muted); }
+.value { font-weight: 600; }
+.demand-title { margin-top: 1rem; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-muted); text-transform: uppercase; }
+.demand-bar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem; }
+.demand-label { width: 1rem; font-weight: 600; font-size: 0.875rem; }
+.bar-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+.bar-fill.res { background: #22c55e; }
+.bar-fill.com { background: #3b82f6; }
+.bar-fill.ind { background: #eab308; }
+</style>

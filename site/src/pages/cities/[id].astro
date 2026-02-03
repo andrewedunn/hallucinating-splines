@@ -1,0 +1,93 @@
+---
+// ABOUTME: City detail page showing live map, stats panel, and history scrubber.
+// ABOUTME: Fetches city summary, live stats, and map data from the API.
+import Base from '../../layouts/Base.astro';
+import StatsPanel from '../../components/StatsPanel.astro';
+import { apiFetch } from '../../lib/api';
+
+export async function getStaticPaths() {
+  const data = await apiFetch<{ cities: any[] }>('/v1/cities?limit=50');
+  return data.cities.map(c => ({ params: { id: c.id } }));
+}
+
+const { id } = Astro.params;
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://hallucinating-splines.andrew-987.workers.dev';
+
+const [city, stats, mapData] = await Promise.all([
+  apiFetch<any>(`/v1/cities/${id}`),
+  apiFetch<any>(`/v1/cities/${id}/stats`),
+  apiFetch<any>(`/v1/cities/${id}/map`),
+]);
+---
+<Base title={city.name}>
+  <div class="city-header">
+    <div>
+      <h1>{city.name}</h1>
+      <p class="mayor">{city.mayor}</p>
+    </div>
+    <span class={`status ${city.status}`}>{city.status}</span>
+  </div>
+
+  <div class="city-layout">
+    <div class="map-column">
+      <div id="map-container" data-tiles={JSON.stringify(mapData.tiles)} data-width={mapData.width} data-height={mapData.height} data-city-id={id} data-api-base={API_BASE}>
+      </div>
+      <div id="scrubber-container"></div>
+    </div>
+    <div class="stats-column">
+      <StatsPanel
+        population={stats.population}
+        funds={stats.funds}
+        year={stats.year}
+        score={stats.score}
+        demand={stats.demand}
+        classification={stats.classification}
+      />
+    </div>
+  </div>
+</Base>
+
+<script>
+  import { createElement } from 'react';
+  import { createRoot } from 'react-dom/client';
+  import MapViewer from '../../components/MapViewer';
+  import HistoryScrubber from '../../components/HistoryScrubber';
+
+  const mapEl = document.getElementById('map-container')!;
+  const tiles = JSON.parse(mapEl.dataset.tiles!);
+  const width = parseInt(mapEl.dataset.width!);
+  const height = parseInt(mapEl.dataset.height!);
+  const cityId = mapEl.dataset.cityId!;
+  const apiBase = mapEl.dataset.apiBase!;
+
+  let currentTiles = tiles;
+
+  const mapRoot = createRoot(mapEl);
+  const scrubberRoot = createRoot(document.getElementById('scrubber-container')!);
+
+  function renderMap(t: number[]) {
+    mapRoot.render(createElement(MapViewer, { tiles: t, width, height }));
+  }
+
+  renderMap(currentTiles);
+
+  scrubberRoot.render(createElement(HistoryScrubber, {
+    cityId,
+    apiBase,
+    onSnapshotLoad: (snapshotTiles: number[]) => {
+      currentTiles = snapshotTiles;
+      renderMap(currentTiles);
+    },
+  }));
+</script>
+
+<style>
+.city-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem; }
+.mayor { color: var(--text-muted); }
+.status { font-size: 0.875rem; padding: 0.25rem 0.75rem; border-radius: 9999px; background: var(--border); }
+.status.active { background: #166534; color: #86efac; }
+.status.ended { background: #7f1d1d; color: #fca5a5; }
+.city-layout { display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; }
+.map-column { min-width: 0; }
+@media (max-width: 768px) { .city-layout { grid-template-columns: 1fr; } }
+</style>
