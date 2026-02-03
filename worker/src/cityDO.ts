@@ -108,6 +108,20 @@ export class CityDO extends DurableObject<Env> {
     return game.getDemand();
   }
 
+  async getSnapshotData(): Promise<any> {
+    const game = await this.ensureGame();
+    const stats = this.game!.getStats();
+    const mapData = this.game!.getMap();
+    return {
+      city_id: this.cityId,
+      game_year: stats.year,
+      population: stats.population,
+      funds: stats.funds,
+      score: stats.score,
+      tiles: mapData.tiles,
+    };
+  }
+
   async deleteCity(): Promise<void> {
     this.game = null;
     await this.ctx.storage.deleteAll();

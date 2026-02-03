@@ -115,6 +115,16 @@ actions.post('/:id/advance', authMiddleware, async (c) => {
     ).bind(result.year, result.population, result.funds, cityId).run()
   );
 
+  // Save snapshot to R2 and metadata to D1 (fire and forget)
+  c.executionCtx.waitUntil((async () => {
+    const snapshot = await stub.getSnapshotData();
+    const r2Key = `snapshots/${cityId}/${snapshot.game_year}.json`;
+    await c.env.SNAPSHOTS.put(r2Key, JSON.stringify(snapshot));
+    await c.env.DB.prepare(
+      `INSERT INTO snapshots (city_id, game_year, r2_key, population, funds) VALUES (?, ?, ?, ?, ?)`
+    ).bind(cityId, snapshot.game_year, r2Key, snapshot.population, snapshot.funds).run();
+  })());
+
   return c.json(result);
 });
 
