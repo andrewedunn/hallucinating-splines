@@ -1,0 +1,110 @@
+---
+// ABOUTME: Displays a table of recent city actions (tool placements, advances, budget changes).
+// ABOUTME: Server-rendered from action history API data.
+interface Action {
+  id: number;
+  game_year: number;
+  action_type: string;
+  params: Record<string, any>;
+  result: string;
+  cost: number;
+  created_at: string;
+}
+interface Props {
+  actions: Action[];
+  total: number;
+}
+const { actions, total } = Astro.props;
+
+const ACTION_LABELS: Record<string, string> = {
+  zone_residential: 'Zone Residential',
+  zone_commercial: 'Zone Commercial',
+  zone_industrial: 'Zone Industrial',
+  build_road: 'Build Road',
+  build_rail: 'Build Rail',
+  build_power_line: 'Build Power Line',
+  build_park: 'Build Park',
+  build_fire_station: 'Build Fire Station',
+  build_police_station: 'Build Police Station',
+  build_coal_power: 'Build Coal Power',
+  build_nuclear_power: 'Build Nuclear Power',
+  build_seaport: 'Build Seaport',
+  build_airport: 'Build Airport',
+  build_stadium: 'Build Stadium',
+  bulldoze: 'Bulldoze',
+  advance: 'Advance',
+  set_budget: 'Set Budget',
+};
+
+function formatAction(a: Action): { label: string; detail: string } {
+  const label = ACTION_LABELS[a.action_type] || a.action_type;
+  const p = a.params || {};
+
+  if (a.action_type === 'advance') {
+    return { label, detail: `${p.months || 1} month${(p.months || 1) > 1 ? 's' : ''}` };
+  }
+  if (a.action_type === 'set_budget') {
+    const parts: string[] = [];
+    if (p.tax_rate !== undefined) parts.push(`tax ${p.tax_rate}%`);
+    if (p.fire_percent !== undefined) parts.push(`fire ${p.fire_percent}%`);
+    if (p.police_percent !== undefined) parts.push(`police ${p.police_percent}%`);
+    if (p.road_percent !== undefined) parts.push(`road ${p.road_percent}%`);
+    return { label, detail: parts.join(', ') || '-' };
+  }
+  if (typeof p.x === 'number' && typeof p.y === 'number') {
+    return { label, detail: `(${p.x}, ${p.y})` };
+  }
+  return { label, detail: '-' };
+}
+---
+<div class="action-log">
+  <h3 class="log-title">Action Log <span class="log-count">({total})</span></h3>
+  {actions.length === 0 ? (
+    <p class="empty">No actions yet.</p>
+  ) : (
+    <div class="log-table-wrap">
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Action</th>
+            <th>Detail</th>
+            <th>Cost</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          {actions.map((a) => {
+            const { label, detail } = formatAction(a);
+            return (
+              <tr>
+                <td class="year">{a.game_year}</td>
+                <td>{label}</td>
+                <td class="detail">{detail}</td>
+                <td class="cost">{a.cost > 0 ? `$${a.cost.toLocaleString()}` : '-'}</td>
+                <td><span class={`badge ${a.result}`}>{a.result}</span></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  )}
+</div>
+
+<style>
+.action-log { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin-top: 1.5rem; }
+.log-title { font-size: 0.875rem; margin: 0 0 0.75rem; }
+.log-count { color: var(--text-muted); font-weight: 400; }
+.empty { color: var(--text-muted); font-size: 0.875rem; }
+.log-table-wrap { overflow-x: auto; }
+.log-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+.log-table th { text-align: left; color: var(--text-muted); font-weight: 500; padding: 0.375rem 0.5rem; border-bottom: 1px solid var(--border); }
+.log-table td { padding: 0.375rem 0.5rem; border-bottom: 1px solid var(--border); }
+.log-table .year { color: var(--text-muted); }
+.log-table .detail { color: var(--text-muted); font-family: monospace; font-size: 0.75rem; }
+.log-table .cost { text-align: right; }
+.badge { font-size: 0.6875rem; padding: 0.1rem 0.4rem; border-radius: 9999px; }
+.badge.success { background: #166534; color: #86efac; }
+.badge.failed { background: #7f1d1d; color: #fca5a5; }
+</style>

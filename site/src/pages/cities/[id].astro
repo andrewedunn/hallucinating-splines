@@ -1,17 +1,19 @@
 ---
-// ABOUTME: City detail page showing live map, stats panel, and history scrubber.
-// ABOUTME: Fetches city summary, live stats, and map data from the API.
+// ABOUTME: City detail page showing live map, stats panel, action log, and history charts.
+// ABOUTME: Fetches city summary, live stats, map data, and action history from the API.
 import Base from '../../layouts/Base.astro';
 import StatsPanel from '../../components/StatsPanel.astro';
+import ActionLog from '../../components/ActionLog.astro';
 import { apiFetch } from '../../lib/api';
 
 const { id } = Astro.params;
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://hallucinating-splines.andrew-987.workers.dev';
 
-const [city, stats, mapData] = await Promise.all([
+const [city, stats, mapData, actionsData] = await Promise.all([
   apiFetch<any>(`/v1/cities/${id}`),
   apiFetch<any>(`/v1/cities/${id}/stats`),
   apiFetch<any>(`/v1/cities/${id}/map`),
+  apiFetch<any>(`/v1/cities/${id}/actions?limit=50`),
 ]);
 ---
 <Base title={city.name}>
@@ -28,16 +30,11 @@ const [city, stats, mapData] = await Promise.all([
       <div id="map-container" data-tiles={JSON.stringify(mapData.tiles)} data-width={mapData.width} data-height={mapData.height} data-city-id={id} data-api-base={API_BASE}>
       </div>
       <div id="scrubber-container"></div>
+      <div id="history-charts-container"></div>
+      <ActionLog actions={actionsData.actions || []} total={actionsData.total || 0} />
     </div>
     <div class="stats-column">
-      <StatsPanel
-        population={stats.population}
-        funds={stats.funds}
-        year={stats.year}
-        score={stats.score}
-        demand={stats.demand}
-        classification={stats.classification}
-      />
+      <StatsPanel stats={stats} />
     </div>
   </div>
 </Base>
@@ -47,6 +44,7 @@ const [city, stats, mapData] = await Promise.all([
   import { createRoot } from 'react-dom/client';
   import MapViewer from '../../components/MapViewer';
   import HistoryScrubber from '../../components/HistoryScrubber';
+  import HistoryCharts from '../../components/HistoryCharts';
 
   const mapEl = document.getElementById('map-container')!;
   const tiles = JSON.parse(mapEl.dataset.tiles!);
@@ -59,6 +57,7 @@ const [city, stats, mapData] = await Promise.all([
 
   const mapRoot = createRoot(mapEl);
   const scrubberRoot = createRoot(document.getElementById('scrubber-container')!);
+  const chartsRoot = createRoot(document.getElementById('history-charts-container')!);
 
   function renderMap(t: number[]) {
     mapRoot.render(createElement(MapViewer, { tiles: t, width, height }));
@@ -74,6 +73,8 @@ const [city, stats, mapData] = await Promise.all([
       renderMap(currentTiles);
     },
   }));
+
+  chartsRoot.render(createElement(HistoryCharts, { cityId, apiBase }));
 </script>
 
 <style>

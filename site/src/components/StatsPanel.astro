@@ -1,43 +1,86 @@
 ---
-// ABOUTME: Displays city statistics panel — population, funds, year, demand bars.
-// ABOUTME: Used on the city detail page.
+// ABOUTME: Displays full city statistics — population, budget, census, evaluation, infrastructure.
+// ABOUTME: Accepts a FullCityStats object from the API.
 interface Props {
-  population: number;
-  funds: number;
-  year: number;
-  score: number;
-  demand: { residential: number; commercial: number; industrial: number };
-  classification: string;
+  stats: {
+    population: number;
+    funds: number;
+    year: number;
+    month: number;
+    score: number;
+    classification: string;
+    isPowered: boolean;
+    demand: { residential: number; commercial: number; industrial: number };
+    census: {
+      resPop: number; comPop: number; indPop: number;
+      roadTotal: number; railTotal: number;
+      poweredZoneCount: number; unpoweredZoneCount: number;
+      policeStationPop: number; fireStationPop: number;
+      coalPowerPop: number; nuclearPowerPop: number;
+      seaportPop: number; airportPop: number; stadiumPop: number;
+      crimeAverage: number; pollutionAverage: number; landValueAverage: number;
+    };
+    evaluation: {
+      approval: number;
+      populationDelta: number;
+      assessedValue: number;
+      scoreDelta: number;
+      problems: string[];
+    };
+    budget: {
+      taxRate: number; cashFlow: number;
+      roadPercent: number; firePercent: number; policePercent: number;
+      roadEffect: number; fireEffect: number; policeEffect: number;
+      roadMaintenanceBudget: number; fireMaintenanceBudget: number; policeMaintenanceBudget: number;
+    };
+  };
 }
-const { population, funds, year, score, demand, classification } = Astro.props;
+const { stats } = Astro.props;
+const { demand, census, evaluation, budget } = stats;
 
 function demandPct(val: number): number {
   return Math.max(0, Math.min(100, (val / 2000) * 50 + 50));
 }
+
+const totalZones = census.poweredZoneCount + census.unpoweredZoneCount;
+const powerPct = totalZones > 0 ? Math.round((census.poweredZoneCount / totalZones) * 100) : 0;
+
+const problemColors: Record<string, string> = {
+  crime: '#ef4444', pollution: '#a855f7', housing: '#f97316',
+  taxes: '#eab308', traffic: '#6b7280', unemployment: '#3b82f6', fire: '#dc2626',
+};
 ---
 <div class="stats-panel">
   <div class="stat-row">
     <span class="label">Population</span>
-    <span class="value">{population.toLocaleString()}</span>
+    <span class="value">{stats.population.toLocaleString()}</span>
   </div>
   <div class="stat-row">
     <span class="label">Funds</span>
-    <span class="value">${funds.toLocaleString()}</span>
+    <span class="value">${stats.funds.toLocaleString()}</span>
   </div>
   <div class="stat-row">
     <span class="label">Year</span>
-    <span class="value">{year}</span>
+    <span class="value">{stats.year}</span>
   </div>
   <div class="stat-row">
     <span class="label">Score</span>
-    <span class="value">{score}</span>
+    <span class="value">{stats.score}</span>
   </div>
   <div class="stat-row">
     <span class="label">Class</span>
-    <span class="value">{classification}</span>
+    <span class="value">{stats.classification}</span>
   </div>
 
-  <h3 class="demand-title">Demand</h3>
+  <h3 class="section-title">Approval</h3>
+  <div class="approval-bar">
+    <div class="bar-track">
+      <div class="bar-fill approval" style={`width: ${evaluation.approval}%`}></div>
+    </div>
+    <span class="approval-pct">{evaluation.approval}%</span>
+  </div>
+
+  <h3 class="section-title">Demand</h3>
   <div class="demand-bars">
     <div class="demand-bar">
       <span class="demand-label">R</span>
@@ -52,14 +95,130 @@ function demandPct(val: number): number {
       <div class="bar-track"><div class="bar-fill ind" style={`width: ${demandPct(demand.industrial)}%`}></div></div>
     </div>
   </div>
+
+  <h3 class="section-title">Population Breakdown</h3>
+  <div class="stat-row sub">
+    <span class="label">Residential</span>
+    <span class="value">{census.resPop.toLocaleString()}</span>
+  </div>
+  <div class="stat-row sub">
+    <span class="label">Commercial</span>
+    <span class="value">{census.comPop.toLocaleString()}</span>
+  </div>
+  <div class="stat-row sub">
+    <span class="label">Industrial</span>
+    <span class="value">{census.indPop.toLocaleString()}</span>
+  </div>
+
+  <h3 class="section-title">Assessed Value</h3>
+  <div class="stat-row sub">
+    <span class="label">Value</span>
+    <span class="value">${evaluation.assessedValue.toLocaleString()}</span>
+  </div>
+
+  {evaluation.problems.length > 0 && (
+    <h3 class="section-title">Top Problems</h3>
+    <div class="problem-tags">
+      {evaluation.problems.map((p) => (
+        <span class="problem-tag" style={`background: ${problemColors[p] || '#6b7280'}22; color: ${problemColors[p] || '#6b7280'}; border: 1px solid ${problemColors[p] || '#6b7280'}44`}>{p}</span>
+      ))}
+    </div>
+  )}
+
+  <h3 class="section-title">Infrastructure</h3>
+  <div class="infra-grid">
+    <div class="infra-item">
+      <span class="infra-count">{census.policeStationPop}</span>
+      <span class="infra-label">Police</span>
+    </div>
+    <div class="infra-item">
+      <span class="infra-count">{census.fireStationPop}</span>
+      <span class="infra-label">Fire</span>
+    </div>
+    <div class="infra-item">
+      <span class="infra-count">{census.coalPowerPop + census.nuclearPowerPop}</span>
+      <span class="infra-label">Power</span>
+    </div>
+    <div class="infra-item">
+      <span class="infra-count">{census.seaportPop}</span>
+      <span class="infra-label">Ports</span>
+    </div>
+    <div class="infra-item">
+      <span class="infra-count">{census.airportPop}</span>
+      <span class="infra-label">Airports</span>
+    </div>
+    <div class="infra-item">
+      <span class="infra-count">{census.stadiumPop}</span>
+      <span class="infra-label">Stadiums</span>
+    </div>
+    <div class="infra-item">
+      <span class="infra-count">{census.roadTotal}</span>
+      <span class="infra-label">Roads</span>
+    </div>
+    <div class="infra-item">
+      <span class="infra-count">{census.railTotal}</span>
+      <span class="infra-label">Rail</span>
+    </div>
+  </div>
+
+  <h3 class="section-title">Power</h3>
+  <div class="stat-row sub">
+    <span class="label">Powered / Total</span>
+    <span class="value">{census.poweredZoneCount} / {totalZones} ({powerPct}%)</span>
+  </div>
+
+  <h3 class="section-title">Budget</h3>
+  <div class="stat-row sub">
+    <span class="label">Tax Rate</span>
+    <span class="value">{budget.taxRate}%</span>
+  </div>
+  <div class="stat-row sub">
+    <span class="label">Cash Flow</span>
+    <span class={`value ${budget.cashFlow >= 0 ? 'positive' : 'negative'}`}>${budget.cashFlow.toLocaleString()}</span>
+  </div>
+  <div class="budget-services">
+    <div class="budget-service">
+      <span class="label">Fire</span>
+      <span class="value">{budget.firePercent}%</span>
+    </div>
+    <div class="budget-service">
+      <span class="label">Police</span>
+      <span class="value">{budget.policePercent}%</span>
+    </div>
+    <div class="budget-service">
+      <span class="label">Road</span>
+      <span class="value">{budget.roadPercent}%</span>
+    </div>
+  </div>
+
+  <h3 class="section-title">Environment</h3>
+  <div class="stat-row sub">
+    <span class="label">Crime</span>
+    <span class="value">{census.crimeAverage}</span>
+  </div>
+  <div class="stat-row sub">
+    <span class="label">Pollution</span>
+    <span class="value">{census.pollutionAverage}</span>
+  </div>
+  <div class="stat-row sub">
+    <span class="label">Land Value</span>
+    <span class="value">{census.landValueAverage}</span>
+  </div>
 </div>
 
 <style>
 .stats-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; }
 .stat-row { display: flex; justify-content: space-between; padding: 0.3rem 0; }
+.stat-row.sub { padding: 0.2rem 0; font-size: 0.875rem; }
 .label { color: var(--text-muted); }
 .value { font-weight: 600; }
-.demand-title { margin-top: 1rem; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-muted); text-transform: uppercase; }
+.value.positive { color: #22c55e; }
+.value.negative { color: #ef4444; }
+.section-title { margin-top: 1rem; margin-bottom: 0.5rem; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.approval-bar { display: flex; align-items: center; gap: 0.5rem; }
+.approval-bar .bar-track { flex: 1; }
+.approval-pct { font-weight: 600; font-size: 0.875rem; min-width: 3rem; text-align: right; }
+.bar-fill.approval { background: #22c55e; }
 .demand-bar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem; }
 .demand-label { width: 1rem; font-weight: 600; font-size: 0.875rem; }
 .bar-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
@@ -67,4 +226,13 @@ function demandPct(val: number): number {
 .bar-fill.res { background: #22c55e; }
 .bar-fill.com { background: #3b82f6; }
 .bar-fill.ind { background: #eab308; }
+.problem-tags { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+.problem-tag { font-size: 0.75rem; padding: 0.125rem 0.5rem; border-radius: 9999px; text-transform: capitalize; }
+.infra-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+.infra-item { text-align: center; }
+.infra-count { display: block; font-weight: 700; font-size: 1rem; }
+.infra-label { font-size: 0.7rem; color: var(--text-muted); }
+.budget-services { display: flex; gap: 1rem; margin-top: 0.25rem; }
+.budget-service { display: flex; flex-direction: column; align-items: center; flex: 1; font-size: 0.875rem; }
+.budget-service .label { font-size: 0.7rem; }
 </style>
