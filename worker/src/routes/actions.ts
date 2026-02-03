@@ -83,6 +83,10 @@ actions.post('/:id/actions', authMiddleware, async (c) => {
     ? await stub.placeToolWithAuto(toolName, x, y, { auto_bulldoze, auto_power, auto_road })
     : await stub.placeToolAction(toolName, x, y);
 
+  if (result.error === 'rate_limited') {
+    return errorResponse(c, 429, 'rate_limited', result.reason);
+  }
+
   // Sync stats to D1 (fire and forget)
   if (result.success && result.stats) {
     c.executionCtx.waitUntil(syncStats(c.env.DB, cityId, result.stats));
@@ -133,6 +137,10 @@ actions.post('/:id/advance', authMiddleware, async (c) => {
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
   const result = await stub.advance(months);
+
+  if (result.error === 'rate_limited') {
+    return errorResponse(c, 429, 'rate_limited', result.reason);
+  }
 
   // Sync year/population/funds to D1 (advance doesn't return score)
   c.executionCtx.waitUntil(

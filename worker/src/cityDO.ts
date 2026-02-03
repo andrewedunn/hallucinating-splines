@@ -26,6 +26,21 @@ export class CityDO extends DurableObject<Env> {
   private cityId: string | null = null;
   private seed: number | null = null;
   private zeroFundsMonths: number = 0;
+  private actionTimestamps: number[] = [];
+  private advanceTimestamps: number[] = [];
+
+  private checkRateLimit(timestamps: number[], maxPerMinute: number): boolean {
+    const now = Date.now();
+    const oneMinuteAgo = now - 60_000;
+    while (timestamps.length > 0 && timestamps[0] < oneMinuteAgo) {
+      timestamps.shift();
+    }
+    if (timestamps.length >= maxPerMinute) {
+      return false;
+    }
+    timestamps.push(now);
+    return true;
+  }
 
   private async ensureGame(): Promise<HeadlessGame> {
     if (this.game) return this.game;
@@ -67,6 +82,9 @@ export class CityDO extends DurableObject<Env> {
   }
 
   async placeToolAction(toolName: string, x: number, y: number): Promise<any> {
+    if (!this.checkRateLimit(this.actionTimestamps, 30)) {
+      return { success: false, error: 'rate_limited', reason: 'Max 30 actions per minute' };
+    }
     const game = await this.ensureGame();
     const result = game.placeTool(toolName, x, y);
     if (result.success) {
@@ -81,6 +99,9 @@ export class CityDO extends DurableObject<Env> {
     y: number,
     flags: { auto_bulldoze?: boolean; auto_power?: boolean; auto_road?: boolean },
   ): Promise<any> {
+    if (!this.checkRateLimit(this.actionTimestamps, 30)) {
+      return { success: false, error: 'rate_limited', reason: 'Max 30 actions per minute' };
+    }
     const game = await this.ensureGame();
     const autoActions: AutoAction[] = [];
 
@@ -134,6 +155,9 @@ export class CityDO extends DurableObject<Env> {
   }
 
   async advance(months: number): Promise<any> {
+    if (!this.checkRateLimit(this.advanceTimestamps, 10)) {
+      return { error: 'rate_limited', reason: 'Max 10 advances per minute' };
+    }
     const game = await this.ensureGame();
     const tickResult = game.tick(months);
 
