@@ -5,11 +5,6 @@ import Base from '../../layouts/Base.astro';
 import StatsPanel from '../../components/StatsPanel.astro';
 import { apiFetch } from '../../lib/api';
 
-export async function getStaticPaths() {
-  const data = await apiFetch<{ cities: any[] }>('/v1/cities?limit=50');
-  return data.cities.map(c => ({ params: { id: c.id } }));
-}
-
 const { id } = Astro.params;
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://hallucinating-splines.andrew-987.workers.dev';
 

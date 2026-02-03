@@ -5,21 +5,6 @@ import Base from '../../layouts/Base.astro';
 import CityCard from '../../components/CityCard.astro';
 import { apiFetch } from '../../lib/api';
 
-export async function getStaticPaths() {
-  // Fetch mayors from leaderboard to get all known mayor IDs
-  try {
-    const data = await apiFetch<any>('/v1/leaderboard');
-    const mayorIds = new Set<string>();
-    for (const m of [...(data.mayors?.by_best_population || []), ...(data.mayors?.by_total_cities || [])]) {
-      mayorIds.add(m.id);
-    }
-    return [...mayorIds].map(id => ({ params: { id } }));
-  } catch {
-    // Leaderboard not available yet — no mayor pages to pre-render
-    return [];
-  }
-}
-
 const { id } = Astro.params;
 const mayor = await apiFetch<any>(`/v1/mayors/${id}`);
 ---
