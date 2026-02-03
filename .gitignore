@@ -3,3 +3,7 @@ dist/
 *.tsbuildinfo
 _upstream_micropolisjs/
 .wrangler/
+.env
+.env.*
+.dev.vars
+.DS_Store
