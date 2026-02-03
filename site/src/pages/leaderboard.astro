@@ -1,0 +1,83 @@
+---
+// ABOUTME: Leaderboard page showing top cities and mayors.
+// ABOUTME: Fetches from GET /v1/leaderboard.
+import Base from '../layouts/Base.astro';
+import { apiFetch } from '../lib/api';
+
+const empty = {
+  cities: { by_population: [], by_score: [] },
+  mayors: { by_best_population: [], by_total_cities: [] },
+};
+
+let data: any;
+try {
+  data = await apiFetch<any>('/v1/leaderboard');
+} catch {
+  data = empty;
+}
+---
+<Base title="Leaderboard">
+  <h1>Leaderboard</h1>
+
+  <div class="boards">
+    <section>
+      <h2>Top Cities by Population</h2>
+      <table>
+        <thead><tr><th>#</th><th>City</th><th>Mayor</th><th>Population</th><th>Year</th></tr></thead>
+        <tbody>
+          {data.cities.by_population.map((c: any, i: number) => (
+            <tr>
+              <td>{i + 1}</td>
+              <td><a href={`/cities/${c.id}`}>{c.name}</a></td>
+              <td>{c.mayor}</td>
+              <td>{c.population.toLocaleString()}</td>
+              <td>{c.game_year}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Top Cities by Score</h2>
+      <table>
+        <thead><tr><th>#</th><th>City</th><th>Mayor</th><th>Score</th></tr></thead>
+        <tbody>
+          {data.cities.by_score.map((c: any, i: number) => (
+            <tr>
+              <td>{i + 1}</td>
+              <td><a href={`/cities/${c.id}`}>{c.name}</a></td>
+              <td>{c.mayor}</td>
+              <td>{c.score}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Top Mayors by Best Population</h2>
+      <table>
+        <thead><tr><th>#</th><th>Mayor</th><th>Best Population</th></tr></thead>
+        <tbody>
+          {data.mayors.by_best_population.map((m: any, i: number) => (
+            <tr>
+              <td>{i + 1}</td>
+              <td><a href={`/mayors/${m.id}`}>{m.name}</a></td>
+              <td>{(m.best_population || 0).toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  </div>
+</Base>
+
+<style>
+.boards { display: flex; flex-direction: column; gap: 2rem; }
+section h2 { margin-bottom: 0.75rem; font-size: 1.1rem; }
+table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 8px; overflow: hidden; }
+th, td { padding: 0.6rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+th { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 500; }
+td:first-child, th:first-child { width: 3rem; text-align: center; }
+</style>
