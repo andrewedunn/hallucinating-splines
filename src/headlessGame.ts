@@ -1,6 +1,7 @@
 // ABOUTME: Main public API for the headless micropolisJS engine.
 // ABOUTME: Wraps Simulation, GameTools, and TickRunner into a clean interface for programmatic control.
 
+import { GameMap } from './engine/gameMap.js';
 import { MapGenerator } from './engine/mapGenerator.js';
 import { Simulation } from './engine/simulation.js';
 import { GameTools } from './engine/gameTools.js';
@@ -52,12 +53,8 @@ export class HeadlessGame {
   }
 
   static fromSave(data: any): HeadlessGame {
-    const map = new (MapGenerator as any).__map_constructor
-      ? MapGenerator(120, 100)
-      : withSeed(0, () => MapGenerator(120, 100));
-
-    const game = new HeadlessGame(map, data);
-    return game;
+    const map = new (GameMap as any)(120, 100);
+    return new HeadlessGame(map, data);
   }
 
   /**
