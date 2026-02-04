@@ -2,7 +2,7 @@
 // ABOUTME: Creates Durable Objects for new cities, queries D1 for listings.
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { authMiddleware } from '../auth';
+import { authMiddleware, hashKey } from '../auth';
 import { generateCityName } from '../names';
 import { errorResponse } from '../errors';
 import {
@@ -120,6 +120,24 @@ cities.openapi(listCitiesRoute, async (c) => {
   const sort = c.req.query('sort') || 'newest';
   const limit = Math.min(parseInt(c.req.query('limit') || '20'), 50);
   const offset = parseInt(c.req.query('offset') || '0');
+  const mine = c.req.query('mine') === 'true';
+
+  // If ?mine=true, try to resolve the API key to filter by owner
+  let keyId: string | null = null;
+  if (mine) {
+    const authHeader = c.req.header('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      const key = authHeader.slice(7);
+      const hash = await hashKey(key);
+      const result = await c.env.DB.prepare(
+        'SELECT id FROM api_keys WHERE key_hash = ? AND active = 1'
+      ).bind(hash).first<{ id: string }>();
+      if (result) keyId = result.id;
+    }
+    if (!keyId) {
+      return c.json({ cities: [], total: 0 }, 200);
+    }
+  }
 
   let orderBy: string;
   switch (sort) {
@@ -128,13 +146,20 @@ cities.openapi(listCitiesRoute, async (c) => {
     default: orderBy = 'c.created_at DESC'; break;
   }
 
+  const whereClause = keyId ? 'WHERE c.api_key_id = ?' : '';
+  const bindings: (string | number)[] = keyId ? [keyId, limit, offset] : [limit, offset];
+
   const rows = await c.env.DB.prepare(
     `SELECT c.id, c.name, k.mayor_name as mayor, k.id as mayor_id, c.population, c.game_year, c.score, c.status, c.seed, c.updated_at
      FROM cities c JOIN api_keys k ON c.api_key_id = k.id
+     ${whereClause}
      ORDER BY ${orderBy} LIMIT ? OFFSET ?`
-  ).bind(limit, offset).all();
+  ).bind(...bindings).all();
 
-  const total = await c.env.DB.prepare('SELECT COUNT(*) as count FROM cities').first<{ count: number }>();
+  const totalQuery = keyId
+    ? c.env.DB.prepare('SELECT COUNT(*) as count FROM cities WHERE api_key_id = ?').bind(keyId)
+    : c.env.DB.prepare('SELECT COUNT(*) as count FROM cities');
+  const total = await totalQuery.first<{ count: number }>();
 
   return c.json({
     cities: rows.results,
