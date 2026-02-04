@@ -705,11 +705,11 @@ const resolveCityRoute = createRoute({
   path: '/resolve/{code}',
   tags: ['Cities'],
   summary: 'Resolve city by short code',
-  description: 'Looks up a city by the 4-character short code from its slug URL.',
+  description: 'Looks up a city by the short code from its slug URL.',
   request: {
-    params: z.object({ code: z.string().regex(/^[0-9a-f]{4}$/).openapi({
+    params: z.object({ code: z.string().regex(/^[0-9a-f]{4,6}$/).openapi({
       param: { name: 'code', in: 'path' },
-      example: 'a1b2',
+      example: 'a1b2c3',
     }) }),
   },
   responses: {

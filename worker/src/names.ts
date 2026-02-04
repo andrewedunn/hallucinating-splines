@@ -60,9 +60,9 @@ function slugify(name: string): string {
 }
 
 function shortCode(id: string): string {
-  // Extract first 4 hex chars after the prefix (city_ or key_)
+  // Extract first 6 hex chars after the prefix (city_ or key_)
   const hex = id.replace(/^(city_|key_)/, '');
-  return hex.slice(0, 4);
+  return hex.slice(0, 6);
 }
 
 export function generateCitySlug(cityId: string, cityName?: string): string {

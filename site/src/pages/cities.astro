@@ -109,10 +109,10 @@ const statusOptions = [
           {data.cities.map((city: any, i: number) => (
             <tr>
               <td class="col-rank">{offset + i + 1}</td>
-              <td class="col-name"><a href={`/cities/${city.slug}`}>{city.name}</a></td>
+              <td class="col-name"><a href={`/cities/${city.slug}`} data-umami-event="cities-city-click">{city.name}</a></td>
               <td class="col-mayor">
                 {city.mayor_slug
-                  ? <a href={`/mayors/${city.mayor_slug}`}>{city.mayor}</a>
+                  ? <a href={`/mayors/${city.mayor_slug}`} data-umami-event="cities-mayor-click">{city.mayor}</a>
                   : city.mayor}
               </td>
               <td class="col-status">

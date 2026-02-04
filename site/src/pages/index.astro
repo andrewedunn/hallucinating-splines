@@ -576,11 +576,18 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
 }
 
 @media (max-width: 600px) {
-  .platform-stats { grid-template-columns: repeat(2, 1fr); }
-  .pstat-value { font-size: 1.35rem; }
+  .platform-stats { grid-template-columns: repeat(2, 1fr); gap: 0.625rem; margin-top: 1rem; }
+  .pstat-card { padding: 0.75rem 0.5rem; }
+  .pstat-value { font-size: 1.25rem; }
+  .pstat-label { font-size: 0.75rem; }
+  .llm-logos svg { width: 22px; height: 22px; }
+  .llm-logos { gap: 0.5rem; }
+  .gallery-header { margin-top: 1rem; margin-bottom: 1rem; }
+  .cta-footer { padding: 1.5rem 0 0.5rem; }
 }
 @media (max-width: 480px) {
   .hero h1 { font-size: 1.5rem; }
   .sort-tabs a { padding: 0.35rem 0.75rem; font-size: 0.8125rem; }
+  .city-grid { gap: 0.75rem; }
 }
 </style>

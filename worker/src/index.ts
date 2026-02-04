@@ -153,11 +153,11 @@ const mayorResolveRoute = createRoute({
   path: '/v1/mayors/resolve/{code}',
   tags: ['Mayors'],
   summary: 'Resolve mayor by short code',
-  description: 'Looks up a mayor by the 4-character short code from their slug URL.',
+  description: 'Looks up a mayor by the short code from their slug URL.',
   request: {
-    params: z.object({ code: z.string().regex(/^[0-9a-f]{4}$/).openapi({
+    params: z.object({ code: z.string().regex(/^[0-9a-f]{4,6}$/).openapi({
       param: { name: 'code', in: 'path' },
-      example: '1a2b',
+      example: '1a2b3c',
     }) }),
   },
   responses: {
