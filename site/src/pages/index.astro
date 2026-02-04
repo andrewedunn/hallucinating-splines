@@ -277,10 +277,10 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
   }
 
   function drawYearOverlay(ctx: CanvasRenderingContext2D, w: number, h: number, year: string) {
-    ctx.font = 'bold 20px monospace';
-    const pad = 6;
+    ctx.font = 'bold 40px monospace';
+    const pad = 10;
     const tw = ctx.measureText(year).width;
-    const lh = 22;
+    const lh = 44;
     ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
     ctx.fillRect(w - tw - pad * 2, h - lh - pad, tw + pad * 2, lh + pad);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
