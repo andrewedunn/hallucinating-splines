@@ -118,15 +118,21 @@ export default function MapViewer({ tiles, width, height }: Props) {
         e.preventDefault();
         const newDist = getTouchDistance(e.touches);
         const newCenter = getTouchCenter(e.touches);
-        const scaleFactor = newDist / ts.lastDist;
-        const newZoom = Math.max(0.5, Math.min(4, zoomRef.current * scaleFactor));
+        const newZoom = Math.max(0.5, Math.min(4, zoomRef.current * (newDist / ts.lastDist)));
 
-        // Pan with pinch center
+        // Pan with pinch center movement
         const dx = newCenter.x - ts.lastCenter.x;
         const dy = newCenter.y - ts.lastCenter.y;
 
+        // Adjust offset to keep pinch center stationary during scale change
+        const ratio = newZoom / zoomRef.current;
+        const cx = ts.lastCenter.x;
+        const cy = ts.lastCenter.y;
+        const newOffX = cx - (cx - offsetRef.current.x) * ratio + dx;
+        const newOffY = cy - (cy - offsetRef.current.y) * ratio + dy;
+
         setZoom(newZoom);
-        setOffset(o => ({ x: o.x + dx, y: o.y + dy }));
+        setOffset({ x: newOffX, y: newOffY });
 
         ts.lastDist = newDist;
         ts.lastCenter = newCenter;
@@ -185,7 +191,19 @@ export default function MapViewer({ tiles, width, height }: Props) {
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    setZoom(z => Math.max(0.5, Math.min(4, z * delta)));
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+
+    setZoom(prevZoom => {
+      const newZoom = Math.max(0.5, Math.min(4, prevZoom * delta));
+      const ratio = newZoom / prevZoom;
+      setOffset(o => ({
+        x: cx - (cx - o.x) * ratio,
+        y: cy - (cy - o.y) * ratio,
+      }));
+      return newZoom;
+    });
   }, []);
 
   const zoomIn = useCallback(() => {

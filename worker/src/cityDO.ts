@@ -52,6 +52,7 @@ export class CityDO extends DurableObject<Env> {
       this.seed = stored.seed;
       this.zeroFundsMonths = stored.zeroFundsMonths || 0;
       this.game = HeadlessGame.fromSave(stored.saveData);
+      this.game.normalizeCensus();
     }
 
     if (!this.game) {

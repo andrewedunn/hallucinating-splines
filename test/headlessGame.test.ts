@@ -213,6 +213,66 @@ describe('HeadlessGame', () => {
     });
   });
 
+  describe('normalizeCensus', () => {
+    test('census matches after save/load with normalization', () => {
+      const game = HeadlessGame.fromSeed(42);
+
+      // Build a small city: coal + residential + road + wire
+      const spot = findClearSpot(game, 4);
+      game.placeTool('coal', spot.x, spot.y);
+      const rx = spot.x + 9;
+      game.placeTool('residential', rx, spot.y);
+      for (let x = spot.x + 3; x <= rx - 2; x++) game.placeTool('wire', x, spot.y);
+      game.placeTool('road', rx, spot.y + 3);
+
+      // Advance to populate census
+      game.tick(24);
+
+      const statsBefore = game.getFullStats();
+      expect(statsBefore.census.poweredZoneCount).toBeGreaterThan(0);
+
+      // Save, reload, normalize
+      const saveData = game.save();
+      const restored = HeadlessGame.fromSave(saveData);
+      restored.normalizeCensus();
+      const statsAfter = restored.getFullStats();
+
+      // Zone counts should match exactly
+      expect(statsAfter.census.poweredZoneCount).toBe(statsBefore.census.poweredZoneCount);
+      expect(statsAfter.census.unpoweredZoneCount).toBe(statsBefore.census.unpoweredZoneCount);
+      expect(statsAfter.census.coalPowerPop).toBe(statsBefore.census.coalPowerPop);
+      expect(statsAfter.census.roadTotal).toBe(statsBefore.census.roadTotal);
+    });
+
+    test('resPop is not doubled after save/load with normalization', () => {
+      const game = HeadlessGame.fromSeed(42);
+
+      // Build a small city
+      const spot = findClearSpot(game, 4);
+      game.placeTool('coal', spot.x, spot.y);
+      const rx = spot.x + 9;
+      game.placeTool('residential', rx, spot.y);
+      for (let x = spot.x + 3; x <= rx - 2; x++) game.placeTool('wire', x, spot.y);
+      game.placeTool('road', rx, spot.y + 3);
+
+      game.tick(24);
+
+      const statsBefore = game.getFullStats();
+      const saveData = game.save();
+
+      // Without normalization, resPop is doubled (saved + re-counted by mapScan)
+      const raw = HeadlessGame.fromSave(saveData);
+      const rawStats = raw.getFullStats();
+      expect(rawStats.census.resPop).toBe(statsBefore.census.resPop * 2);
+
+      // With normalization, resPop matches original
+      const restored = HeadlessGame.fromSave(saveData);
+      restored.normalizeCensus();
+      const statsAfter = restored.getFullStats();
+      expect(statsAfter.census.resPop).toBe(statsBefore.census.resPop);
+    });
+  });
+
   describe('getCensusHistory', () => {
     test('returns six 120-entry arrays', () => {
       const game = HeadlessGame.fromSeed(42);

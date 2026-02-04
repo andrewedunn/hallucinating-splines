@@ -1,29 +1,52 @@
-// ABOUTME: Pulsing green "LIVE" indicator with "Updated Xs ago" text.
-// ABOUTME: Rendered into #live-indicator on active city pages by the polling orchestrator.
+// ABOUTME: Shows elapsed time since last city update, with auto-refresh toggle.
+// ABOUTME: Green pulsing dot when recent (<5min), grey static dot when stale.
 
 import { useState, useEffect } from 'react';
 
 interface Props {
-  lastUpdated: number; // timestamp ms
+  lastUpdated: number; // timestamp ms — city's actual updated_at or time of detected change
+  polling: boolean;
+  onTogglePolling: () => void;
 }
 
-export default function LiveIndicator({ lastUpdated }: Props) {
-  const [ago, setAgo] = useState(0);
+function formatElapsed(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+const RECENT_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+
+export default function LiveIndicator({ lastUpdated, polling, onTogglePolling }: Props) {
+  const [elapsed, setElapsed] = useState(Date.now() - lastUpdated);
 
   useEffect(() => {
-    const tick = () => setAgo(Math.floor((Date.now() - lastUpdated) / 1000));
+    const tick = () => setElapsed(Date.now() - lastUpdated);
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [lastUpdated]);
 
-  const label = ago < 2 ? 'just now' : `${ago}s ago`;
+  const isRecent = elapsed < RECENT_THRESHOLD;
 
   return (
     <span style={containerStyle}>
-      <span style={dotStyle} />
-      <span style={liveStyle}>LIVE</span>
-      <span style={agoStyle}>{label}</span>
+      <span style={isRecent ? dotActiveStyle : dotStaleStyle} />
+      <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
+        Updated {formatElapsed(elapsed)}
+      </span>
+      <button
+        onClick={onTogglePolling}
+        style={toggleStyle}
+        title={polling ? 'Pause auto-refresh' : 'Resume auto-refresh'}
+      >
+        {polling ? '⏸' : '▶'}
+      </button>
     </span>
   );
 }
@@ -36,21 +59,31 @@ const containerStyle: React.CSSProperties = {
   fontWeight: 600,
 };
 
-const dotStyle: React.CSSProperties = {
+const dotBase: React.CSSProperties = {
   width: '8px',
   height: '8px',
   borderRadius: '50%',
+};
+
+const dotActiveStyle: React.CSSProperties = {
+  ...dotBase,
   background: '#22c55e',
   boxShadow: '0 0 6px #22c55e',
   animation: 'live-pulse 2s ease-in-out infinite',
 };
 
-const liveStyle: React.CSSProperties = {
-  color: '#22c55e',
-  letterSpacing: '0.05em',
+const dotStaleStyle: React.CSSProperties = {
+  ...dotBase,
+  background: '#6b7280',
 };
 
-const agoStyle: React.CSSProperties = {
-  color: 'var(--text-muted)',
-  fontWeight: 400,
+const toggleStyle: React.CSSProperties = {
+  background: 'none',
+  border: '1px solid var(--border, #333)',
+  borderRadius: 4,
+  color: 'var(--text-muted, #888)',
+  cursor: 'pointer',
+  fontSize: '0.625rem',
+  padding: '1px 4px',
+  lineHeight: 1,
 };

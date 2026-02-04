@@ -20,7 +20,7 @@ const [stats, mapData, actionsData] = await Promise.all([
 ]);
 ---
 <Base title={city.name}>
-  <div class="city-header" data-game-year={stats.year} data-status={city.status}>
+  <div class="city-header" data-game-year={stats.year} data-status={city.status} data-updated-at={city.updated_at}>
     <div>
       <h1>{city.name}</h1>
       <a href={`/mayors/${city.mayor_slug}`} class="mayor">{city.mayor}</a>
@@ -110,8 +110,10 @@ const [stats, mapData, actionsData] = await Promise.all([
     bulldoze: 'Bulldoze', advance: 'Advance', set_budget: 'Set Budget',
   };
 
-  let lastUpdated = Date.now();
+  const updatedAtStr = headerEl.getAttribute('data-updated-at');
+  let lastUpdated = updatedAtStr ? new Date(updatedAtStr + 'Z').getTime() : Date.now();
   let pollTimer: ReturnType<typeof setInterval> | null = null;
+  let pollingEnabled = true;
 
   function demandPct(val: number): number {
     return Math.max(0, Math.min(100, (val / 2000) * 50 + 50));
@@ -262,9 +264,19 @@ const [stats, mapData, actionsData] = await Promise.all([
     }
   }
 
+  function togglePolling() {
+    pollingEnabled = !pollingEnabled;
+    if (pollingEnabled) {
+      startPolling();
+    } else {
+      stopPolling();
+    }
+    renderLiveIndicator();
+  }
+
   function renderLiveIndicator() {
     if (liveRoot) {
-      liveRoot.render(createElement(LiveIndicator, { lastUpdated }));
+      liveRoot.render(createElement(LiveIndicator, { lastUpdated, polling: pollingEnabled, onTogglePolling: togglePolling }));
     }
   }
 
@@ -286,12 +298,14 @@ const [stats, mapData, actionsData] = await Promise.all([
       if (!res.ok) return;
       const stats = await res.json();
 
-      lastUpdated = Date.now();
       updateStatsDOM(stats);
       renderLiveIndicator();
 
       const newYear = stats.year;
       if (newYear !== gameYear) {
+        // City actually advanced — update the timestamp
+        lastUpdated = Date.now();
+        renderLiveIndicator();
         gameYear = newYear;
         // Year changed — fetch heavy data in parallel
         const [mapRes, historyRes, snapshotsRes, actionsRes] = await Promise.all([

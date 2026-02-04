@@ -247,6 +247,23 @@ export class HeadlessGame {
     };
   }
 
+  normalizeCensus(): void {
+    // After fromSave(), init() runs mapScan + doPowerScan. But mapScan counts
+    // powered zones using stale POWERBIT flags, and census populations are
+    // double-counted (saved values + mapScan re-adds). Fix by:
+    // 1. Clear census, run mapScan to discover power plants and populate powerStack
+    // 2. Run doPowerScan to fill powerGridMap from powerStack
+    // 3. Clear census again, run mapScan with correct powerGridMap so setTilePower
+    //    correctly sets POWERBIT flags before zone counting
+    this.sim._clearCensus();
+    const simData = this.sim._constructSimData();
+    this.sim._mapScanner.mapScan(0, this.map.width, simData);
+    this.sim._powerManager.doPowerScan(this.sim._census);
+    this.sim._clearCensus();
+    this.sim._mapScanner.mapScan(0, this.map.width, this.sim._constructSimData());
+    this.sim._powerManager.doPowerScan(this.sim._census);
+  }
+
   save(): any {
     const saveData: any = {};
     this.sim.save(saveData);
