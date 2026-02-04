@@ -4,15 +4,17 @@
 interface Props {
   id: string;
   name: string;
+  slug?: string;
   mayor: string;
   mayor_id?: string;
+  mayor_slug?: string;
   population: number;
   game_year: number;
   score: number;
   status: string;
   updated_at?: string;
 }
-const { id, name, mayor, mayor_id, population, game_year, score, status, updated_at } = Astro.props;
+const { id, name, slug, mayor, mayor_id, mayor_slug, population, game_year, score, status, updated_at } = Astro.props;
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 
 function relativeTime(dateStr?: string): string {
@@ -43,17 +45,19 @@ function activityColor(dateStr?: string): string {
 
 const timeAgo = relativeTime(updated_at);
 const freshness = activityColor(updated_at);
+const cityHref = slug ? `/cities/${slug}` : `/cities/${id}`;
+const mayorHref = mayor_slug ? `/mayors/${mayor_slug}` : mayor_id ? `/mayors/${mayor_id}` : null;
 ---
 <div class="city-card" data-city-id={id}>
-  <a href={`/cities/${id}`} class="card-thumb" data-city-id={id} data-api-base={API_BASE} data-umami-event="city-card-click">
+  <a href={cityHref} class="card-thumb" data-city-id={id} data-api-base={API_BASE} data-umami-event="city-card-click">
   </a>
   <div class="card-body">
     <div class="card-header">
-      <a href={`/cities/${id}`} class="city-name">{name}</a>
+      <a href={cityHref} class="city-name">{name}</a>
       <span class={`activity ${freshness}`}>{timeAgo}</span>
     </div>
-    {mayor_id ? (
-      <a href={`/mayors/${mayor_id}`} class="card-mayor">{mayor}</a>
+    {mayorHref ? (
+      <a href={mayorHref} class="card-mayor">{mayor}</a>
     ) : (
       <span class="card-mayor">{mayor}</span>
     )}

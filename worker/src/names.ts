@@ -54,3 +54,29 @@ export function generateMayorName(seed: string): string {
 export function generateCityName(seed: string): string {
   return generateName(seed);
 }
+
+function slugify(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+function shortCode(id: string): string {
+  // Extract first 4 hex chars after the prefix (city_ or key_)
+  const hex = id.replace(/^(city_|key_)/, '');
+  return hex.slice(0, 4);
+}
+
+export function generateCitySlug(cityId: string, cityName?: string): string {
+  const name = cityName || generateCityName(cityId);
+  return `${slugify(name)}-${shortCode(cityId)}`;
+}
+
+export function generateMayorSlug(keyId: string, mayorName?: string): string {
+  const raw = mayorName || generateMayorName(keyId);
+  const name = raw.replace(/^Mayor\s+/i, '');
+  return `${slugify(name)}-${shortCode(keyId)}`;
+}
+
+export function extractShortCode(slug: string): string {
+  const parts = slug.split('-');
+  return parts[parts.length - 1];
+}

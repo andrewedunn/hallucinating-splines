@@ -3,7 +3,7 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware, hashKey } from '../auth';
-import { generateCityName } from '../names';
+import { generateCityName, generateCitySlug, generateMayorSlug } from '../names';
 import { errorResponse } from '../errors';
 import {
   CityIdParam, ErrorSchema, CityListSchema, CreateCityBodySchema,
@@ -161,8 +161,14 @@ cities.openapi(listCitiesRoute, async (c) => {
     : c.env.DB.prepare('SELECT COUNT(*) as count FROM cities');
   const total = await totalQuery.first<{ count: number }>();
 
+  const citiesWithSlugs = rows.results.map((row: any) => ({
+    ...row,
+    slug: generateCitySlug(row.id, row.name),
+    mayor_slug: row.mayor_id ? generateMayorSlug(row.mayor_id, row.mayor) : undefined,
+  }));
+
   return c.json({
-    cities: rows.results,
+    cities: citiesWithSlugs,
     total: total?.count || 0,
   }, 200);
 });
@@ -585,6 +591,53 @@ cities.openapi(listActionsRoute, async (c) => {
   }, 200);
 });
 
+// --- GET /v1/cities/resolve/:code ---
+
+const resolveCityRoute = createRoute({
+  method: 'get',
+  path: '/resolve/{code}',
+  tags: ['Cities'],
+  summary: 'Resolve city by short code',
+  description: 'Looks up a city by the 4-character short code from its slug URL.',
+  request: {
+    params: z.object({ code: z.string().regex(/^[0-9a-f]{4}$/).openapi({
+      param: { name: 'code', in: 'path' },
+      example: 'a1b2',
+    }) }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.any() } },
+      description: 'City summary',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'City not found',
+    },
+  },
+});
+
+cities.openapi(resolveCityRoute, async (c) => {
+  const code = c.req.param('code');
+
+  const row = await c.env.DB.prepare(
+    `SELECT c.*, k.mayor_name as mayor, k.id as mayor_id
+     FROM cities c JOIN api_keys k ON c.api_key_id = k.id
+     WHERE c.id LIKE ?
+     ORDER BY c.created_at DESC LIMIT 1`
+  ).bind(`city_${code}%`).first<any>();
+
+  if (!row) {
+    return errorResponse(c, 404, 'not_found', 'City not found');
+  }
+
+  return c.json({
+    ...row,
+    slug: generateCitySlug(row.id, row.name),
+    mayor_slug: generateMayorSlug(row.mayor_id, row.mayor),
+  }, 200);
+});
+
 // --- GET /v1/cities/:id ---
 
 const getCityRoute = createRoute({
@@ -612,16 +665,20 @@ cities.openapi(getCityRoute, async (c) => {
   const cityId = c.req.param('id');
 
   const row = await c.env.DB.prepare(
-    `SELECT c.*, k.mayor_name as mayor
+    `SELECT c.*, k.mayor_name as mayor, k.id as mayor_id
      FROM cities c JOIN api_keys k ON c.api_key_id = k.id
      WHERE c.id = ?`
-  ).bind(cityId).first();
+  ).bind(cityId).first<any>();
 
   if (!row) {
     return errorResponse(c, 404, 'not_found', 'City not found');
   }
 
-  return c.json(row, 200);
+  return c.json({
+    ...row,
+    slug: generateCitySlug(row.id, row.name),
+    mayor_slug: generateMayorSlug(row.mayor_id, row.mayor),
+  }, 200);
 });
 
 // --- DELETE /v1/cities/:id ---
