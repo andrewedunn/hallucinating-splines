@@ -231,6 +231,88 @@ export class CityDO extends DurableObject<Env> {
     };
   }
 
+  async placeLineTool(toolName: string, x1: number, y1: number, x2: number, y2: number): Promise<any> {
+    if (!this.checkRateLimit(this.actionTimestamps, 30)) {
+      return { success: false, error: 'rate_limited', reason: 'Max 30 actions per minute' };
+    }
+    const game = await this.ensureGame();
+
+    // Bresenham line algorithm
+    const tiles: [number, number][] = [];
+    let dx = Math.abs(x2 - x1);
+    let dy = Math.abs(y2 - y1);
+    const sx = x1 < x2 ? 1 : -1;
+    const sy = y1 < y2 ? 1 : -1;
+    let err = dx - dy;
+    let cx = x1, cy = y1;
+
+    while (true) {
+      tiles.push([cx, cy]);
+      if (cx === x2 && cy === y2) break;
+      const e2 = 2 * err;
+      if (e2 > -dy) { err -= dy; cx += sx; }
+      if (e2 < dx) { err += dx; cy += sy; }
+    }
+
+    let totalCost = 0;
+    let placed = 0;
+    for (const [tx, ty] of tiles) {
+      const result = game.placeTool(toolName, tx, ty);
+      if (result.success) {
+        totalCost += result.cost;
+        placed++;
+      }
+    }
+
+    if (placed > 0) await this.persist();
+
+    return {
+      success: placed > 0,
+      cost: totalCost,
+      tiles_placed: placed,
+      tiles_attempted: tiles.length,
+      stats: this.getStatsInternal(),
+    };
+  }
+
+  async placeRectTool(toolName: string, x: number, y: number, width: number, height: number): Promise<any> {
+    if (!this.checkRateLimit(this.actionTimestamps, 30)) {
+      return { success: false, error: 'rate_limited', reason: 'Max 30 actions per minute' };
+    }
+    const game = await this.ensureGame();
+
+    // Place outline only
+    const tiles: [number, number][] = [];
+    for (let i = 0; i < width; i++) {
+      tiles.push([x + i, y]);                   // top edge
+      tiles.push([x + i, y + height - 1]);      // bottom edge
+    }
+    for (let j = 1; j < height - 1; j++) {
+      tiles.push([x, y + j]);                   // left edge
+      tiles.push([x + width - 1, y + j]);       // right edge
+    }
+
+    let totalCost = 0;
+    let placed = 0;
+    for (const [tx, ty] of tiles) {
+      const result = game.placeTool(toolName, tx, ty);
+      if (result.success) {
+        totalCost += result.cost;
+        placed++;
+      }
+    }
+
+    if (placed > 0) await this.persist();
+
+    return {
+      success: placed > 0,
+      cost: totalCost,
+      tiles_placed: placed,
+      tiles_attempted: tiles.length,
+      stats: this.getStatsInternal(),
+    };
+  }
+
   async advance(months: number): Promise<any> {
     if (!this.checkRateLimit(this.advanceTimestamps, 10)) {
       return { error: 'rate_limited', reason: 'Max 10 advances per minute' };

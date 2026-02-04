@@ -56,6 +56,18 @@ const TOOL_MAP: Record<string, string> = {
   bulldoze: 'bulldozer',
 };
 
+// Line/rect action names → engine tool names
+const LINE_TOOL_MAP: Record<string, string> = {
+  build_road_line: 'road',
+  build_rail_line: 'rail',
+  build_wire_line: 'wire',
+};
+const RECT_TOOL_MAP: Record<string, string> = {
+  build_road_rect: 'road',
+  build_rail_rect: 'rail',
+  build_wire_rect: 'wire',
+};
+
 // --- POST /v1/cities/:id/actions ---
 
 const placeActionRoute = createRoute({
@@ -104,10 +116,58 @@ actions.openapi(placeActionRoute, async (c) => {
   }
 
   const body = await c.req.json();
-  const { action, x, y } = body;
+  const { action } = body;
 
-  if (typeof action !== 'string' || typeof x !== 'number' || typeof y !== 'number') {
-    return errorResponse(c, 400, 'bad_request', 'Missing action, x, or y');
+  if (typeof action !== 'string') {
+    return errorResponse(c, 400, 'bad_request', 'Missing action');
+  }
+
+  const doId = c.env.CITY.idFromName(cityId);
+  const stub = c.env.CITY.get(doId);
+
+  // Dispatch line actions
+  const lineTool = LINE_TOOL_MAP[action];
+  if (lineTool) {
+    const { x1, y1, x2, y2 } = body;
+    if (typeof x1 !== 'number' || typeof y1 !== 'number' || typeof x2 !== 'number' || typeof y2 !== 'number') {
+      return errorResponse(c, 400, 'bad_request', 'Line actions need x1, y1, x2, y2');
+    }
+    const result = await stub.placeLineTool(lineTool, x1, y1, x2, y2);
+    if (result.error === 'rate_limited') return errorResponse(c, 429, 'rate_limited', result.reason);
+    if (result.stats) c.executionCtx.waitUntil(syncStats(c.env.DB, cityId, result.stats));
+    c.executionCtx.waitUntil(
+      c.env.DB.prepare(
+        `INSERT INTO actions (city_id, game_year, action_type, params, result, cost) VALUES (?, ?, ?, ?, ?, ?)`
+      ).bind(cityId, result.stats?.year || 0, action, JSON.stringify({ x1, y1, x2, y2 }), result.success ? 'success' : 'failed', result.cost || 0).run()
+    );
+    return c.json({ success: result.success, cost: result.cost, tiles_placed: result.tiles_placed, tiles_attempted: result.tiles_attempted, funds_remaining: result.stats?.funds }, 200);
+  }
+
+  // Dispatch rect actions
+  const rectTool = RECT_TOOL_MAP[action];
+  if (rectTool) {
+    const { x, y, width, height } = body;
+    if (typeof x !== 'number' || typeof y !== 'number' || typeof width !== 'number' || typeof height !== 'number') {
+      return errorResponse(c, 400, 'bad_request', 'Rect actions need x, y, width, height');
+    }
+    if (width < 1 || width > 120 || height < 1 || height > 100) {
+      return errorResponse(c, 400, 'bad_request', 'Width must be 1-120 and height 1-100');
+    }
+    const result = await stub.placeRectTool(rectTool, x, y, width, height);
+    if (result.error === 'rate_limited') return errorResponse(c, 429, 'rate_limited', result.reason);
+    if (result.stats) c.executionCtx.waitUntil(syncStats(c.env.DB, cityId, result.stats));
+    c.executionCtx.waitUntil(
+      c.env.DB.prepare(
+        `INSERT INTO actions (city_id, game_year, action_type, params, result, cost) VALUES (?, ?, ?, ?, ?, ?)`
+      ).bind(cityId, result.stats?.year || 0, action, JSON.stringify({ x, y, width, height }), result.success ? 'success' : 'failed', result.cost || 0).run()
+    );
+    return c.json({ success: result.success, cost: result.cost, tiles_placed: result.tiles_placed, tiles_attempted: result.tiles_attempted, funds_remaining: result.stats?.funds }, 200);
+  }
+
+  // Standard point-placement actions
+  const { x, y } = body;
+  if (typeof x !== 'number' || typeof y !== 'number') {
+    return errorResponse(c, 400, 'bad_request', 'Missing x or y');
   }
 
   const toolName = TOOL_MAP[action];
@@ -120,8 +180,6 @@ actions.openapi(placeActionRoute, async (c) => {
   const auto_road = body.auto_road === true;
   const useAuto = auto_bulldoze || auto_power || auto_road;
 
-  const doId = c.env.CITY.idFromName(cityId);
-  const stub = c.env.CITY.get(doId);
   const result = useAuto
     ? await stub.placeToolWithAuto(toolName, x, y, { auto_bulldoze, auto_power, auto_road })
     : await stub.placeToolAction(toolName, x, y);

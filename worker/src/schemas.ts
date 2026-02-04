@@ -103,6 +103,8 @@ export const ActionNameEnum = z.enum([
   'build_fire_station', 'build_police_station',
   'build_coal_power', 'build_nuclear_power',
   'build_seaport', 'build_airport', 'build_stadium', 'bulldoze',
+  'build_road_line', 'build_rail_line', 'build_wire_line',
+  'build_road_rect', 'build_rail_rect', 'build_wire_rect',
 ]).openapi('ActionName');
 
 export const PlaceActionBodySchema = z.object({

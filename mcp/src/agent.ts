@@ -13,6 +13,7 @@ import {
   formatMapRegion,
   formatBuildable,
   formatActionResult,
+  formatLineRectResult,
   formatBatchResult,
   formatBudgetResult,
   formatAdvanceResult,
@@ -386,7 +387,53 @@ Each action in the batch supports the same action types and auto_* flags as perf
       },
     );
 
-    // 9. set_budget
+    // 9. build_line
+    this.server.tool(
+      'build_line',
+      `Draw a line of road, rail, or wire tiles between two points. Uses Bresenham line for diagonal support. Counts as 1 action for rate limiting.
+
+Action types: build_road_line, build_rail_line, build_wire_line
+
+Much faster than placing individual tiles. Use for road grids, power connections, and rail lines.`,
+      {
+        city_id: z.string().describe('City ID'),
+        action: z.enum(['build_road_line', 'build_rail_line', 'build_wire_line']).describe('Line action type'),
+        x1: z.number().int().min(0).describe('Start X coordinate'),
+        y1: z.number().int().min(0).describe('Start Y coordinate'),
+        x2: z.number().int().min(0).describe('End X coordinate'),
+        y2: z.number().int().min(0).describe('End Y coordinate'),
+      },
+      async ({ city_id, action, x1, y1, x2, y2 }) => {
+        const r = await api().post(`/v1/cities/${city_id}/actions`, { action, x1, y1, x2, y2 });
+        if (!r.ok) return errorResult(`Line action failed: ${r.reason}`);
+        return text(formatLineRectResult(r.data as Record<string, unknown>));
+      },
+    );
+
+    // 10. build_rect
+    this.server.tool(
+      'build_rect',
+      `Draw a rectangular outline of road, rail, or wire tiles. Only the outline is placed, not the interior.
+
+Action types: build_road_rect, build_rail_rect, build_wire_rect
+
+Great for laying out city blocks — draw a road rectangle, then zone the interior.`,
+      {
+        city_id: z.string().describe('City ID'),
+        action: z.enum(['build_road_rect', 'build_rail_rect', 'build_wire_rect']).describe('Rectangle action type'),
+        x: z.number().int().min(0).describe('Top-left X coordinate'),
+        y: z.number().int().min(0).describe('Top-left Y coordinate'),
+        width: z.number().int().min(2).max(120).describe('Width of rectangle'),
+        height: z.number().int().min(2).max(100).describe('Height of rectangle'),
+      },
+      async ({ city_id, action, x, y, width, height }) => {
+        const r = await api().post(`/v1/cities/${city_id}/actions`, { action, x, y, width, height });
+        if (!r.ok) return errorResult(`Rect action failed: ${r.reason}`);
+        return text(formatLineRectResult(r.data as Record<string, unknown>));
+      },
+    );
+
+    // 11. set_budget
     this.server.tool(
       'set_budget',
       `Adjust tax rate and department funding. Tax rate affects growth and revenue. Department funding affects service quality.

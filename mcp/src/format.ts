@@ -228,6 +228,23 @@ export function formatActionResult(data: Record<string, unknown>): string {
   return lines.join('\n');
 }
 
+export function formatLineRectResult(data: Record<string, unknown>): string {
+  const success = data.success as boolean;
+  const cost = data.cost as number;
+  const placed = data.tiles_placed as number;
+  const attempted = data.tiles_attempted as number;
+  const fundsRemaining = data.funds_remaining as number | undefined;
+
+  if (!success) {
+    return `Action failed: no tiles could be placed (${attempted} attempted)`;
+  }
+
+  const lines = [`Placed ${placed}/${attempted} tiles.`];
+  lines.push(`  Cost: $${cost}`);
+  if (fundsRemaining !== undefined) lines.push(`  Funds remaining: $${fundsRemaining}`);
+  return lines.join('\n');
+}
+
 export function formatBatchResult(data: Record<string, unknown>): string {
   const results = data.results as Array<Record<string, unknown>> | undefined;
   const totalCost = data.total_cost as number;
