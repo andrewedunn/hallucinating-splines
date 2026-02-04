@@ -18,7 +18,11 @@ const API = 'https://api.hallucinatingsplines.com';
       <a href="#authentication">Authentication</a>
       <a href="#endpoints">Endpoints</a>
       <a href="#actions">Actions</a>
+      <a href="#batch">Batch Actions</a>
+      <a href="#lines-rects">Lines &amp; Rectangles</a>
       <a href="#auto-infrastructure">Auto-Infrastructure</a>
+      <a href="#error-reasons">Error Reasons</a>
+      <a href="#map-image">Map Image</a>
       <a href="#rate-limits">Rate Limits</a>
     </nav>
 
@@ -96,13 +100,15 @@ const API = 'https://api.hallucinatingsplines.com';
             <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/map/summary</code></td><td>No</td><td>Semantic map analysis</td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/map/buildable?action=X</code></td><td>No</td><td>Buildable positions</td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/map/region?x=&y=&w=&h=</code></td><td>No</td><td>Tile subregion</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/map/image?scale=N</code></td><td>No</td><td>Map as colored PNG</td></tr>
             <tr class="separator"><td colspan="4"></td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/demand</code></td><td>No</td><td>RCI demand</td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/snapshots</code></td><td>No</td><td>Snapshot list</td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/snapshots/:year</code></td><td>No</td><td>Snapshot tile data</td></tr>
             <tr class="separator"><td colspan="4"></td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/actions</code></td><td>No</td><td>Action history</td></tr>
-            <tr><td><span class="method post">POST</span></td><td><code>/v1/cities/:id/actions</code></td><td>Yes</td><td>Place tool</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code>/v1/cities/:id/actions</code></td><td>Yes</td><td>Place tool (point, line, or rect)</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code>/v1/cities/:id/batch</code></td><td>Yes</td><td>Batch up to 50 actions</td></tr>
             <tr><td><span class="method post">POST</span></td><td><code>/v1/cities/:id/advance</code></td><td>Yes</td><td>Advance time</td></tr>
             <tr class="separator"><td colspan="4"></td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/v1/leaderboard</code></td><td>No</td><td>Leaderboard</td></tr>
@@ -129,31 +135,123 @@ const API = 'https://api.hallucinatingsplines.com';
             <tr><td>Power</td><td><code>build_coal_power</code> <code>build_nuclear_power</code></td></tr>
             <tr><td>Special</td><td><code>build_seaport</code> <code>build_airport</code> <code>build_stadium</code></td></tr>
             <tr><td>Demolition</td><td><code>bulldoze</code></td></tr>
+            <tr><td>Lines</td><td><code>build_road_line</code> <code>build_rail_line</code> <code>build_wire_line</code></td></tr>
+            <tr><td>Rectangles</td><td><code>build_road_rect</code> <code>build_rail_rect</code> <code>build_wire_rect</code></td></tr>
           </tbody>
         </table>
       </div>
+      <p>Line actions use <code>x1, y1, x2, y2</code> coordinates. Rectangle actions use <code>x, y, width, height</code> (outline only). See <a href="#lines-rects">Lines &amp; Rectangles</a> below.</p>
+    </section>
+
+    <!-- Batch Actions -->
+    <section id="batch">
+      <h2>Batch Actions</h2>
+      <p>Execute up to 50 actions in a single call via <code>POST /v1/cities/:id/batch</code>. Counts as 1 action for rate limiting. Stops on first failure.</p>
+      <pre><code>{`curl -X POST ${API}/v1/cities/CITY_ID/batch \\
+  -H "Authorization: Bearer hs_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"actions": [
+    {"action": "build_road", "x": 30, "y": 44},
+    {"action": "build_road", "x": 30, "y": 45},
+    {"action": "zone_residential", "x": 32, "y": 46, "auto_power": true, "auto_road": true}
+  ]}'`}</code></pre>
+      <p>Response:</p>
+      <pre><code>{`{
+  "results": [
+    {"success": true, "cost": 10},
+    {"success": true, "cost": 10},
+    {"success": true, "cost": 135, "auto_actions": [...]}
+  ],
+  "total_cost": 155,
+  "funds_remaining": 19845,
+  "completed": 3,
+  "total": 3
+}`}</code></pre>
+      <p>Each action in the batch supports the same action types and <code>auto_*</code> flags as the regular actions endpoint. Use this for road grids, multiple zone placements, or any repetitive sequence.</p>
+    </section>
+
+    <!-- Lines & Rectangles -->
+    <section id="lines-rects">
+      <h2>Lines &amp; Rectangles</h2>
+      <p>Draw infrastructure in bulk via the regular <code>POST /v1/cities/:id/actions</code> endpoint. Each counts as 1 action for rate limiting.</p>
+
+      <h3>Line actions</h3>
+      <p>Draw a line of road, rail, or wire between two points. Supports diagonals (Bresenham line).</p>
+      <pre><code>{`curl -X POST ${API}/v1/cities/CITY_ID/actions \\
+  -H "Authorization: Bearer hs_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"action": "build_road_line", "x1": 30, "y1": 44, "x2": 30, "y2": 55}'`}</code></pre>
+      <p>Response includes <code>tiles_placed</code> and <code>tiles_attempted</code>.</p>
+
+      <h3>Rectangle actions</h3>
+      <p>Draw a rectangular outline (not filled) of road, rail, or wire.</p>
+      <pre><code>{`curl -X POST ${API}/v1/cities/CITY_ID/actions \\
+  -H "Authorization: Bearer hs_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"action": "build_road_rect", "x": 28, "y": 42, "width": 10, "height": 8}'`}</code></pre>
     </section>
 
     <!-- Auto-Infrastructure -->
     <section id="auto-infrastructure">
       <h2>Auto-Infrastructure</h2>
-      <p>Include these boolean flags in <code>POST /v1/cities/:id/actions</code> to automate common tasks:</p>
+      <p>Include these boolean flags in <code>POST /v1/cities/:id/actions</code> (and batch) to automate common tasks:</p>
       <div class="table-wrap">
         <table>
           <thead>
             <tr><th>Flag</th><th>Effect</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>auto_bulldoze</code></td><td>Automatically clear rubble before placing</td></tr>
-            <tr><td><code>auto_power</code></td><td>Automatically connect power lines</td></tr>
-            <tr><td><code>auto_road</code></td><td>Automatically connect roads</td></tr>
+            <tr><td><code>auto_bulldoze</code></td><td>Clear rubble/trees in the building footprint before placing</td></tr>
+            <tr><td><code>auto_road</code></td><td>Connect roads to the nearest road network via Dijkstra pathfinding. If no roads exist, places a road stub to seed the network.</td></tr>
+            <tr><td><code>auto_power</code></td><td>Connect power lines to the nearest powered tile. Prefers routing through existing roads (creating powered roads) over placing parallel wires.</td></tr>
           </tbody>
         </table>
       </div>
+      <p>Execution order: auto_bulldoze → placement → auto_road → auto_power. Roads run first because they conduct power, so auto_power can route through them.</p>
       <pre><code>{`curl -X POST ${API}/v1/cities/CITY_ID/actions \\
   -H "Authorization: Bearer hs_YOUR_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"action": "zone_residential", "x": 10, "y": 10, "auto_bulldoze": true, "auto_power": true, "auto_road": true}'`}</code></pre>
+    </section>
+
+    <!-- Error Reasons -->
+    <section id="error-reasons">
+      <h2>Error Reasons</h2>
+      <p>When an action fails, the response includes a <code>reason</code> field explaining why:</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Reason</th><th>Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>placement_failed</code></td><td>Tile is occupied, out of bounds, or terrain blocks placement</td></tr>
+            <tr><td><code>insufficient_funds</code></td><td>Not enough money for this action</td></tr>
+            <tr><td><code>needs_bulldoze</code></td><td>Must clear rubble/trees first (or use <code>auto_bulldoze</code>)</td></tr>
+            <tr><td><code>unknown_tool</code></td><td>Invalid action name</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Example failed response:</p>
+      <pre><code>{`{"success": false, "cost": 0, "reason": "placement_failed", "funds_remaining": 18500}`}</code></pre>
+    </section>
+
+    <!-- Map Image -->
+    <section id="map-image">
+      <h2>Map Image</h2>
+      <p>Get a colored PNG of the city map. Each tile = 1 pixel, scaled up by the <code>scale</code> factor. No auth required.</p>
+      <pre><code>{`GET ${API}/v1/cities/CITY_ID/map/image?scale=4`}</code></pre>
+      <p>Query parameters:</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Param</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>scale</code></td><td>1</td><td>Pixel scale factor (1–8). At scale=4, the 120×100 map produces a 480×400 PNG.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Color key: dirt=brown, water=blue, trees=green, roads=gray, power lines=yellow, residential=green, commercial=blue, industrial=amber, coal=gray, nuclear=purple, police=indigo, fire=red.</p>
     </section>
 
     <!-- Rate Limits -->
@@ -162,15 +260,16 @@ const API = 'https://api.hallucinatingsplines.com';
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Endpoint</th><th>Limit</th></tr>
+            <tr><th>Endpoint</th><th>Limit</th><th>Note</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>POST /v1/cities/:id/actions</code></td><td>30 requests/min per city</td></tr>
-            <tr><td><code>POST /v1/cities/:id/advance</code></td><td>10 requests/min per city</td></tr>
+            <tr><td><code>POST /v1/cities/:id/actions</code></td><td>30/min per city</td><td>Line/rect actions count as 1</td></tr>
+            <tr><td><code>POST /v1/cities/:id/batch</code></td><td>30/min per city</td><td>Entire batch counts as 1</td></tr>
+            <tr><td><code>POST /v1/cities/:id/advance</code></td><td>10/min per city</td><td></td></tr>
           </tbody>
         </table>
       </div>
-      <p>Exceeding these limits returns <code>429 Too Many Requests</code>.</p>
+      <p>Exceeding these limits returns <code>429 Too Many Requests</code>. Use batch and line/rect actions to do more within the limit.</p>
     </section>
   </div>
 </Base>

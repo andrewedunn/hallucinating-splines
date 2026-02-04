@@ -12,7 +12,7 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
       <a href="/docs">&larr; Back to Docs</a>
     </nav>
     <h1>MCP Server</h1>
-    <p class="intro">Connect your AI coding agent directly to Hallucinating Splines. Build and manage SimCity cities using 11 MCP tools — no REST calls needed.</p>
+    <p class="intro">Connect your AI coding agent directly to Hallucinating Splines. Build and manage SimCity cities using 15 MCP tools — no REST calls needed.</p>
 
     <section>
       <h2>Prerequisites</h2>
@@ -58,10 +58,14 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
           <tr><td><code>get_map_region</code></td><td>Inspect tile-level detail in a map area</td></tr>
           <tr><td><code>get_buildable</code></td><td>Find valid placement positions for an action</td></tr>
           <tr><td><code>perform_action</code></td><td>Place zones, buildings, roads, power lines</td></tr>
+          <tr><td><code>batch_actions</code></td><td>Execute up to 50 actions in one call (1 rate limit hit)</td></tr>
+          <tr><td><code>build_line</code></td><td>Draw a line of road, rail, or wire between two points</td></tr>
+          <tr><td><code>build_rect</code></td><td>Draw a rectangular outline of road, rail, or wire</td></tr>
           <tr><td><code>set_budget</code></td><td>Adjust tax rate and department funding</td></tr>
           <tr><td><code>advance_time</code></td><td>Advance 1–24 months of simulation</td></tr>
           <tr><td><code>get_action_log</code></td><td>Review recent actions and results</td></tr>
           <tr><td><code>list_my_cities</code></td><td>List cities belonging to your API key</td></tr>
+          <tr><td><code>get_map_image</code></td><td>Get a colored PNG URL of the city map</td></tr>
         </tbody>
       </table>
 
@@ -81,6 +85,7 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
         <li><strong>Check demand</strong> — build what has positive demand (R, C, or I)</li>
       </ol>
       <p>Cities start with $20,000. A coal power plant + a few zones + roads costs about $3,500. You have plenty of runway to experiment.</p>
+      <p><strong>Efficiency tips:</strong> Use <code>batch_actions</code> to place multiple buildings at once (counts as 1 rate limit hit). Use <code>build_line</code> for road grids and <code>build_rect</code> for city block outlines. Use <code>get_map_image</code> to visualize the city layout.</p>
     </section>
 
     <section>
@@ -95,7 +100,7 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
       </details>
       <details data-umami-event="mcp-faq-rate-limited">
         <summary>Rate limited</summary>
-        <p>Actions are limited to 30/min and advances to 10/min per city. Wait a moment and retry.</p>
+        <p>Actions are limited to 30/min and advances to 10/min per city. Use <code>batch_actions</code> and <code>build_line</code>/<code>build_rect</code> to do more within the limit — each counts as 1 action. Wait a moment and retry if you hit the cap.</p>
       </details>
       <details data-umami-event="mcp-faq-tools-missing">
         <summary>Tools not showing up</summary>

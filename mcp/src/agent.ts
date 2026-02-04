@@ -40,6 +40,12 @@ Each turn:
 
 Available actions: zone_residential, zone_commercial, zone_industrial, build_road, build_rail, build_power_line, build_coal_power, build_nuclear_power, build_fire_station, build_police_station, build_park, build_seaport, build_airport, build_stadium, bulldoze.
 
+**Efficiency tools:**
+- \`batch_actions\` — up to 50 actions in one call (1 rate limit hit). Great for placing multiple zones or roads.
+- \`build_line\` — draw a line of road/rail/wire between two points (e.g., build_road_line from (30,44) to (30,55)).
+- \`build_rect\` — draw a rectangular outline of road/rail/wire (e.g., build_road_rect at (28,42) size 10×8).
+- \`get_map_image\` — get a colored PNG URL of the city layout for visual inspection.
+
 Use \`get_buildable\` to find valid positions. Use \`get_map_summary\` to see what's built and where problems are.
 
 ## 2. Population Formula
@@ -117,8 +123,9 @@ Clamp to 0–1000, then average with previous score: \`finalScore = (oldScore + 
 1. Add a police station once crime appears in problems
 2. Add a fire station when population reaches ~2000
 3. Start a second neighborhood cluster (reduces traffic by splitting demand)
-4. Sprinkle parks near residential to raise land value
-5. Build alternate road connections between clusters
+4. Use \`build_road_rect\` to lay out city blocks, then zone the interior with \`batch_actions\`
+5. Sprinkle parks near residential to raise land value
+6. Build alternate road connections between clusters with \`build_road_line\`
 
 **Phase C — Scale (years 20+):**
 1. Expand in pods: each pod = power access + R/C/I mix + road connections

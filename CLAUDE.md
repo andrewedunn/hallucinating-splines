@@ -30,10 +30,11 @@ worker/
     cityDO.ts          # Durable Object — one HeadlessGame per city
     autoInfra.ts       # Dijkstra-based auto-power, auto-road, and auto-bulldoze
     mapAnalysis.ts     # Semantic map analysis (zone counts, power coverage)
+    mapImage.ts        # Tile-to-color PNG generator for map image endpoint
     routes/
       keys.ts          # POST /v1/keys — API key creation
-      cities.ts        # City CRUD, map data, snapshots, actions history
-      actions.ts       # POST /v1/cities/:id/actions, POST /v1/cities/:id/advance
+      cities.ts        # City CRUD, map data, snapshots, map image, actions history
+      actions.ts       # POST /v1/cities/:id/actions, batch, advance
       seeds.ts         # GET /v1/seeds — curated map seeds
   migrations/          # D1 SQL migrations (run via wrangler d1 migrations apply)
   wrangler.toml        # Cloudflare config (D1, DO, R2, cron triggers)
@@ -62,7 +63,7 @@ site/
 mcp/
   src/
     index.ts           # Worker entry point + routing
-    agent.ts           # McpAgent with 11 tool definitions
+    agent.ts           # McpAgent with 15 tool definitions
     api.ts             # HTTP client for REST API
     format.ts          # Response formatters for LLM output
   wrangler.toml        # Worker config (DO binding, API_BASE var)
@@ -121,6 +122,11 @@ GitHub is NOT connected to Cloudflare — deploys are manual.
 - **Scheduled handler** runs daily via cron — currently ends inactive cities (14 days)
 - Auth uses SHA-256 hashed API keys with `hs_` prefix. Keys are shown once at creation.
 - Rate limiting is in-memory per DO: 30 actions/min, 10 advances/min
+- Batch endpoint (`POST /v1/cities/:id/batch`): up to 50 actions per call, counts as 1 rate limit hit
+- Line/rect actions (`build_road_line`, `build_road_rect`, etc.): bulk infrastructure drawing, 1 rate limit hit each
+- Map image endpoint (`GET /v1/cities/:id/map/image?scale=N`): colored PNG, no auth required
+- Auto-infrastructure order: auto_road runs before auto_power (roads conduct power)
+- Failed actions include a `reason` field: `placement_failed`, `insufficient_funds`, `needs_bulldoze`
 
 ### Key Patterns
 - City IDs: `city_` + 16 hex chars
