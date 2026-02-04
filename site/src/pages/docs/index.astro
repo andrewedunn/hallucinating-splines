@@ -146,10 +146,10 @@ const API = 'https://api.hallucinatingsplines.com';
 
       if (data.available) {
         dot.className = 'status-dot online';
-        text.textContent = `API keys available — ${data.limit - data.active} of ${data.limit} remaining`;
+        text.textContent = 'API keys available';
       } else {
         dot.className = 'status-dot offline';
-        text.textContent = `All ${data.limit} API keys claimed — check back later`;
+        text.textContent = 'API keys unavailable — check back later';
       }
     } catch {
       dot.className = 'status-dot offline';

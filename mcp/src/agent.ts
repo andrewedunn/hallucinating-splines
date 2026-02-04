@@ -23,6 +23,138 @@ interface Props extends Record<string, unknown> {
   key?: string;
 }
 
+const AGENT_PLAYBOOK = `# Hallucinating Splines — Agent Playbook
+
+A guide for AI agents building cities via the MCP tools. Goal: maximize population and score.
+
+## 1. The Game Loop
+
+Each turn:
+1. **Read state** — \`get_city_stats\` for population, funds, demand (RCI), score, problems
+2. **Plan** — Check what has positive demand; identify problems (crime, traffic, pollution)
+3. **Build** — Use \`perform_action\` to zone/build. Always set \`auto_road: true\` and \`auto_power: true\`
+4. **Advance** — Use \`advance_time\` (1–24 months). Start with 1–2 months, scale up once stable
+5. **Repeat** — Check stats again, react to what changed
+
+Available actions: zone_residential, zone_commercial, zone_industrial, build_road, build_rail, build_power_line, build_coal_power, build_nuclear_power, build_fire_station, build_police_station, build_park, build_seaport, build_airport, build_stadium, bulldoze.
+
+Use \`get_buildable\` to find valid positions. Use \`get_map_summary\` to see what's built and where problems are.
+
+## 2. Population Formula
+
+\`\`\`
+population = (resPop + (comPop + indPop) × 8) × 20
+\`\`\`
+
+Commercial and industrial count 8× residential per zone. Balanced R/C/I growth matters more than spamming residential. Follow the demand indicators from \`get_city_stats\`.
+
+## 3. Score Formula
+
+Score runs 0–1000 and is calculated each tick in this exact order:
+
+**Step 1 — Problem severity (0–1000 base):**
+Sum 7 problem scores, divide by 3, convert: \`base = (250 − min(sum/3, 250)) × 4\`
+
+The 7 problems:
+| Problem | Formula |
+|---|---|
+| Crime | crimeAverage |
+| Pollution | pollutionAverage |
+| Housing costs | landValueAverage × 0.7 |
+| Taxes | cityTax × 10 |
+| Traffic | (trafficTotal / count) × 2.4 |
+| Unemployment | ratio of resPop to (comPop + indPop) × 8 |
+| Fire | min(firePop × 5, 255) |
+
+**Step 2 — Demand cap penalties (×0.85 each):**
+If residential, commercial, or industrial zones are capped (not enough built to meet demand), each applies a 15% penalty.
+
+**Step 3 — Infrastructure effectiveness:**
+- Roads: direct subtraction if underfunded (\`score -= maxRoadEffect − actualRoadEffect\`)
+- Police: multiplier 0.9–1.0 based on funding
+- Fire dept: multiplier 0.9–1.0 based on funding
+
+**Step 4 — Oversupply penalties (×0.85 each):**
+If demand valve < −1000 for any zone type, 15% penalty each.
+
+**Step 5 — Population growth scaling:**
+- Growing city: score scaled up proportional to growth rate
+- Shrinking city: penalty capped at ~5%
+- Stagnant: no change
+
+**Step 6 — Fire & tax subtraction:**
+\`score -= fireSeverity − cityTax\`
+
+**Step 7 — Power coverage:**
+\`score *= poweredZones / totalZones\`
+
+**Step 8 — Clamp & smooth:**
+Clamp to 0–1000, then average with previous score: \`finalScore = (oldScore + newScore) / 2\`
+
+**Key insight:** Score smoothing means steady improvement beats volatile swings. One bad year drags you down for multiple turns.
+
+## 4. City Design Principles
+
+- **Power is non-negotiable.** Unpowered zones don't grow and tank your score via the power coverage ratio. One coal plant (~$3000) powers ~50 zones.
+- **Traffic kills.** It's weighted 2.4× in the problem formula. Build multiple commercial centers instead of one mega-center. Use roads to provide alternate routes.
+- **Industrial pollutes.** Keep industry far from residential. Pollution is a direct problem score contributor.
+- **Police are cheap crime prevention.** A $500 police station covers ~15 tile radius and directly reduces crime (a problem score factor).
+- **Taxes are double-penalized.** cityTax × 10 in the problem table AND subtracted from score in step 6. Keep tax at 7% and adjust only when necessary.
+- **Fund your services.** Road, police, and fire funding directly affect score via step 3. Keep them at 100% unless bankrupt.
+
+## 5. Recommended Build Order
+
+**Phase A — Bootstrap (years 0–5):**
+1. Build a coal power plant centrally ($3000)
+2. Zone a small balanced cluster: 4R + 2C + 2I near the plant
+3. Always use \`auto_road: true\`, \`auto_power: true\`, \`auto_bulldoze: true\`
+4. Advance 2 months at a time, check demand between advances
+5. Build what has positive demand; stop zoning what's negative
+
+**Phase B — Stabilize (years 5–20):**
+1. Add a police station once crime appears in problems
+2. Add a fire station when population reaches ~2000
+3. Start a second neighborhood cluster (reduces traffic by splitting demand)
+4. Sprinkle parks near residential to raise land value
+5. Build alternate road connections between clusters
+
+**Phase C — Scale (years 20+):**
+1. Expand in pods: each pod = power access + R/C/I mix + road connections
+2. Second power plant when zones start losing power
+3. Consider seaport ($5000) and airport ($10000) for trade bonuses
+4. Stadium ($3000) for happiness when population is high
+5. Monitor score — if it's declining, diagnose via \`get_city_stats\` problems list
+
+## 6. Agent Decision Heuristics
+
+**Invariants (check every turn):**
+- 100% power coverage (check unpowered count in map summary)
+- All zones have road access (use auto_road)
+- Never build into negative demand — check RCI demand first
+- Keep funds above $1000 buffer
+
+**Demand-driven zoning:**
+- Positive R demand → zone_residential
+- Positive C demand → zone_commercial
+- Positive I demand → zone_industrial
+- All negative → don't zone, advance time and wait
+
+**Problem responses:**
+- High crime → build police station near affected area
+- High pollution → relocate/stop industrial near residential
+- High traffic → build alternate routes, start new commercial center
+- Housing costs high → more parks near residential, lower taxes
+- Unemployment → more commercial and industrial zones
+- Fire problems → build fire station
+
+**Budget strategy:**
+- Tax 7% is the sweet spot — don't change unless necessary
+- If funds dropping: cut road funding to 80% before raising tax
+- Never go below 50% on any department funding
+- Raising tax above 10% is almost never worth the score hit
+`;
+
+
 function text(s: string) {
   return { content: [{ type: 'text' as const, text: s }] };
 }
@@ -316,6 +448,25 @@ Use this to find your city IDs or check on multiple cities.`,
         if (!r.ok) return errorResult(`Failed to list cities: ${r.reason}`);
         return text(formatCityList(r.data as Record<string, unknown>));
       },
+    );
+
+    // Resource: Agent Playbook
+    this.server.registerResource(
+      'Agent Playbook',
+      'hallucinating-splines://playbook',
+      {
+        description: 'Strategy guide for AI agents: how to maximize population and score in Hallucinating Splines.',
+        mimeType: 'text/markdown',
+      },
+      () => ({
+        contents: [
+          {
+            uri: 'hallucinating-splines://playbook',
+            mimeType: 'text/markdown',
+            text: AGENT_PLAYBOOK,
+          },
+        ],
+      }),
     );
   }
 }
