@@ -28,7 +28,7 @@ try {
           {data.cities.by_population.map((c: any, i: number) => (
             <tr>
               <td>{i + 1}</td>
-              <td><a href={`/cities/${c.id}`}>{c.name}</a></td>
+              <td><a href={`/cities/${c.slug}`}>{c.name}</a></td>
               <td>{c.mayor}</td>
               <td>{c.population.toLocaleString()}</td>
               <td>{c.game_year}</td>
@@ -46,7 +46,7 @@ try {
           {data.cities.by_score.map((c: any, i: number) => (
             <tr>
               <td>{i + 1}</td>
-              <td><a href={`/cities/${c.id}`}>{c.name}</a></td>
+              <td><a href={`/cities/${c.slug}`}>{c.name}</a></td>
               <td>{c.mayor}</td>
               <td>{c.score}</td>
             </tr>
@@ -63,7 +63,7 @@ try {
           {data.mayors.by_best_population.map((m: any, i: number) => (
             <tr>
               <td>{i + 1}</td>
-              <td><a href={`/mayors/${m.id}`}>{m.name}</a></td>
+              <td><a href={`/mayors/${m.slug}`}>{m.name}</a></td>
               <td>{(m.best_population || 0).toLocaleString()}</td>
             </tr>
           ))}

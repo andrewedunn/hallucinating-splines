@@ -1,12 +1,13 @@
 ---
 // ABOUTME: Mayor profile page showing mayor stats and all their cities.
-// ABOUTME: Fetches mayor data from the API.
+// ABOUTME: Resolves mayor from slug URL (name + short code), then fetches profile from API.
 import Base from '../../layouts/Base.astro';
 import CityCard from '../../components/CityCard.astro';
 import { apiFetch } from '../../lib/api';
 
-const { id } = Astro.params;
-const mayor = await apiFetch<any>(`/v1/mayors/${id}`);
+const { slug } = Astro.params;
+const code = slug!.split('-').pop()!;
+const mayor = await apiFetch<any>(`/v1/mayors/resolve/${code}`);
 ---
 <Base title={mayor.name}>
   <h1>{mayor.name}</h1>

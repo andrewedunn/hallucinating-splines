@@ -1,26 +1,29 @@
 ---
 // ABOUTME: City detail page showing live map, stats panel, action log, and history charts.
-// ABOUTME: Fetches city summary, live stats, map data, and action history from the API.
+// ABOUTME: Resolves city from slug URL (name + short code), then fetches live data from API.
 import Base from '../../layouts/Base.astro';
 import StatsPanel from '../../components/StatsPanel.astro';
 import ActionLog from '../../components/ActionLog.astro';
 import { apiFetch } from '../../lib/api';
 
-const { id } = Astro.params;
+const { slug } = Astro.params;
+const code = slug!.split('-').pop()!;
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 
-const [city, stats, mapData, actionsData] = await Promise.all([
-  apiFetch<any>(`/v1/cities/${id}`),
-  apiFetch<any>(`/v1/cities/${id}/stats`),
-  apiFetch<any>(`/v1/cities/${id}/map`),
-  apiFetch<any>(`/v1/cities/${id}/actions?limit=50`),
+const city = await apiFetch<any>(`/v1/cities/resolve/${code}`);
+const cityId = city.id;
+
+const [stats, mapData, actionsData] = await Promise.all([
+  apiFetch<any>(`/v1/cities/${cityId}/stats`),
+  apiFetch<any>(`/v1/cities/${cityId}/map`),
+  apiFetch<any>(`/v1/cities/${cityId}/actions?limit=50`),
 ]);
 ---
 <Base title={city.name}>
   <div class="city-header" data-game-year={stats.year} data-status={city.status}>
     <div>
       <h1>{city.name}</h1>
-      <a href={`/mayors/${city.api_key_id}`} class="mayor">{city.mayor}</a>
+      <a href={`/mayors/${city.mayor_slug}`} class="mayor">{city.mayor}</a>
     </div>
     <div class="header-badges">
       <span id="live-indicator"></span>
@@ -30,7 +33,7 @@ const [city, stats, mapData, actionsData] = await Promise.all([
 
   <div class="city-layout">
     <div class="map-column">
-      <div id="map-container" data-tiles={JSON.stringify(mapData.tiles)} data-width={mapData.width} data-height={mapData.height} data-city-id={id} data-api-base={API_BASE}>
+      <div id="map-container" data-tiles={JSON.stringify(mapData.tiles)} data-width={mapData.width} data-height={mapData.height} data-city-id={cityId} data-api-base={API_BASE}>
       </div>
       <div id="scrubber-container"></div>
       <div id="history-charts-container"></div>
