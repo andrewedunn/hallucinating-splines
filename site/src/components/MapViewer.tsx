@@ -37,9 +37,10 @@ export default function MapViewer({ tiles, width, height }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [spriteSheet, setSpriteSheet] = useState<HTMLImageElement | null>(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const fitScaleRef = useRef(1);
 
   // Touch gesture refs (refs to avoid stale closures in event listeners)
   const touchStateRef = useRef({
@@ -60,13 +61,30 @@ export default function MapViewer({ tiles, width, height }: Props) {
     loadSpriteSheet('/tiles.png').then(setSpriteSheet);
   }, []);
 
+  // Compute fitScale and set initial zoom/offset to center the map
   useEffect(() => {
-    if (!spriteSheet || !canvasRef.current) return;
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+    const mapPixelW = width * TILE_SIZE;
+    const mapPixelH = height * TILE_SIZE;
+    const fitScale = Math.min(canvas.width / mapPixelW, canvas.height / mapPixelH);
+    fitScaleRef.current = fitScale;
+    if (zoom === 0) {
+      setZoom(fitScale);
+      setOffset({
+        x: (canvas.width - mapPixelW * fitScale) / 2,
+        y: (canvas.height - mapPixelH * fitScale) / 2,
+      });
+    }
+  }, [spriteSheet, width, height]);
+
+  useEffect(() => {
+    if (!spriteSheet || !canvasRef.current || zoom === 0) return;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d')!;
 
-    const mapPixelW = width * TILE_SIZE;
-    const mapPixelH = height * TILE_SIZE;
     canvas.width = canvas.clientWidth;
     canvas.height = canvas.clientHeight;
 
@@ -74,15 +92,6 @@ export default function MapViewer({ tiles, width, height }: Props) {
     ctx.save();
     ctx.translate(offset.x, offset.y);
     ctx.scale(zoom, zoom);
-
-    // Fit map initially
-    const scaleX = canvas.width / mapPixelW;
-    const scaleY = canvas.height / mapPixelH;
-    const fitScale = Math.min(scaleX, scaleY);
-
-    if (zoom === 1) {
-      ctx.scale(fitScale, fitScale);
-    }
 
     renderMap(ctx, spriteSheet, tiles, width, height);
     ctx.restore();
@@ -118,7 +127,8 @@ export default function MapViewer({ tiles, width, height }: Props) {
         e.preventDefault();
         const newDist = getTouchDistance(e.touches);
         const newCenter = getTouchCenter(e.touches);
-        const newZoom = Math.max(0.5, Math.min(4, zoomRef.current * (newDist / ts.lastDist)));
+        const fit = fitScaleRef.current;
+        const newZoom = Math.max(fit * 0.5, Math.min(fit * 6, zoomRef.current * (newDist / ts.lastDist)));
 
         // Pan with pinch center movement
         const dx = newCenter.x - ts.lastCenter.x;
@@ -188,6 +198,11 @@ export default function MapViewer({ tiles, width, height }: Props) {
 
   const handleMouseUp = useCallback(() => setDragging(false), []);
 
+  const zoomMinMax = useCallback((z: number) => {
+    const fit = fitScaleRef.current;
+    return Math.max(fit * 0.5, Math.min(fit * 6, z));
+  }, []);
+
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
@@ -196,7 +211,7 @@ export default function MapViewer({ tiles, width, height }: Props) {
     const cy = e.clientY - rect.top;
 
     setZoom(prevZoom => {
-      const newZoom = Math.max(0.5, Math.min(4, prevZoom * delta));
+      const newZoom = zoomMinMax(prevZoom * delta);
       const ratio = newZoom / prevZoom;
       setOffset(o => ({
         x: cx - (cx - o.x) * ratio,
@@ -204,23 +219,47 @@ export default function MapViewer({ tiles, width, height }: Props) {
       }));
       return newZoom;
     });
-  }, []);
+  }, [zoomMinMax]);
+
+  const zoomFromCenter = useCallback((factor: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const cx = canvas.clientWidth / 2;
+    const cy = canvas.clientHeight / 2;
+    setZoom(prevZoom => {
+      const newZoom = zoomMinMax(prevZoom * factor);
+      const ratio = newZoom / prevZoom;
+      setOffset(o => ({
+        x: cx - (cx - o.x) * ratio,
+        y: cy - (cy - o.y) * ratio,
+      }));
+      return newZoom;
+    });
+  }, [zoomMinMax]);
 
   const zoomIn = useCallback(() => {
     window.umami?.track('map-zoom-in');
-    setZoom(z => Math.min(4, z * 1.3));
-  }, []);
+    zoomFromCenter(1.3);
+  }, [zoomFromCenter]);
 
   const zoomOut = useCallback(() => {
     window.umami?.track('map-zoom-out');
-    setZoom(z => Math.max(0.5, z * 0.7));
-  }, []);
+    zoomFromCenter(0.7);
+  }, [zoomFromCenter]);
 
   const resetView = useCallback(() => {
     window.umami?.track('map-reset');
-    setZoom(1);
-    setOffset({ x: 0, y: 0 });
-  }, []);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const fit = fitScaleRef.current;
+    const mapPixelW = width * TILE_SIZE;
+    const mapPixelH = height * TILE_SIZE;
+    setZoom(fit);
+    setOffset({
+      x: (canvas.clientWidth - mapPixelW * fit) / 2,
+      y: (canvas.clientHeight - mapPixelH * fit) / 2,
+    });
+  }, [width, height]);
 
   const btnStyle: React.CSSProperties = {
     width: 40, height: 40,
