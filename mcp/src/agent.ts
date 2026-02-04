@@ -1,4 +1,4 @@
-// ABOUTME: MCP agent with 15 city-building tools for the Hallucinating Splines platform.
+// ABOUTME: MCP agent with 18 city-building tools for the Hallucinating Splines platform.
 // ABOUTME: Extends McpAgent (Cloudflare Durable Object) and wraps the REST API.
 
 import { McpAgent } from 'agents/mcp';
@@ -19,6 +19,9 @@ import {
   formatAdvanceResult,
   formatActionLog,
   formatCityList,
+  formatRetireCity,
+  formatDemand,
+  formatCensusHistory,
 } from './format';
 
 interface Props extends Record<string, unknown> {
@@ -556,6 +559,59 @@ Use this to get a visual overview of the city layout.`,
         const s = scale || 4;
         const url = `${baseUrl}/v1/cities/${city_id}/map/image?scale=${s}`;
         return text(`Map image URL: ${url}\n\nOpen this URL to view the city map as a colored PNG.`);
+      },
+    );
+
+    // 16. retire_city
+    this.server.tool(
+      'retire_city',
+      `Permanently retire an active city you own. The city stops simulating, but all history, snapshots, and action logs are preserved.
+
+Use this when:
+- A city is bankrupt or stagnating beyond recovery
+- You want to free up a city slot (max 3 active cities per API key)
+- You're done with a city and want to start fresh
+
+This action cannot be undone.`,
+      { city_id: z.string().describe('City ID to retire') },
+      async ({ city_id }) => {
+        const r = await api().del(`/v1/cities/${city_id}`);
+        if (!r.ok) return errorResult(`Failed to retire city: ${r.reason}`);
+        return text(formatRetireCity(r.data as Record<string, unknown>));
+      },
+    );
+
+    // 17. get_demand
+    this.server.tool(
+      'get_demand',
+      `Get current RCI (Residential/Commercial/Industrial) demand values for a city.
+
+Positive demand means the city wants more of that zone type. Negative means oversupply.
+
+This is the same demand data included in get_city_stats, but as a lightweight standalone call when you just need to check what to build next.`,
+      { city_id: z.string().describe('City ID') },
+      async ({ city_id }) => {
+        const r = await api().get(`/v1/cities/${city_id}/demand`);
+        if (!r.ok) return errorResult(`Failed to get demand: ${r.reason}`);
+        return text(formatDemand(r.data as Record<string, unknown>));
+      },
+    );
+
+    // 18. get_census_history
+    this.server.tool(
+      'get_census_history',
+      `Get historical census data showing how a city has grown over time. Returns population, zone populations, funds, and score for each recorded year.
+
+Use this to:
+- Track population growth trends
+- See if funds are trending up or down
+- Identify when score started declining
+- Compare zone balance over time`,
+      { city_id: z.string().describe('City ID') },
+      async ({ city_id }) => {
+        const r = await api().get(`/v1/cities/${city_id}/history`);
+        if (!r.ok) return errorResult(`Failed to get census history: ${r.reason}`);
+        return text(formatCensusHistory(r.data as Record<string, unknown>));
       },
     );
 

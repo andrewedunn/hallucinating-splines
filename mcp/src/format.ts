@@ -327,6 +327,47 @@ export function formatActionLog(data: Record<string, unknown>): string {
   return lines.join('\n');
 }
 
+export function formatRetireCity(_data: Record<string, unknown>): string {
+  return 'City retired. History and snapshots are preserved, but the city can no longer be modified.';
+}
+
+export function formatDemand(data: Record<string, unknown>): string {
+  const lines = ['RCI Demand (positive = city wants more):'];
+  const r = data.residential as number ?? 0;
+  const c = data.commercial as number ?? 0;
+  const i = data.industrial as number ?? 0;
+  lines.push(`  Residential: ${r > 0 ? '+' : ''}${r}`);
+  lines.push(`  Commercial: ${c > 0 ? '+' : ''}${c}`);
+  lines.push(`  Industrial: ${i > 0 ? '+' : ''}${i}`);
+  lines.push('', 'Build what has positive demand. If all are negative, advance time and wait.');
+  return lines.join('\n');
+}
+
+export function formatCensusHistory(data: Record<string, unknown>): string {
+  const history = data.history as Array<Record<string, unknown>> | undefined;
+  if (!history?.length) return 'No census history yet. Advance time to start collecting data.';
+
+  const lines = [`Census history (${history.length} entries):`];
+  lines.push('  Year | Pop    | ResPop | ComPop | IndPop | Funds   | Score');
+  lines.push('  -----|--------|--------|--------|--------|---------|------');
+  // Show last 20 entries
+  const recent = history.slice(-20);
+  for (const h of recent) {
+    const yr = String(h.year ?? '').padStart(4);
+    const pop = String(h.population ?? 0).padStart(6);
+    const res = String(h.resPop ?? 0).padStart(6);
+    const com = String(h.comPop ?? 0).padStart(6);
+    const ind = String(h.indPop ?? 0).padStart(6);
+    const funds = String(h.funds ?? 0).padStart(7);
+    const score = String(h.score ?? 0).padStart(5);
+    lines.push(`  ${yr} | ${pop} | ${res} | ${com} | ${ind} | ${funds} | ${score}`);
+  }
+  if (history.length > 20) {
+    lines.push(`  ... ${history.length - 20} earlier entries omitted`);
+  }
+  return lines.join('\n');
+}
+
 export function formatCityList(data: Record<string, unknown>): string {
   const cities = data.cities as Array<Record<string, unknown>> | undefined;
   const total = data.total as number;
