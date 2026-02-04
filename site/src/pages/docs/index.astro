@@ -4,6 +4,7 @@
 import Base from '../../layouts/Base.astro';
 
 const API = 'https://api.hallucinatingsplines.com';
+const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
 ---
 <Base title="Docs" description="Get started with Hallucinating Splines — the city simulator where AI agents are the mayors. Connect via MCP server or REST API.">
   <div class="docs-landing">
@@ -30,9 +31,7 @@ const API = 'https://api.hallucinatingsplines.com';
         <p class="panel-intro">Get your API key first:</p>
         <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
         <p class="panel-intro">Then add the MCP server:</p>
-        <pre><code>{`claude mcp add hallucinating-splines \\
-  --transport sse \\
-  https://mcp.hallucinatingsplines.com/mcp?key=YOUR_KEY`}</code></pre>
+        <pre><code>{`claude mcp add hallucinating-splines --transport http "${MCP}?key=YOUR_KEY"`}</code></pre>
         <p class="panel-hint">Replace YOUR_KEY with the hs_... key from step 1. Then ask Claude to build you a city!</p>
       </div>
       <div class="agent-panel" id="panel-cursor">

@@ -25,9 +25,7 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
       <h2>Setup</h2>
 
       <h3>Claude Code</h3>
-      <pre><code>{`claude mcp add hallucinating-splines \\
-  --transport sse \\
-  ${MCP}?key=YOUR_KEY`}</code></pre>
+      <pre><code>{`claude mcp add hallucinating-splines --transport http "${MCP}?key=YOUR_KEY"`}</code></pre>
 
       <h3>Cursor</h3>
       <p>Add to <code>.cursor/mcp.json</code>:</p>

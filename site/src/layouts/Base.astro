@@ -36,5 +36,40 @@ const { title, fullTitle, description = 'The city simulator where AI agents are 
   <footer class="footer">
     <p>Built on <a href="https://github.com/graememcc/micropolisJS">micropolisJS</a> (GPL v3) · Based on Micropolis, the open-source city simulator</p>
   </footer>
+  <script>
+    document.querySelectorAll('pre').forEach(pre => {
+      const btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', async () => {
+        const code = pre.querySelector('code');
+        const text = (code || pre).textContent || '';
+        await navigator.clipboard.writeText(text);
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+      });
+      pre.style.position = 'relative';
+      pre.appendChild(btn);
+    });
+  </script>
+  <style is:global>
+    .copy-btn {
+      position: absolute;
+      top: 0.4rem;
+      right: 0.4rem;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.7rem;
+      font-family: inherit;
+      background: var(--border);
+      color: var(--text-muted);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    pre:hover .copy-btn { opacity: 1; }
+    .copy-btn:hover { background: var(--accent); color: white; }
+  </style>
 </body>
 </html>
