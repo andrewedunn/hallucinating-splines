@@ -148,6 +148,18 @@ export class HeadlessGame {
     return { width: w, height: h, tiles };
   }
 
+  getRawMap(): MapData {
+    const w = this.map.width;
+    const h = this.map.height;
+    const tiles: number[] = new Array(w * h);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        tiles[y * w + x] = this.map.getTile(x, y).getRawValue();
+      }
+    }
+    return { width: w, height: h, tiles };
+  }
+
   getTile(x: number, y: number): TileInfo {
     return {
       value: this.map.getTile(x, y).getValue(),

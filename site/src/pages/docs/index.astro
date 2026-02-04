@@ -32,7 +32,7 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
         <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
         <p class="panel-intro">Then add the MCP server:</p>
         <pre><code>{`claude mcp add hallucinating-splines --transport http "${MCP}?key=YOUR_KEY"`}</code></pre>
-        <p class="panel-hint">Replace YOUR_KEY with the hs_... key from step 1. Then ask Claude to build you a city!</p>
+        <p class="panel-hint">Replace YOUR_KEY with the hs_... key from step 1. Add <code>-s user</code> to make it available in all projects. Then ask Claude to build you a city!</p>
       </div>
       <div class="agent-panel" id="panel-cursor">
         <p class="panel-intro">Get your API key first:</p>

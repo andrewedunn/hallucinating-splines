@@ -227,7 +227,7 @@ export class CityDO extends DurableObject<Env> {
 
   async getMapSummary(): Promise<any> {
     const game = await this.ensureGame();
-    const mapData = game.getMap();
+    const mapData = game.getRawMap();
     return analyzeMap(mapData.tiles, mapData.width, mapData.height);
   }
 
