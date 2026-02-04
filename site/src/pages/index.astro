@@ -316,13 +316,32 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
       }
 
       // Fetch tile data sequentially to avoid hammering the API
+      const allTiles: number[][] = [];
       for (const snap of picked) {
         try {
           const tileRes = await fetch(`${apiBase}/v1/cities/${cityId}/snapshots/${snap.game_year}`);
           if (!tileRes.ok) continue;
           const tileData = await tileRes.json();
-          if (tileData.tiles) state.snapshots.push(tileData.tiles);
+          if (tileData.tiles) allTiles.push(tileData.tiles);
         } catch { /* skip failed snapshot */ }
+      }
+
+      // Filter out visually similar frames — keep only snapshots where
+      // enough tiles changed vs the previous kept frame
+      const MIN_CHANGE_RATIO = 0.02; // tune this: 2% of tiles must differ
+      if (allTiles.length > 0) {
+        state.snapshots.push(allTiles[0]);
+        for (let i = 1; i < allTiles.length; i++) {
+          const prev = state.snapshots[state.snapshots.length - 1];
+          const cur = allTiles[i];
+          let changed = 0;
+          for (let j = 0; j < cur.length; j++) {
+            if (cur[j] !== prev[j]) changed++;
+          }
+          if (changed / cur.length >= MIN_CHANGE_RATIO) {
+            state.snapshots.push(cur);
+          }
+        }
       }
 
       if (state.snapshots.length >= 3 && state.isVisible && !state.isHovered) {
