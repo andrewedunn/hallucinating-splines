@@ -225,7 +225,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
     c.style.position = 'absolute';
     c.style.top = '0';
     c.style.left = '0';
-    c.style.transition = 'opacity 0.8s ease';
+    c.style.transition = 'opacity 0.5s ease';
     return c;
   }
 
@@ -365,12 +365,12 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
       nextCanvas.style.opacity = '1';
       state.activeIndex = nextIndex;
 
-      // Randomized 4-5s interval
-      const interval = 4000 + Math.random() * 1000;
+      // Randomized 2-3s interval
+      const interval = 2000 + Math.random() * 1000;
       state.cycleTimer = setTimeout(cycle, interval);
     }
 
-    const interval = 4000 + Math.random() * 1000;
+    const interval = 2000 + Math.random() * 1000;
     state.cycleTimer = setTimeout(cycle, interval);
   }
 
