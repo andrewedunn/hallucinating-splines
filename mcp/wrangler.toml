@@ -13,9 +13,5 @@ bindings = [
 tag = "v1"
 new_sqlite_classes = ["HallucinatingSplinesMCP"]
 
-[[routes]]
-pattern = "mcp.hallucinatingsplines.com/*"
-zone_name = "hallucinatingsplines.com"
-
 [vars]
 API_BASE = "https://api.hallucinatingsplines.com"
