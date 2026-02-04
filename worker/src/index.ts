@@ -40,6 +40,42 @@ const healthRoute = createRoute({
 
 app.openapi(healthRoute, (c) => c.json({ status: 'ok' }, 200));
 
+// --- Platform stats ---
+
+const statsRoute = createRoute({
+  method: 'get',
+  path: '/v1/stats',
+  tags: ['System'],
+  summary: 'Platform stats',
+  description: 'Returns aggregate platform statistics: mayors, cities, and total population.',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.object({
+        mayors: z.number(),
+        cities: z.number(),
+        population: z.number(),
+      }) } },
+      description: 'Platform stats',
+    },
+  },
+});
+
+app.openapi(statsRoute, async (c) => {
+  const [mayors, cityStats] = await Promise.all([
+    c.env.DB.prepare('SELECT COUNT(*) as count FROM api_keys WHERE active = 1').first<{ count: number }>(),
+    c.env.DB.prepare(
+      `SELECT COUNT(*) as count, COALESCE(SUM(population), 0) as total_pop
+       FROM cities WHERE COALESCE(ended_reason, '') != 'data_wiped'`
+    ).first<{ count: number; total_pop: number }>(),
+  ]);
+
+  return c.json({
+    mayors: mayors?.count ?? 0,
+    cities: cityStats?.count ?? 0,
+    population: cityStats?.total_pop ?? 0,
+  }, 200);
+});
+
 // Mount sub-routers
 app.route('/v1/keys', keys);
 app.route('/v1/seeds', seeds);

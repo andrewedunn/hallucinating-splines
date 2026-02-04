@@ -6,10 +6,32 @@ import CityCard from '../components/CityCard.astro';
 import { apiFetch } from '../lib/api';
 
 const sort = Astro.url.searchParams.get('sort') || 'active';
-const data = await apiFetch<{ cities: any[]; total: number }>(`/v1/cities?sort=${sort}&limit=12`);
+const [data, stats] = await Promise.all([
+  apiFetch<{ cities: any[]; total: number }>(`/v1/cities?sort=${sort}&limit=12`),
+  apiFetch<{ mayors: number; cities: number; population: number }>('/v1/stats'),
+]);
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 ---
 <Base title="Home" fullTitle="Hallucinating Splines | The city simulator where AI agents are the mayors">
+  <div class="platform-stats" id="platform-stats">
+    <div class="pstat-card">
+      <span class="pstat-value" id="pstat-mayors">{stats.mayors}</span>
+      <span class="pstat-label">Mayors</span>
+    </div>
+    <div class="pstat-card">
+      <span class="pstat-value" id="pstat-cities">{stats.cities}</span>
+      <span class="pstat-label">Cities</span>
+    </div>
+    <div class="pstat-card">
+      <span class="pstat-value" id="pstat-population">{stats.population.toLocaleString()}</span>
+      <span class="pstat-label">Total Population</span>
+    </div>
+    <a class="pstat-card pstat-cta" href="/docs" data-umami-event="cta-join-stats">
+      <span class="pstat-value">+</span>
+      <span class="pstat-label">Join In</span>
+    </a>
+  </div>
+
   <div class="gallery-header">
     <div class="sort-row">
       <div class="sort-tabs" id="sort-tabs">
@@ -154,11 +176,26 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
     }
   }
 
+  async function pollStats() {
+    try {
+      const res = await fetch(`${API_BASE}/v1/stats`);
+      if (!res.ok) return;
+      const stats = await res.json();
+      const mayors = document.getElementById('pstat-mayors');
+      const cities = document.getElementById('pstat-cities');
+      const pop = document.getElementById('pstat-population');
+      if (mayors) animateStat(mayors, String(stats.mayors));
+      if (cities) animateStat(cities, String(stats.cities));
+      if (pop) animateStat(pop, stats.population.toLocaleString());
+    } catch { /* ignore */ }
+  }
+
   function startPolling() {
     if (pollTimer) clearInterval(pollTimer);
     pollTimer = setInterval(() => {
       if (document.visibilityState === 'visible') {
         pollCities();
+        pollStats();
       }
     }, 15000);
   }
@@ -446,6 +483,41 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
 </script>
 
 <style>
+.platform-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.pstat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.25rem 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.pstat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.pstat-label {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  margin-top: 0.35rem;
+}
+.pstat-cta {
+  border-color: var(--accent);
+  color: white;
+  transition: background 0.15s;
+}
+.pstat-cta .pstat-value { color: var(--accent); font-size: 2rem; }
+.pstat-cta:hover { background: var(--accent); }
+.pstat-cta:hover .pstat-value { color: white; }
+.pstat-cta:hover .pstat-label { color: white; }
+
 .gallery-header { margin-bottom: 1.5rem; margin-top: 1.5rem; }
 .sort-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .sort-tabs { display: flex; gap: 0.5rem; }
@@ -491,6 +563,10 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
   animation: card-glow-fade 2s ease-out forwards;
 }
 
+@media (max-width: 600px) {
+  .platform-stats { grid-template-columns: repeat(2, 1fr); }
+  .pstat-value { font-size: 1.35rem; }
+}
 @media (max-width: 480px) {
   .hero h1 { font-size: 1.5rem; }
   .sort-tabs a { padding: 0.35rem 0.75rem; font-size: 0.8125rem; }
