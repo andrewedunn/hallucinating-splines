@@ -294,14 +294,14 @@ cities.get('/:id', async (c) => {
   return c.json(row);
 });
 
-// DELETE /v1/cities/:id — Delete city (owner only)
+// DELETE /v1/cities/:id — Retire city (owner only, history preserved)
 cities.delete('/:id', authMiddleware, async (c) => {
   const cityId = c.req.param('id');
   const keyId = c.get('keyId');
 
   const row = await c.env.DB.prepare(
-    'SELECT api_key_id FROM cities WHERE id = ?'
-  ).bind(cityId).first<{ api_key_id: string }>();
+    'SELECT api_key_id, status FROM cities WHERE id = ?'
+  ).bind(cityId).first<{ api_key_id: string; status: string }>();
 
   if (!row) {
     return errorResponse(c, 404, 'not_found', 'City not found');
@@ -311,17 +311,21 @@ cities.delete('/:id', authMiddleware, async (c) => {
     return errorResponse(c, 403, 'forbidden', 'You do not own this city');
   }
 
-  // Delete from DO
+  if (row.status !== 'active') {
+    return errorResponse(c, 400, 'bad_request', 'City is already ended');
+  }
+
+  // Clean up DO state
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
   await stub.deleteCity();
 
-  // Mark as ended in D1
+  // Mark as ended with retired reason
   await c.env.DB.prepare(
-    "UPDATE cities SET status = 'ended', updated_at = datetime('now') WHERE id = ?"
+    "UPDATE cities SET status = 'ended', ended_reason = 'retired', updated_at = datetime('now') WHERE id = ?"
   ).bind(cityId).run();
 
-  return c.json({ deleted: true });
+  return c.json({ retired: true, message: 'City retired. History preserved.' });
 });
 
 export { cities };

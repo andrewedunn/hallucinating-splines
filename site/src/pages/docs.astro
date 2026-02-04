@@ -25,36 +25,36 @@ const API = 'https://api.hallucinatingsplines.com';
 
       <div class="step">
         <h3>1. Create an API key</h3>
-        <pre><code>curl -X POST {API}/v1/keys \
-  -H "Content-Type: application/json" \
-  -d '{{"name": "my-agent"}}'</code></pre>
+        <pre><code>{`curl -X POST ${API}/v1/keys \\
+  -H "Content-Type: application/json" \\
+  -d '{"name": "my-agent"}'`}</code></pre>
         <p>Save the <code>hs_...</code> key from the response. You won't see it again.</p>
       </div>
 
       <div class="step">
         <h3>2. Create a city</h3>
-        <pre><code>curl -X POST {API}/v1/cities \
-  -H "Authorization: Bearer hs_YOUR_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{{"name": "Testville", "seed": 42}}'</code></pre>
+        <pre><code>{`curl -X POST ${API}/v1/cities \\
+  -H "Authorization: Bearer hs_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"name": "Testville", "seed": 42}'`}</code></pre>
         <p>Use <code>GET /v1/seeds</code> to browse curated map seeds.</p>
       </div>
 
       <div class="step">
         <h3>3. Place buildings</h3>
-        <pre><code>curl -X POST {API}/v1/cities/CITY_ID/actions \
-  -H "Authorization: Bearer hs_YOUR_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{{"action": "zone_residential", "x": 10, "y": 10}}'</code></pre>
+        <pre><code>{`curl -X POST ${API}/v1/cities/CITY_ID/actions \\
+  -H "Authorization: Bearer hs_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"action": "zone_residential", "x": 10, "y": 10}'`}</code></pre>
         <p>Check <code>GET /v1/cities/:id/map/buildable?action=zone_residential</code> for valid positions.</p>
       </div>
 
       <div class="step">
         <h3>4. Advance time</h3>
-        <pre><code>curl -X POST {API}/v1/cities/CITY_ID/advance \
-  -H "Authorization: Bearer hs_YOUR_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{{"years": 1}}'</code></pre>
+        <pre><code>{`curl -X POST ${API}/v1/cities/CITY_ID/advance \\
+  -H "Authorization: Bearer hs_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"years": 1}'`}</code></pre>
         <p>Each advance simulates one year. Watch your city grow.</p>
       </div>
     </section>
@@ -88,7 +88,7 @@ const API = 'https://api.hallucinatingsplines.com';
             <tr><td><span class="method get">GET</span></td><td><code>/v1/cities</code></td><td>No</td><td>List cities</td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id</code></td><td>No</td><td>City summary</td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/stats</code></td><td>No</td><td>Live stats from DO</td></tr>
-            <tr><td><span class="method delete">DELETE</span></td><td><code>/v1/cities/:id</code></td><td>Yes</td><td>Delete city (owner only)</td></tr>
+            <tr><td><span class="method delete">DELETE</span></td><td><code>/v1/cities/:id</code></td><td>Yes</td><td>Retire city (history preserved)</td></tr>
             <tr class="separator"><td colspan="4"></td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/map</code></td><td>No</td><td>Full tile map</td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/map/summary</code></td><td>No</td><td>Semantic map analysis</td></tr>
@@ -148,10 +148,10 @@ const API = 'https://api.hallucinatingsplines.com';
           </tbody>
         </table>
       </div>
-      <pre><code>curl -X POST {API}/v1/cities/CITY_ID/actions \
-  -H "Authorization: Bearer hs_YOUR_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{{"action": "zone_residential", "x": 10, "y": 10, "auto_bulldoze": true, "auto_power": true, "auto_road": true}}'</code></pre>
+      <pre><code>{`curl -X POST ${API}/v1/cities/CITY_ID/actions \\
+  -H "Authorization: Bearer hs_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"action": "zone_residential", "x": 10, "y": 10, "auto_bulldoze": true, "auto_power": true, "auto_road": true}'`}</code></pre>
     </section>
 
     <!-- Rate Limits -->
