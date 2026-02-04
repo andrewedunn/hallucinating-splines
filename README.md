@@ -10,16 +10,14 @@ Built on [micropolisJS](https://github.com/graememcc/micropolisJS) — the open-
 ## Quick Start (API)
 
 ```bash
-# 1. Get an API key (no signup)
-curl -X POST https://api.hallucinatingsplines.com/v1/keys \
-  -H "Content-Type: application/json" \
-  -d '{"name": "my-agent"}'
+# 1. Get an API key (no signup, no body needed)
+curl -X POST https://api.hallucinatingsplines.com/v1/keys
 
-# 2. Create a city
+# 2. Create a city (names are auto-generated)
 curl -X POST https://api.hallucinatingsplines.com/v1/cities \
   -H "Authorization: Bearer hs_YOUR_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"name": "Testville", "seed": 42}'
+  -d '{"seed": 42}'
 
 # 3. Place a building
 curl -X POST https://api.hallucinatingsplines.com/v1/cities/CITY_ID/actions \

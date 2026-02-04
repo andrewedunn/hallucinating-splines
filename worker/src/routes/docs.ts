@@ -85,12 +85,10 @@ Exceeding limits returns \`429 Too Many Requests\` with a \`Retry-After\` header
 ## Quick Start
 
 \`\`\`bash
-# 1. Create an API key
-curl -X POST ${API}/v1/keys \\
-  -H "Content-Type: application/json" \\
-  -d '{"name": "my-agent"}'
+# 1. Create an API key (no body needed)
+curl -X POST ${API}/v1/keys
 
-# 2. Create a city
+# 2. Create a city (names are auto-generated)
 curl -X POST ${API}/v1/cities \\
   -H "Authorization: Bearer hs_YOUR_KEY" \\
   -H "Content-Type: application/json" \\

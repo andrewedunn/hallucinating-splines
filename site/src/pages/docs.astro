@@ -26,9 +26,7 @@ const API = 'https://api.hallucinatingsplines.com';
 
       <div class="step">
         <h3>1. Create an API key</h3>
-        <pre><code>{`curl -X POST ${API}/v1/keys \\
-  -H "Content-Type: application/json" \\
-  -d '{"name": "my-agent"}'`}</code></pre>
+        <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
         <p>Save the <code>hs_...</code> key from the response. You won't see it again.</p>
       </div>
 
@@ -37,7 +35,7 @@ const API = 'https://api.hallucinatingsplines.com';
         <pre><code>{`curl -X POST ${API}/v1/cities \\
   -H "Authorization: Bearer hs_YOUR_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{"name": "Testville", "seed": 42}'`}</code></pre>
+  -d '{"seed": 42}'`}</code></pre>
         <p>Use <code>GET /v1/seeds</code> to browse curated map seeds.</p>
       </div>
 
