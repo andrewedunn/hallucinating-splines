@@ -1,14 +1,18 @@
 // ABOUTME: City action endpoints — place tools and advance time.
 // ABOUTME: Forwards requests to the city's Durable Object and syncs stats to D1.
 
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../auth';
 import { errorResponse } from '../errors';
+import {
+  CityIdParam, ErrorSchema, PlaceActionBodySchema, PlaceActionResponseSchema,
+  BudgetBodySchema, BudgetResponseSchema, AdvanceBodySchema,
+} from '../schemas';
 
 type Bindings = { DB: D1Database; CITY: DurableObjectNamespace; SNAPSHOTS: R2Bucket };
 type Variables = { keyId: string };
 
-const actions = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+const actions = new OpenAPIHono<{ Bindings: Bindings; Variables: Variables }>();
 
 // Helper: verify city ownership and active status
 async function verifyCityOwner(c: any, cityId: string): Promise<boolean> {
@@ -52,8 +56,47 @@ const TOOL_MAP: Record<string, string> = {
   bulldoze: 'bulldozer',
 };
 
-// POST /v1/cities/:id/actions — Place a tool
-actions.post('/:id/actions', authMiddleware, async (c) => {
+// --- POST /v1/cities/:id/actions ---
+
+const placeActionRoute = createRoute({
+  method: 'post',
+  path: '/{id}/actions',
+  tags: ['Actions'],
+  summary: 'Place a tool',
+  description: 'Places a building, zone, or bulldoze action at the given coordinates. Supports auto-infrastructure flags for automatic power, road, and bulldoze.',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: CityIdParam }),
+    body: { content: { 'application/json': { schema: PlaceActionBodySchema } } },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: PlaceActionResponseSchema } },
+      description: 'Action result',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Bad request',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Unauthorized',
+    },
+    403: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Not your city or city not active',
+    },
+    429: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Rate limited (30 actions/min per city)',
+    },
+  },
+});
+
+actions.openapi(placeActionRoute, async (c) => {
+  const authResult = await authMiddleware(c, async () => {});
+  if (authResult) return authResult;
+
   const cityId = c.req.param('id');
 
   if (!await verifyCityOwner(c, cityId)) {
@@ -116,11 +159,46 @@ actions.post('/:id/actions', authMiddleware, async (c) => {
     response.auto_actions = result.auto_actions;
   }
 
-  return c.json(response);
+  return c.json(response, 200);
 });
 
-// POST /v1/cities/:id/budget — Update budget settings
-actions.post('/:id/budget', authMiddleware, async (c) => {
+// --- POST /v1/cities/:id/budget ---
+
+const setBudgetRoute = createRoute({
+  method: 'post',
+  path: '/{id}/budget',
+  tags: ['Actions'],
+  summary: 'Update budget settings',
+  description: 'Sets tax rate and service funding percentages. All fields are optional — only provided values are changed.',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: CityIdParam }),
+    body: { content: { 'application/json': { schema: BudgetBodySchema } } },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: BudgetResponseSchema } },
+      description: 'Budget updated',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Invalid values',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Unauthorized',
+    },
+    403: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Not your city or city not active',
+    },
+  },
+});
+
+actions.openapi(setBudgetRoute, async (c) => {
+  const authResult = await authMiddleware(c, async () => {});
+  if (authResult) return authResult;
+
   const cityId = c.req.param('id');
 
   if (!await verifyCityOwner(c, cityId)) {
@@ -177,11 +255,50 @@ actions.post('/:id/budget', authMiddleware, async (c) => {
     success: true,
     budget: stats?.budget,
     funds: stats?.funds,
-  });
+  }, 200);
 });
 
-// POST /v1/cities/:id/advance — Advance time
-actions.post('/:id/advance', authMiddleware, async (c) => {
+// --- POST /v1/cities/:id/advance ---
+
+const advanceRoute = createRoute({
+  method: 'post',
+  path: '/{id}/advance',
+  tags: ['Actions'],
+  summary: 'Advance time',
+  description: 'Advances the city simulation by 1-24 months. Each month is 64 ticks of the simulation engine. Triggers snapshot creation.',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: CityIdParam }),
+    body: { content: { 'application/json': { schema: AdvanceBodySchema } } },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.any() } },
+      description: 'Advance result with updated stats',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Invalid months value',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Unauthorized',
+    },
+    403: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Not your city or city not active',
+    },
+    429: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Rate limited (10 advances/min per city)',
+    },
+  },
+});
+
+actions.openapi(advanceRoute, async (c) => {
+  const authResult = await authMiddleware(c, async () => {});
+  if (authResult) return authResult;
+
   const cityId = c.req.param('id');
 
   if (!await verifyCityOwner(c, cityId)) {
@@ -203,7 +320,7 @@ actions.post('/:id/advance', authMiddleware, async (c) => {
     return errorResponse(c, 429, 'rate_limited', result.reason);
   }
 
-  // Sync year/population/funds to D1 (advance doesn't return score)
+  // Sync year/population/funds to D1
   c.executionCtx.waitUntil(
     c.env.DB.prepare(
       `UPDATE cities SET game_year = ?, population = ?, funds = ?, updated_at = datetime('now')
@@ -238,7 +355,7 @@ actions.post('/:id/advance', authMiddleware, async (c) => {
     );
   }
 
-  return c.json(result);
+  return c.json(result, 200);
 });
 
 export { actions };

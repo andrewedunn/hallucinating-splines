@@ -1,15 +1,20 @@
 // ABOUTME: City CRUD endpoints — create, list, get, delete.
 // ABOUTME: Creates Durable Objects for new cities, queries D1 for listings.
 
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../auth';
 import { generateCityName } from '../names';
 import { errorResponse } from '../errors';
+import {
+  CityIdParam, ErrorSchema, CityListSchema, CreateCityBodySchema,
+  CreateCityResponseSchema, RetireCityResponseSchema, CityListQuerySchema,
+  PaginationQuerySchema, BuildableQuerySchema, RegionQuerySchema, SnapshotYearParam,
+} from '../schemas';
 
 type Bindings = { DB: D1Database; CITY: DurableObjectNamespace; SNAPSHOTS: R2Bucket };
 type Variables = { keyId: string; mayorName: string };
 
-const cities = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+const cities = new OpenAPIHono<{ Bindings: Bindings; Variables: Variables }>();
 
 function generateCityId(): string {
   const bytes = new Uint8Array(8);
@@ -20,11 +25,41 @@ function generateCityId(): string {
   return `city_${hex}`;
 }
 
-// POST /v1/cities — Create a new city
-cities.post('/', authMiddleware, async (c) => {
+// --- POST /v1/cities ---
+
+const createCityRoute = createRoute({
+  method: 'post',
+  path: '/',
+  tags: ['Cities'],
+  summary: 'Create a new city',
+  description: 'Creates a new city with optional seed. Max 5 active cities per API key.',
+  security: [{ Bearer: [] }],
+  request: {
+    body: { content: { 'application/json': { schema: CreateCityBodySchema } } },
+  },
+  responses: {
+    201: {
+      content: { 'application/json': { schema: CreateCityResponseSchema } },
+      description: 'City created',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Limit reached',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Unauthorized',
+    },
+  },
+});
+
+cities.openapi(createCityRoute, async (c) => {
+  // Auth middleware runs via .use() below — but for openapi routes we call it manually
+  const authResult = await authMiddleware(c, async () => {});
+  if (authResult) return authResult;
+
   const keyId = c.get('keyId');
 
-  // Check active city count
   const countResult = await c.env.DB.prepare(
     "SELECT COUNT(*) as count FROM cities WHERE api_key_id = ? AND status = 'active'"
   ).bind(keyId).first<{ count: number }>();
@@ -39,12 +74,10 @@ cities.post('/', authMiddleware, async (c) => {
   const cityId = generateCityId();
   const cityName = generateCityName(cityId);
 
-  // Create Durable Object and init game
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
   const initStats = await stub.init(cityId, seed);
 
-  // Insert city row in D1
   await c.env.DB.prepare(
     `INSERT INTO cities (id, api_key_id, name, seed, game_year, population, funds, score)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
@@ -64,8 +97,26 @@ cities.post('/', authMiddleware, async (c) => {
   }, 201);
 });
 
-// GET /v1/cities — List cities (public)
-cities.get('/', async (c) => {
+// --- GET /v1/cities ---
+
+const listCitiesRoute = createRoute({
+  method: 'get',
+  path: '/',
+  tags: ['Cities'],
+  summary: 'List cities',
+  description: 'Returns a paginated list of all cities, sortable by newest, population, or score.',
+  request: {
+    query: CityListQuerySchema,
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: CityListSchema } },
+      description: 'City list',
+    },
+  },
+});
+
+cities.openapi(listCitiesRoute, async (c) => {
   const sort = c.req.query('sort') || 'newest';
   const limit = Math.min(parseInt(c.req.query('limit') || '20'), 50);
   const offset = parseInt(c.req.query('offset') || '0');
@@ -88,11 +139,33 @@ cities.get('/', async (c) => {
   return c.json({
     cities: rows.results,
     total: total?.count || 0,
-  });
+  }, 200);
 });
 
-// GET /v1/cities/:id/stats — Live stats from DO
-cities.get('/:id/stats', async (c) => {
+// --- GET /v1/cities/:id/stats ---
+
+const getCityStatsRoute = createRoute({
+  method: 'get',
+  path: '/{id}/stats',
+  tags: ['Cities'],
+  summary: 'Get live city stats',
+  description: 'Returns live stats from the Durable Object (population, funds, demand, etc.).',
+  request: {
+    params: z.object({ id: CityIdParam }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.any() } },
+      description: 'Live city stats',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'City not found',
+    },
+  },
+});
+
+cities.openapi(getCityStatsRoute, async (c) => {
   const cityId = c.req.param('id');
 
   const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
@@ -102,11 +175,33 @@ cities.get('/:id/stats', async (c) => {
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
   const stats = await stub.getStats();
-  return c.json(stats);
+  return c.json(stats, 200);
 });
 
-// GET /v1/cities/:id/map — Full tile map
-cities.get('/:id/map', async (c) => {
+// --- GET /v1/cities/:id/map ---
+
+const getCityMapRoute = createRoute({
+  method: 'get',
+  path: '/{id}/map',
+  tags: ['Cities'],
+  summary: 'Get full tile map',
+  description: 'Returns the complete 120x100 tile map as a flat array.',
+  request: {
+    params: z.object({ id: CityIdParam }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.any() } },
+      description: 'Full tile map data',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'City not found',
+    },
+  },
+});
+
+cities.openapi(getCityMapRoute, async (c) => {
   const cityId = c.req.param('id');
 
   const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
@@ -116,11 +211,33 @@ cities.get('/:id/map', async (c) => {
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
   const mapData = await stub.getMapData();
-  return c.json(mapData);
+  return c.json(mapData, 200);
 });
 
-// GET /v1/cities/:id/map/summary — Semantic map analysis
-cities.get('/:id/map/summary', async (c) => {
+// --- GET /v1/cities/:id/map/summary ---
+
+const getMapSummaryRoute = createRoute({
+  method: 'get',
+  path: '/{id}/map/summary',
+  tags: ['Cities'],
+  summary: 'Get semantic map analysis',
+  description: 'Returns zone counts, power coverage, and other high-level map metrics.',
+  request: {
+    params: z.object({ id: CityIdParam }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.any() } },
+      description: 'Semantic map analysis',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'City not found',
+    },
+  },
+});
+
+cities.openapi(getMapSummaryRoute, async (c) => {
   const cityId = c.req.param('id');
   const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
     .bind(cityId).first();
@@ -128,11 +245,38 @@ cities.get('/:id/map/summary', async (c) => {
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
   const summary = await stub.getMapSummary();
-  return c.json(summary);
+  return c.json(summary, 200);
 });
 
-// GET /v1/cities/:id/map/buildable — Buildability mask
-cities.get('/:id/map/buildable', async (c) => {
+// --- GET /v1/cities/:id/map/buildable ---
+
+const getBuildableRoute = createRoute({
+  method: 'get',
+  path: '/{id}/map/buildable',
+  tags: ['Cities'],
+  summary: 'Get buildable positions',
+  description: 'Returns valid placement positions for a given action type.',
+  request: {
+    params: z.object({ id: CityIdParam }),
+    query: BuildableQuerySchema,
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.any() } },
+      description: 'Buildable positions',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Bad request',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'City not found',
+    },
+  },
+});
+
+cities.openapi(getBuildableRoute, async (c) => {
   const cityId = c.req.param('id');
   const action = c.req.query('action');
   if (!action) return errorResponse(c, 400, 'bad_request', 'Missing action query parameter');
@@ -154,11 +298,34 @@ cities.get('/:id/map/buildable', async (c) => {
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
   const result = await stub.getBuildablePositions(toolName);
-  return c.json({ action, ...result });
+  return c.json({ action, ...result }, 200);
 });
 
-// GET /v1/cities/:id/map/region — Tile subregion
-cities.get('/:id/map/region', async (c) => {
+// --- GET /v1/cities/:id/map/region ---
+
+const getMapRegionRoute = createRoute({
+  method: 'get',
+  path: '/{id}/map/region',
+  tags: ['Cities'],
+  summary: 'Get tile subregion',
+  description: 'Returns a rectangular subregion of the map. Max 40x40 tiles.',
+  request: {
+    params: z.object({ id: CityIdParam }),
+    query: RegionQuerySchema,
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.any() } },
+      description: 'Tile subregion data',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'City not found',
+    },
+  },
+});
+
+cities.openapi(getMapRegionRoute, async (c) => {
   const cityId = c.req.param('id');
   const x = parseInt(c.req.query('x') || '0');
   const y = parseInt(c.req.query('y') || '0');
@@ -172,11 +339,33 @@ cities.get('/:id/map/region', async (c) => {
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
   const region = await stub.getMapRegion(x, y, w, h);
-  return c.json(region);
+  return c.json(region, 200);
 });
 
-// GET /v1/cities/:id/demand — RCI demand
-cities.get('/:id/demand', async (c) => {
+// --- GET /v1/cities/:id/demand ---
+
+const getDemandRoute = createRoute({
+  method: 'get',
+  path: '/{id}/demand',
+  tags: ['Cities'],
+  summary: 'Get RCI demand',
+  description: 'Returns residential, commercial, and industrial demand values. Positive means the city wants more of that zone type.',
+  request: {
+    params: z.object({ id: CityIdParam }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.any() } },
+      description: 'RCI demand data',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'City not found',
+    },
+  },
+});
+
+cities.openapi(getDemandRoute, async (c) => {
   const cityId = c.req.param('id');
 
   const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
@@ -186,11 +375,34 @@ cities.get('/:id/demand', async (c) => {
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
   const demand = await stub.getDemandData();
-  return c.json(demand);
+  return c.json(demand, 200);
 });
 
-// GET /v1/cities/:id/snapshots — List snapshots
-cities.get('/:id/snapshots', async (c) => {
+// --- GET /v1/cities/:id/snapshots ---
+
+const listSnapshotsRoute = createRoute({
+  method: 'get',
+  path: '/{id}/snapshots',
+  tags: ['Cities'],
+  summary: 'List snapshots',
+  description: 'Returns a paginated list of city snapshots (one per game year).',
+  request: {
+    params: z.object({ id: CityIdParam }),
+    query: PaginationQuerySchema,
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.any() } },
+      description: 'Snapshot list',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'City not found',
+    },
+  },
+});
+
+cities.openapi(listSnapshotsRoute, async (c) => {
   const cityId = c.req.param('id');
 
   const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
@@ -212,11 +424,37 @@ cities.get('/:id/snapshots', async (c) => {
   return c.json({
     snapshots: snapshots.results,
     total: total?.count || 0,
-  });
+  }, 200);
 });
 
-// GET /v1/cities/:id/snapshots/:year — Get snapshot tile data from R2
-cities.get('/:id/snapshots/:year', async (c) => {
+// --- GET /v1/cities/:id/snapshots/:year ---
+
+const getSnapshotRoute = createRoute({
+  method: 'get',
+  path: '/{id}/snapshots/{year}',
+  tags: ['Cities'],
+  summary: 'Get snapshot tile data',
+  description: 'Returns tile map data for a specific snapshot year from R2 storage.',
+  request: {
+    params: z.object({ id: CityIdParam, year: SnapshotYearParam }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.any() } },
+      description: 'Snapshot tile data',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Invalid year',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Snapshot not found',
+    },
+  },
+});
+
+cities.openapi(getSnapshotRoute, async (c) => {
   const cityId = c.req.param('id');
   const year = parseInt(c.req.param('year'));
 
@@ -232,11 +470,33 @@ cities.get('/:id/snapshots/:year', async (c) => {
   if (!object) return errorResponse(c, 404, 'not_found', 'Snapshot data missing');
 
   const data = await object.json();
-  return c.json(data);
+  return c.json(data, 200);
 });
 
-// GET /v1/cities/:id/history — Census history arrays
-cities.get('/:id/history', async (c) => {
+// --- GET /v1/cities/:id/history ---
+
+const getHistoryRoute = createRoute({
+  method: 'get',
+  path: '/{id}/history',
+  tags: ['Cities'],
+  summary: 'Get census history',
+  description: 'Returns population, commercial, industrial, and other census history arrays from the simulation.',
+  request: {
+    params: z.object({ id: CityIdParam }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.any() } },
+      description: 'Census history arrays',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'City not found',
+    },
+  },
+});
+
+cities.openapi(getHistoryRoute, async (c) => {
   const cityId = c.req.param('id');
 
   const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
@@ -246,11 +506,34 @@ cities.get('/:id/history', async (c) => {
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
   const history = await stub.getCensusHistory();
-  return c.json(history);
+  return c.json(history, 200);
 });
 
-// GET /v1/cities/:id/actions — Action history
-cities.get('/:id/actions', async (c) => {
+// --- GET /v1/cities/:id/actions ---
+
+const listActionsRoute = createRoute({
+  method: 'get',
+  path: '/{id}/actions',
+  tags: ['Cities'],
+  summary: 'Get action history',
+  description: 'Returns a paginated list of actions taken on this city.',
+  request: {
+    params: z.object({ id: CityIdParam }),
+    query: PaginationQuerySchema,
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.any() } },
+      description: 'Action history',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'City not found',
+    },
+  },
+});
+
+cities.openapi(listActionsRoute, async (c) => {
   const cityId = c.req.param('id');
   const limit = Math.min(parseInt(c.req.query('limit') || '50'), 100);
   const offset = parseInt(c.req.query('offset') || '0');
@@ -274,11 +557,33 @@ cities.get('/:id/actions', async (c) => {
       params: JSON.parse(a.params),
     })),
     total: total?.count || 0,
-  });
+  }, 200);
 });
 
-// GET /v1/cities/:id — Get city summary (public)
-cities.get('/:id', async (c) => {
+// --- GET /v1/cities/:id ---
+
+const getCityRoute = createRoute({
+  method: 'get',
+  path: '/{id}',
+  tags: ['Cities'],
+  summary: 'Get city summary',
+  description: 'Returns city metadata including name, mayor, population, score, status, and seed.',
+  request: {
+    params: z.object({ id: CityIdParam }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.any() } },
+      description: 'City summary',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'City not found',
+    },
+  },
+});
+
+cities.openapi(getCityRoute, async (c) => {
   const cityId = c.req.param('id');
 
   const row = await c.env.DB.prepare(
@@ -291,11 +596,49 @@ cities.get('/:id', async (c) => {
     return errorResponse(c, 404, 'not_found', 'City not found');
   }
 
-  return c.json(row);
+  return c.json(row, 200);
 });
 
-// DELETE /v1/cities/:id — Retire city (owner only, history preserved)
-cities.delete('/:id', authMiddleware, async (c) => {
+// --- DELETE /v1/cities/:id ---
+
+const deleteCityRoute = createRoute({
+  method: 'delete',
+  path: '/{id}',
+  tags: ['Cities'],
+  summary: 'Retire a city',
+  description: 'Retires an active city you own. History is preserved. This action cannot be undone.',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: CityIdParam }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: RetireCityResponseSchema } },
+      description: 'City retired',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'City already ended',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Unauthorized',
+    },
+    403: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Not your city',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'City not found',
+    },
+  },
+});
+
+cities.openapi(deleteCityRoute, async (c) => {
+  const authResult = await authMiddleware(c, async () => {});
+  if (authResult) return authResult;
+
   const cityId = c.req.param('id');
   const keyId = c.get('keyId');
 
@@ -315,17 +658,15 @@ cities.delete('/:id', authMiddleware, async (c) => {
     return errorResponse(c, 400, 'bad_request', 'City is already ended');
   }
 
-  // Clean up DO state
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
   await stub.deleteCity();
 
-  // Mark as ended with retired reason
   await c.env.DB.prepare(
     "UPDATE cities SET status = 'ended', ended_reason = 'retired', updated_at = datetime('now') WHERE id = ?"
   ).bind(cityId).run();
 
-  return c.json({ retired: true, message: 'City retired. History preserved.' });
+  return c.json({ retired: true, message: 'City retired. History preserved.' }, 200);
 });
 
 export { cities };

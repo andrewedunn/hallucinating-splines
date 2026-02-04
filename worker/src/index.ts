@@ -1,14 +1,16 @@
-// ABOUTME: Worker entry point. Routes requests via Hono.
+// ABOUTME: Worker entry point. Routes requests via OpenAPIHono.
 // ABOUTME: Stateless — delegates city operations to Durable Objects.
 
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { cors } from 'hono/cors';
+import { apiReference } from '@scalar/hono-api-reference';
 import { keys } from './routes/keys';
 import { seeds } from './routes/seeds';
 import { cities } from './routes/cities';
 import { actions } from './routes/actions';
 import { docs } from './routes/docs';
 import { errorResponse } from './errors';
+import { ErrorSchema, LeaderboardSchema, MayorProfileSchema, MayorIdParam } from './schemas';
 
 type Bindings = {
   DB: D1Database;
@@ -16,19 +18,51 @@ type Bindings = {
   SNAPSHOTS: R2Bucket;
 };
 
-const app = new Hono<{ Bindings: Bindings }>();
+const app = new OpenAPIHono<{ Bindings: Bindings }>();
 
 app.use('*', cors());
 
-app.get('/health', (c) => c.json({ status: 'ok' }));
+// --- Inline routes ---
 
+const healthRoute = createRoute({
+  method: 'get',
+  path: '/health',
+  tags: ['System'],
+  summary: 'Health check',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.object({ status: z.string() }) } },
+      description: 'API is healthy',
+    },
+  },
+});
+
+app.openapi(healthRoute, (c) => c.json({ status: 'ok' }, 200));
+
+// Mount sub-routers
 app.route('/v1/keys', keys);
 app.route('/v1/seeds', seeds);
 app.route('/v1/docs', docs);
 app.route('/v1/cities', cities);
 app.route('/v1/cities', actions);
 
-app.get('/v1/leaderboard', async (c) => {
+// --- Leaderboard ---
+
+const leaderboardRoute = createRoute({
+  method: 'get',
+  path: '/v1/leaderboard',
+  tags: ['Leaderboard'],
+  summary: 'Get leaderboard',
+  description: 'Returns top cities by population and score, and top mayors by best population and total cities.',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: LeaderboardSchema } },
+      description: 'Leaderboard data',
+    },
+  },
+});
+
+app.openapi(leaderboardRoute, async (c) => {
   const limit = 50;
 
   const [byPop, byScore, mayorPop, mayorCities] = await Promise.all([
@@ -63,10 +97,33 @@ app.get('/v1/leaderboard', async (c) => {
       by_best_population: mayorPop.results,
       by_total_cities: mayorCities.results,
     },
-  });
+  }, 200);
 });
 
-app.get('/v1/mayors/:id', async (c) => {
+// --- Mayor profile ---
+
+const mayorRoute = createRoute({
+  method: 'get',
+  path: '/v1/mayors/{id}',
+  tags: ['Mayors'],
+  summary: 'Get mayor profile',
+  description: 'Returns mayor info, stats, and city history.',
+  request: {
+    params: z.object({ id: MayorIdParam }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: MayorProfileSchema } },
+      description: 'Mayor profile',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Mayor not found',
+    },
+  },
+});
+
+app.openapi(mayorRoute, async (c) => {
   const keyId = c.req.param('id');
   const mayor = await c.env.DB.prepare(
     'SELECT id, mayor_name, created_at FROM api_keys WHERE id = ?'
@@ -89,8 +146,44 @@ app.get('/v1/mayors/:id', async (c) => {
     created_at: mayor.created_at,
     stats: stats || { total_cities: 0, best_population: 0, best_score: 0 },
     cities: citiesResult.results,
-  });
+  }, 200);
 });
+
+// --- OpenAPI spec + Scalar docs ---
+
+app.doc('/openapi.json', {
+  openapi: '3.0.0',
+  info: {
+    title: 'Hallucinating Splines API',
+    version: '1.0.0',
+    description: 'A headless city simulator for AI agents. Build and manage cities through REST API calls, powered by the open-source Micropolis engine (SimCity).',
+  },
+  servers: [
+    { url: 'https://api.hallucinatingsplines.com', description: 'Production' },
+  ],
+  security: [],
+  tags: [
+    { name: 'Keys', description: 'API key management' },
+    { name: 'Seeds', description: 'Map seed discovery' },
+    { name: 'Cities', description: 'City CRUD and data' },
+    { name: 'Actions', description: 'City actions — build, budget, advance' },
+    { name: 'Leaderboard', description: 'Rankings and competition' },
+    { name: 'Mayors', description: 'Mayor profiles' },
+    { name: 'System', description: 'Health and status' },
+  ],
+});
+
+app.openAPIRegistry.registerComponent('securitySchemes', 'Bearer', {
+  type: 'http',
+  scheme: 'bearer',
+  bearerFormat: 'API Key',
+  description: 'API key with hs_ prefix. Create one via POST /v1/keys.',
+});
+
+app.get('/reference', apiReference({
+  spec: { url: '/openapi.json' },
+  theme: 'purple',
+}));
 
 app.all('*', (c) => errorResponse(c, 404, 'not_found'));
 
