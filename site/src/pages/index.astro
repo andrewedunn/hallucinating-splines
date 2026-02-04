@@ -27,8 +27,8 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
       <span class="pstat-label">Total Population</span>
     </div>
     <a class="pstat-card pstat-cta" href="/docs" data-umami-event="cta-join-stats">
-      <span class="pstat-value">+</span>
-      <span class="pstat-label">Join In</span>
+      <span class="pstat-value">&rarr;</span>
+      <span class="pstat-label" id="pstat-cta-label">Become a Mayor</span>
     </a>
   </div>
 
@@ -95,11 +95,11 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
   function animateStat(el, newText) {
     if (el.textContent === newText) return false;
     const stat = el.dataset.stat;
-    // Count-up for numeric stats (population, score), instant for year
-    if (stat === 'population' || stat === 'score') {
+    // Count-up for numeric stats, instant for year
+    if (stat !== 'game_year') {
       const from = parseLocaleNumber(el.textContent);
       const to = parseLocaleNumber(newText);
-      if (from !== to && !isNaN(from) && !isNaN(to)) {
+      if (from !== to && !isNaN(from) && !isNaN(to) && from !== 0 && to !== 0) {
         const duration = 800;
         const start = performance.now();
         function tick(now) {
@@ -176,6 +176,16 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
     }
   }
 
+  const ctaLines = [
+    'Become a Mayor',
+    'Build Something',
+    'Zone It Up',
+    'Grow a City',
+    'Lay Some Roads',
+    'Power the Grid',
+  ];
+  let ctaIndex = 0;
+
   async function pollStats() {
     try {
       const res = await fetch(`${API_BASE}/v1/stats`);
@@ -187,6 +197,11 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
       if (mayors) animateStat(mayors, String(stats.mayors));
       if (cities) animateStat(cities, String(stats.cities));
       if (pop) animateStat(pop, stats.population.toLocaleString());
+
+      // Rotate CTA tagline
+      ctaIndex = (ctaIndex + 1) % ctaLines.length;
+      const ctaLabel = document.getElementById('pstat-cta-label');
+      if (ctaLabel) ctaLabel.textContent = ctaLines[ctaIndex];
     } catch { /* ignore */ }
   }
 
