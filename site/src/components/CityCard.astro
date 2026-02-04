@@ -49,7 +49,7 @@ const cityHref = slug ? `/cities/${slug}` : `/cities/${id}`;
 const mayorHref = mayor_slug ? `/mayors/${mayor_slug}` : mayor_id ? `/mayors/${mayor_id}` : null;
 ---
 <div class="city-card" data-city-id={id}>
-  <a href={cityHref} class="card-thumb" data-city-id={id} data-api-base={API_BASE} data-umami-event="city-card-click">
+  <a href={cityHref} class="card-thumb" data-city-id={id} data-api-base={API_BASE} data-game-year={game_year} data-umami-event="city-card-click">
   </a>
   <div class="card-body">
     <div class="card-header">

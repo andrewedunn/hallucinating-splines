@@ -276,6 +276,17 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
     return c;
   }
 
+  function drawYearOverlay(ctx: CanvasRenderingContext2D, w: number, h: number, year: string) {
+    ctx.font = 'bold 20px monospace';
+    const pad = 6;
+    const tw = ctx.measureText(year).width;
+    const lh = 22;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(w - tw - pad * 2, h - lh - pad, tw + pad * 2, lh + pad);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fillText(year, w - tw - pad, h - pad - 1);
+  }
+
   async function renderThumbnail(el: HTMLElement) {
     const cityId = el.dataset.cityId;
     const apiBase = el.dataset.apiBase;
@@ -301,7 +312,10 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
 
     // Render live map onto first canvas
     const rendered = renderTilesToCanvas(sheet, mapRes.tiles, mapWidth, mapHeight, targetW, targetH);
-    c0.getContext('2d')!.drawImage(rendered, 0, 0);
+    const ctx0 = c0.getContext('2d')!;
+    ctx0.drawImage(rendered, 0, 0);
+    const gameYear = el.dataset.gameYear;
+    if (gameYear) drawYearOverlay(ctx0, c0.width, c0.height, gameYear);
 
     const state: ThumbState = {
       canvases: [c0, c1],
@@ -428,15 +442,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
       ctx.drawImage(rendered, 0, 0);
 
       // Year overlay
-      const label = String(snap.year);
-      ctx.font = 'bold 20px monospace';
-      const pad = 6;
-      const tw = ctx.measureText(label).width;
-      const lh = 22;
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-      ctx.fillRect(nextCanvas.width - tw - pad * 2, nextCanvas.height - lh - pad, tw + pad * 2, lh + pad);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      ctx.fillText(label, nextCanvas.width - tw - pad, nextCanvas.height - pad - 1);
+      drawYearOverlay(ctx, nextCanvas.width, nextCanvas.height, String(snap.year));
 
       // Crossfade
       state.canvases[state.activeIndex].style.opacity = '0';
