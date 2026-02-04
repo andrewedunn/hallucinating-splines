@@ -173,7 +173,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
   interface ThumbState {
     canvases: [HTMLCanvasElement, HTMLCanvasElement];
     activeIndex: number;
-    snapshots: number[][];
+    snapshots: { tiles: number[]; year: number }[];
     snapshotIndex: number;
     cycleTimer: ReturnType<typeof setTimeout> | null;
     isVisible: boolean;
@@ -316,30 +316,30 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
       }
 
       // Fetch tile data sequentially to avoid hammering the API
-      const allTiles: number[][] = [];
+      const allSnaps: { tiles: number[]; year: number }[] = [];
       for (const snap of picked) {
         try {
           const tileRes = await fetch(`${apiBase}/v1/cities/${cityId}/snapshots/${snap.game_year}`);
           if (!tileRes.ok) continue;
           const tileData = await tileRes.json();
-          if (tileData.tiles) allTiles.push(tileData.tiles);
+          if (tileData.tiles) allSnaps.push({ tiles: tileData.tiles, year: tileData.game_year });
         } catch { /* skip failed snapshot */ }
       }
 
       // Filter out visually similar frames — keep only snapshots where
       // enough tiles changed vs the previous kept frame
       const MIN_CHANGE_RATIO = 0.02; // tune this: 2% of tiles must differ
-      if (allTiles.length > 0) {
-        state.snapshots.push(allTiles[0]);
-        for (let i = 1; i < allTiles.length; i++) {
-          const prev = state.snapshots[state.snapshots.length - 1];
-          const cur = allTiles[i];
+      if (allSnaps.length > 0) {
+        state.snapshots.push(allSnaps[0]);
+        for (let i = 1; i < allSnaps.length; i++) {
+          const prev = state.snapshots[state.snapshots.length - 1].tiles;
+          const cur = allSnaps[i].tiles;
           let changed = 0;
           for (let j = 0; j < cur.length; j++) {
             if (cur[j] !== prev[j]) changed++;
           }
           if (changed / cur.length >= MIN_CHANGE_RATIO) {
-            state.snapshots.push(cur);
+            state.snapshots.push(allSnaps[i]);
           }
         }
       }
@@ -371,13 +371,24 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
       }
 
       state.snapshotIndex = (state.snapshotIndex + 1) % state.snapshots.length;
-      const tiles = state.snapshots[state.snapshotIndex];
+      const snap = state.snapshots[state.snapshotIndex];
       const nextIndex = state.activeIndex === 0 ? 1 : 0;
 
       // Render onto the hidden canvas
-      const rendered = renderTilesToCanvas(sheet, tiles, state.width, state.height, targetW, targetH);
+      const rendered = renderTilesToCanvas(sheet, snap.tiles, state.width, state.height, targetW, targetH);
       const nextCanvas = state.canvases[nextIndex];
-      nextCanvas.getContext('2d')!.drawImage(rendered, 0, 0);
+      const ctx = nextCanvas.getContext('2d')!;
+      ctx.drawImage(rendered, 0, 0);
+
+      // Year overlay
+      const label = String(snap.year);
+      ctx.font = 'bold 11px monospace';
+      const pad = 3;
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+      ctx.fillRect(nextCanvas.width - tw - pad * 2, nextCanvas.height - 15 - pad, tw + pad * 2, 15 + pad);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.fillText(label, nextCanvas.width - tw - pad, nextCanvas.height - pad - 2);
 
       // Crossfade
       state.canvases[state.activeIndex].style.opacity = '0';
