@@ -4,30 +4,112 @@ Project-specific instructions for Claude Code.
 
 ## What This Is
 
-Hallucinating Splines is a headless SimCity engine extracted from [micropolisJS](https://github.com/graememcc/micropolisJS) (GPL v3). It runs the full Micropolis simulation in Node.js with no DOM, no jQuery, no browser APIs. The long-term goal is a "SimCity-as-a-Service" platform for AI agents (see `docs/PRD.md`).
+Hallucinating Splines is a platform where AI agents build and manage cities through an API, powered by the open-source Micropolis engine (the SimCity source code). It has three parts:
+
+1. **Engine** (`src/`) — Headless Micropolis simulation extracted from [micropolisJS](https://github.com/graememcc/micropolisJS) (GPL v3). Runs in Node.js with no browser dependencies.
+2. **API Worker** (`worker/`) — Cloudflare Worker exposing the engine as a REST API. Uses Hono, D1, Durable Objects, and R2.
+3. **Website** (`site/`) — Astro SSR site deployed to Cloudflare Pages. Shows city gallery, leaderboard, docs, and city detail pages with tile-rendered maps.
 
 ## Project Structure
 
 ```
 src/
-  engine/          # Copied + patched micropolisJS core (~58 files)
-  headlessGame.ts  # Main public API
-  tickRunner.ts    # Drives simulation without Date-based throttling
-  seededRandom.ts  # Mulberry32 PRNG for reproducible map generation
-  types.ts         # Public TypeScript interfaces
-test/              # Jest tests (unit + integration)
-docs/              # PRDs and design documents
+  engine/              # Copied + patched micropolisJS core (~58 files, JS)
+  headlessGame.ts      # Main engine API wrapper
+  tickRunner.ts        # Drives simulation without Date-based throttling
+  seededRandom.ts      # Mulberry32 PRNG for reproducible map generation
+  types.ts             # Public TypeScript interfaces
+test/                  # Jest tests (unit + integration)
+
+worker/
+  src/
+    index.ts           # Hono app entry point + scheduled handler
+    auth.ts            # API key generation, SHA-256 hashing, auth middleware
+    errors.ts          # Standardized error response helper
+    names.ts           # Deterministic mayor/city name generation
+    cityDO.ts          # Durable Object — one HeadlessGame per city
+    autoInfra.ts       # Auto-bulldoze, auto-power, auto-road logic
+    mapAnalysis.ts     # Semantic map analysis (zone counts, power coverage)
+    routes/
+      keys.ts          # POST /v1/keys — API key creation
+      cities.ts        # City CRUD, map data, snapshots, actions history
+      actions.ts       # POST /v1/cities/:id/actions, POST /v1/cities/:id/advance
+      seeds.ts         # GET /v1/seeds — curated map seeds
+  migrations/          # D1 SQL migrations (run via wrangler d1 migrations apply)
+  wrangler.toml        # Cloudflare config (D1, DO, R2, cron triggers)
+
+site/
+  src/
+    layouts/Base.astro # Shell: nav, footer, meta tags
+    pages/
+      index.astro      # City gallery (sortable, with tile thumbnails)
+      docs.astro       # API documentation
+      leaderboard.astro
+    components/
+      CityCard.astro   # Gallery card with thumbnail placeholder
+      StatsPanel.astro # City detail stats
+      MapViewer.tsx    # React: pannable/zoomable tile map (canvas)
+      HistoryCharts.tsx # React: population/funds/score sparklines
+      ActionLog.astro  # Collapsible action history
+    lib/
+      api.ts           # Server-side fetch wrapper for the API
+      sprites.ts       # Tile sprite sheet loader + coordinate math
+      tileRenderer.ts  # Canvas tile rendering
+  public/
+    styles/global.css  # Dark theme, layout, responsive breakpoints
+    tiles.png          # Micropolis sprite sheet
+
+docs/                  # PRDs and design documents
+docs/plans/            # Implementation plans (dated)
 ```
 
-## Build & Test
+## Build, Test & Deploy
 
+### Engine (root)
 ```bash
-npm test                  # Run all tests (42 tests)
-npm run typecheck         # TypeScript type checking
-npm run build             # Compile to dist/
+npm test              # Jest tests (requires --experimental-vm-modules)
+npm run typecheck     # TypeScript type checking
+npm run build         # Compile to dist/
 ```
 
-Tests require `--experimental-vm-modules` (handled by the test script).
+### Worker
+```bash
+cd worker
+npm run dev           # Local dev with wrangler
+npm run deploy        # Deploy to Cloudflare Workers
+npm run typecheck     # Type check worker code
+
+# D1 migrations
+npx wrangler d1 migrations apply hallucinating-splines-db
+npx wrangler d1 migrations apply hallucinating-splines-db --local  # for dev
+```
+
+### Site
+```bash
+cd site
+npm run dev           # Local Astro dev server
+npm run build         # Build for production
+npm run preview       # Preview production build
+# Deploy via Cloudflare Pages (manual or wrangler pages deploy dist/)
+```
+
+GitHub is NOT connected to Cloudflare — deploys are manual.
+
+## API Architecture
+
+- **Hono** router in `worker/src/index.ts` handles all HTTP routing
+- **D1** (SQLite) stores api_keys, cities metadata, snapshots, actions
+- **Durable Objects** (`CityDO`) hold live game state in memory, persist to DO storage
+- **R2** stores snapshot tile data (full map captures at each game year)
+- **Scheduled handler** runs daily via cron — currently ends inactive cities (14 days)
+- Auth uses SHA-256 hashed API keys with `hs_` prefix. Keys are shown once at creation.
+- Rate limiting is in-memory per DO: 30 actions/min, 10 advances/min
+
+### Key Patterns
+- City IDs: `city_` + 16 hex chars
+- Key IDs: `key_` + 16 hex chars
+- API keys: `hs_` + 64 hex chars (only the hash is stored)
+- Mayor/city names are deterministically generated from the key/city ID hash
 
 ## Engine Internals
 
@@ -53,6 +135,13 @@ These details matter when working with the simulation:
 - Engine files in `src/engine/` are upstream copies with minimal patches. Avoid modifying them unless necessary.
 - Test output must be clean — no unexpected console noise.
 - The engine uses mixed JS/TS. TypeScript files use `.ts` extension; engine files are `.js`. The `moduleNameMapper` in jest config only strips `.ts` extensions (not `.js`, which would break `text.js` imports).
+- Site uses Astro components (`.astro`) for static/server content, React (`.tsx`) for interactive client components (maps, charts).
+- Worker uses Hono idioms: `c.json()` for responses, `c.req.param()` / `c.req.query()` for params.
+
+## URLs
+
+- **API:** `https://api.hallucinatingsplines.com`
+- **Site:** `https://hallucinatingsplines.com`
 
 ## Key Docs
 
