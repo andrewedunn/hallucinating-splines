@@ -45,7 +45,7 @@ const timeAgo = relativeTime(updated_at);
 const freshness = activityColor(updated_at);
 ---
 <div class="city-card" data-city-id={id}>
-  <a href={`/cities/${id}`} class="card-thumb" data-city-id={id} data-api-base={API_BASE}>
+  <a href={`/cities/${id}`} class="card-thumb" data-city-id={id} data-api-base={API_BASE} data-umami-event="city-card-click">
   </a>
   <div class="card-body">
     <div class="card-header">

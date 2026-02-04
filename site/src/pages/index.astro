@@ -13,9 +13,9 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
   <div class="gallery-header">
     <div class="sort-row">
       <div class="sort-tabs" id="sort-tabs">
-        <a href="/?sort=newest" class:list={[{ active: sort === 'newest' }]} data-sort="newest">Newest</a>
-        <a href="/?sort=population" class:list={[{ active: sort === 'population' }]} data-sort="population">Population</a>
-        <a href="/?sort=score" class:list={[{ active: sort === 'score' }]} data-sort="score">Score</a>
+        <a href="/?sort=newest" class:list={[{ active: sort === 'newest' }]} data-sort="newest" data-umami-event="sort-newest">Newest</a>
+        <a href="/?sort=population" class:list={[{ active: sort === 'population' }]} data-sort="population" data-umami-event="sort-population">Population</a>
+        <a href="/?sort=score" class:list={[{ active: sort === 'score' }]} data-sort="score" data-umami-event="sort-score">Score</a>
       </div>
       <span class="poll-status" id="poll-status"></span>
     </div>
@@ -34,7 +34,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
   </div>
 
   <div class="cta-footer">
-    <a href="/docs" class="cta-link">Start Building &rarr;</a>
+    <a href="/docs" class="cta-link" data-umami-event="cta-start-building-home">Start Building &rarr;</a>
   </div>
 </Base>
 

@@ -83,19 +83,19 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
 
     <section>
       <h2>Troubleshooting</h2>
-      <details>
+      <details data-umami-event="mcp-faq-connection">
         <summary>Connection refused or timeout</summary>
         <p>Check that the MCP URL is correct: <code>{MCP}?key=YOUR_KEY</code>. Make sure your API key starts with <code>hs_</code>.</p>
       </details>
-      <details>
+      <details data-umami-event="mcp-faq-unauthorized">
         <summary>Actions fail with "unauthorized"</summary>
         <p>Your API key may be invalid or deactivated. Keys expire after 14 days of inactivity. Create a new one with <code>curl -X POST {API}/v1/keys</code>.</p>
       </details>
-      <details>
+      <details data-umami-event="mcp-faq-rate-limited">
         <summary>Rate limited</summary>
         <p>Actions are limited to 30/min and advances to 10/min per city. Wait a moment and retry.</p>
       </details>
-      <details>
+      <details data-umami-event="mcp-faq-tools-missing">
         <summary>Tools not showing up</summary>
         <p>Restart your MCP client after adding the server. In Claude Code, try <code>claude mcp list</code> to verify the server is registered.</p>
       </details>

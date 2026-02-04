@@ -1,7 +1,13 @@
 // ABOUTME: Timeline slider for scrubbing through city history snapshots.
 // ABOUTME: Loads snapshot list, fetches tile data on demand when user scrubs.
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+declare global {
+  interface Window {
+    umami?: { track: (event: string) => void };
+  }
+}
 
 interface Snapshot {
   game_year: number;
@@ -31,8 +37,14 @@ export default function HistoryScrubber({ cityId, apiBase, onSnapshotLoad }: Pro
       });
   }, [cityId, apiBase]);
 
+  const hasScrubbed = useRef(false);
+
   const loadSnapshot = useCallback(async (index: number) => {
     if (index < 0 || index >= snapshots.length) return;
+    if (!hasScrubbed.current) {
+      hasScrubbed.current = true;
+      window.umami?.track('history-scrub');
+    }
     setSelectedIndex(index);
     setLoading(true);
     try {
