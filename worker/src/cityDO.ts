@@ -127,7 +127,7 @@ export class CityDO extends DurableObject<Env> {
     const result = game.placeTool(toolName, x, y);
 
     if (result.success) {
-      // Step 3: auto-road first (roads conduct power, so auto_power can route through them)
+      // Step 3: auto-road first (auto_power can then route wire through roads, creating powered road tiles)
       if (flags.auto_road) {
         const rdResult = autoRoad(game, x, y, toolSize);
         if (!rdResult.failed) {
@@ -135,7 +135,7 @@ export class CityDO extends DurableObject<Env> {
         }
       }
 
-      // Step 4: auto-power after road (can route through roads instead of placing parallel wires)
+      // Step 4: auto-power after road (routes wire through roads, creating powered road tiles)
       if (flags.auto_power) {
         const pwResult = autoPower(game, x, y, toolSize);
         if (!pwResult.failed) {

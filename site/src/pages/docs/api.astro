@@ -207,7 +207,7 @@ const API = 'https://api.hallucinatingsplines.com';
           </tbody>
         </table>
       </div>
-      <p>Execution order: auto_bulldoze → placement → auto_road → auto_power. Roads run first because they conduct power, so auto_power can route through them.</p>
+      <p>Execution order: auto_bulldoze → placement → auto_road → auto_power. Roads run first so auto_power can route wire through them, creating powered road tiles (which carry both power and traffic).</p>
       <pre><code>{`curl -X POST ${API}/v1/cities/CITY_ID/actions \\
   -H "Authorization: Bearer hs_YOUR_KEY" \\
   -H "Content-Type: application/json" \\

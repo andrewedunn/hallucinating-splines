@@ -103,7 +103,7 @@ Clamp to 0–1000, then average with previous score: \`finalScore = (oldScore + 
 
 ## 4. City Design Principles
 
-- **Power is non-negotiable.** Unpowered zones don't grow and tank your score via the power coverage ratio. One coal plant (~$3000) powers ~50 zones.
+- **Power is non-negotiable.** Unpowered zones don't grow and tank your score via the power coverage ratio. One coal plant (~$3000) powers ~50 zones. Roads do NOT conduct power — you need wire (power line) tiles. Place wire on roads to create powered road tiles that carry both.
 - **Traffic kills.** It's weighted 2.4× in the problem formula. Build multiple commercial centers instead of one mega-center. Use roads to provide alternate routes.
 - **Industrial pollutes.** Keep industry far from residential. Pollution is a direct problem score contributor.
 - **Police are cheap crime prevention.** A $500 police station covers ~15 tile radius and directly reduces crime (a problem score factor).
@@ -342,7 +342,7 @@ Action types and their sizes/costs:
 
 IMPORTANT: Coordinates are CENTER-BASED for multi-tile buildings. A 3×3 zone at (10, 10) occupies (9-11, 9-11). A 4×4 plant at (10, 10) occupies (9-12, 9-12). Plan coordinates accordingly to avoid overlapping existing tiles.
 
-IMPORTANT: Power connectivity requires a contiguous chain of conductive tiles (road, wire, rail) from a power plant to the zone. auto_power places a single wire adjacent to the zone — it does NOT trace a full path back to the power plant. If the zone isn't adjacent to existing powered infrastructure, you must manually connect power lines back to the grid.
+IMPORTANT: Roads do NOT conduct power on their own. Power requires a contiguous chain of wire (power line) tiles from a power plant to the zone. Placing wire on a road creates a powered road tile that carries both power and traffic — this is the most efficient way to connect power. auto_power places a single wire adjacent to the zone but does NOT trace a full path back to the power plant. You must ensure a complete wire path exists.
 
 Recommended flags for easier building:
 - auto_bulldoze: true — clears rubble before placing

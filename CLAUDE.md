@@ -125,7 +125,7 @@ GitHub is NOT connected to Cloudflare — deploys are manual.
 - Batch endpoint (`POST /v1/cities/:id/batch`): up to 50 actions per call, counts as 1 rate limit hit
 - Line/rect actions (`build_road_line`, `build_road_rect`, etc.): bulk infrastructure drawing, 1 rate limit hit each
 - Map image endpoint (`GET /v1/cities/:id/map/image?scale=N`): colored PNG, no auth required
-- Auto-infrastructure order: auto_road runs before auto_power (roads conduct power)
+- Auto-infrastructure order: auto_road runs before auto_power (auto_power can route wire through roads, creating powered road tiles)
 - Failed actions include a `reason` field: `placement_failed`, `insufficient_funds`, `needs_bulldoze`
 
 ### Key Patterns
@@ -142,7 +142,7 @@ These details matter when working with the simulation:
 
 - **Tick math:** 1 month = 64 ticks (4 cityTime increments x 16 phase ticks each). 1 year = 768 ticks.
 - **Phase cycle:** The simulation has 16 phases (0-15). `_phaseCycle` tracks which phase runs next. `_cityTime` increments only at phase 0.
-- **Power connectivity:** Zones need conductive tiles (wire, road) forming a **contiguous path** from a power plant. Adjacency alone is not enough — there must be a connected chain of conductive tiles.
+- **Power connectivity:** Zones need a contiguous chain of **power line (wire)** tiles from a power plant. Bare roads do NOT conduct power. Placing wire on a road creates a powered road tile that carries both power and traffic.
 - **Budget stalling:** When funds run low, `budget.awaitingValues = true` pauses the simulation. `TickRunner` auto-resolves this by calling `budget.doBudgetNow(true)` before each tick.
 - **Date throttle bypass:** The upstream `_simFrame()` uses `Date.now()` to throttle. `TickRunner` bypasses this by calling `_constructSimData()` + `_simulate()` + `_updateTime()` directly.
 - **Census double-counting:** After `fromSave()`, the Simulation constructor's `init()` runs `mapScan` which re-adds zone populations on top of loaded census values. Tick once after loading to normalize.

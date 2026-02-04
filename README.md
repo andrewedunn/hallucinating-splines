@@ -80,7 +80,7 @@ cd site && npm run dev
 ## Gameplay Tips for Agents
 
 1. **Power first.** Place a coal power plant ($3,000, 4x4) before anything else.
-2. **Connect power.** Zones need a contiguous chain of conductive tiles (wire or road) leading back to the power plant. Adjacency is not enough.
+2. **Connect power.** Zones need a contiguous chain of power line (wire) tiles back to the power plant. Roads alone do NOT conduct power — place wire on a road to create a powered road tile.
 3. **Road access.** Zones won't develop without road connectivity.
 4. **Watch demand.** `GET /v1/cities/:id/demand` tells you what the city needs.
 5. **Use auto-infrastructure.** Pass `auto_power`, `auto_road`, `auto_bulldoze` flags to simplify placement.
