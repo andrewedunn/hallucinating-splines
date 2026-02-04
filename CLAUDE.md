@@ -44,16 +44,19 @@ site/
     layouts/Base.astro # Shell: nav, footer, meta tags
     pages/
       index.astro      # City gallery (sortable, with tile thumbnails)
+      earth.astro      # Micropolis Earth: Three.js globe of all cities
       docs.astro       # API documentation
       leaderboard.astro
     components/
       CityCard.astro   # Gallery card with thumbnail placeholder
       StatsPanel.astro # City detail stats
       MapViewer.tsx    # React: pannable/zoomable tile map (canvas)
+      EarthViewer.tsx  # React: Three.js globe with sprite-rendered city textures
       HistoryCharts.tsx # React: population/funds/score sparklines
       ActionLog.astro  # Collapsible action history
     lib/
       api.ts           # Server-side fetch wrapper for the API
+      earthLayout.ts   # Atlas grid math for globe equirectangular projection
       sprites.ts       # Tile sprite sheet loader + coordinate math
       tileRenderer.ts  # Canvas tile rendering
   public/
@@ -161,7 +164,8 @@ These details matter when working with the simulation:
 - Engine files in `src/engine/` are upstream copies with minimal patches. Avoid modifying them unless necessary.
 - Test output must be clean — no unexpected console noise.
 - The engine uses mixed JS/TS. TypeScript files use `.ts` extension; engine files are `.js`. The `moduleNameMapper` in jest config only strips `.ts` extensions (not `.js`, which would break `text.js` imports).
-- Site uses Astro components (`.astro`) for static/server content, React (`.tsx`) for interactive client components (maps, charts).
+- Site uses Astro components (`.astro`) for static/server content, React (`.tsx`) for interactive client components (maps, charts, globe).
+- Earth page uses Three.js for WebGL globe rendering. City tiles are sprite-rendered onto an equirectangular atlas texture mapped onto a sphere. Three-phase loading: PNGs first, filler cities, then sprite upgrade.
 - Worker uses Hono idioms: `c.json()` for responses, `c.req.param()` / `c.req.query()` for params.
 
 ## URLs
