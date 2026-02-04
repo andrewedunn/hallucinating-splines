@@ -4,8 +4,15 @@
 import * as TV from '../../src/engine/tileValues';
 import { BIT_MASK, POWERBIT, ZONEBIT } from '../../src/engine/tileFlags';
 
+interface TerrainCell {
+  land: number;
+  water: number;
+  trees: number;
+}
+
 interface MapSummary {
   terrain: { water_tiles: number; tree_tiles: number; empty_tiles: number };
+  terrain_grid: { cell_size: number; cols: number; rows: number; cells: string[][] };
   buildings: Array<{ type: string; x: number; y: number; powered: boolean }>;
   infrastructure: { road_tiles: number; rail_tiles: number; power_line_tiles: number };
   analysis: {
@@ -148,8 +155,36 @@ export function analyzeMap(tiles: number[], width: number, height: number): MapS
 
   const largestEmpty = findLargestEmptyArea(tiles, width, height);
 
+  // Build coarse terrain grid (10×10 tile cells)
+  const cellSize = 10;
+  const gridCols = Math.ceil(width / cellSize);
+  const gridRows = Math.ceil(height / cellSize);
+  const terrainCells: string[][] = [];
+
+  for (let gr = 0; gr < gridRows; gr++) {
+    const row: string[] = [];
+    for (let gc = 0; gc < gridCols; gc++) {
+      let water = 0;
+      let total = 0;
+      for (let dy = 0; dy < cellSize && gr * cellSize + dy < height; dy++) {
+        for (let dx = 0; dx < cellSize && gc * cellSize + dx < width; dx++) {
+          const idx = (gr * cellSize + dy) * width + (gc * cellSize + dx);
+          const id = tiles[idx] & BIT_MASK;
+          total++;
+          if (id >= TV.RIVER && id <= TV.WATER_HIGH) water++;
+        }
+      }
+      const pct = water / total;
+      if (pct > 0.8) row.push('~');       // mostly water
+      else if (pct > 0.3) row.push('/');   // mixed (coast)
+      else row.push('.');                  // mostly land
+    }
+    terrainCells.push(row);
+  }
+
   return {
     terrain: { water_tiles: waterTiles, tree_tiles: treeTiles, empty_tiles: emptyTiles },
+    terrain_grid: { cell_size: cellSize, cols: gridCols, rows: gridRows, cells: terrainCells },
     buildings,
     infrastructure: { road_tiles: roadTiles, rail_tiles: railTiles, power_line_tiles: powerLineTiles },
     analysis: {

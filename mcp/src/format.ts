@@ -100,6 +100,19 @@ export function formatMapSummary(data: Record<string, unknown>): string {
     lines.push(`  Water: ${terrain.water_tiles}  Trees: ${terrain.tree_tiles}  Empty: ${terrain.empty_tiles}`);
   }
 
+  const terrainGrid = data.terrain_grid as { cell_size: number; cols: number; rows: number; cells: string[][] } | undefined;
+  if (terrainGrid?.cells) {
+    lines.push('', `Terrain grid (each cell = ${terrainGrid.cell_size}×${terrainGrid.cell_size} tiles, . = land, / = coast, ~ = water):`);
+    // Column headers (tens)
+    const colNums = Array.from({ length: terrainGrid.cols }, (_, i) => String(i * terrainGrid.cell_size).padStart(3));
+    lines.push('   ' + colNums.join(''));
+    for (let r = 0; r < terrainGrid.cells.length; r++) {
+      const rowLabel = String(r * terrainGrid.cell_size).padStart(3);
+      lines.push(`${rowLabel}  ${terrainGrid.cells[r].map(c => ' ' + c + ' ').join('')}`);
+    }
+    lines.push('', 'IMPORTANT: Only build on land (.) tiles. Avoid water (~) and be careful near coasts (/).');
+  }
+
   if (buildings?.length) {
     const counts: Record<string, number> = {};
     let unpowered = 0;

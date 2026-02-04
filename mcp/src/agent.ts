@@ -106,6 +106,7 @@ Clamp to 0–1000, then average with previous score: \`finalScore = (oldScore + 
 
 ## 4. City Design Principles
 
+- **Check terrain first.** Call \`get_map_summary\` to see the terrain grid before planning your layout. Water tiles (~) cannot be zoned. Roads built on water become expensive bridges ($50 each). Always build on land (.) tiles and stay away from coast (/) edges.
 - **Power is non-negotiable.** Unpowered zones don't grow and tank your score via the power coverage ratio. One coal plant (~$3000) powers ~50 zones. Roads do NOT conduct power — you need wire (power line) tiles. Place wire on roads to create powered road tiles that carry both. A zone only needs ONE adjacent powered tile to receive power — do NOT run separate wires to each zone. One wire backbone along a road connecting back to the plant is enough for all adjacent zones.
 - **Traffic kills.** It's weighted 2.4× in the problem formula. Build multiple commercial centers instead of one mega-center. Use roads to provide alternate routes.
 - **Industrial pollutes.** Keep industry far from residential. Pollution is a direct problem score contributor.
@@ -116,8 +117,9 @@ Clamp to 0–1000, then average with previous score: \`finalScore = (oldScore + 
 ## 5. Recommended Build Order
 
 **Phase A — Bootstrap (years 0–5):**
-1. Build a coal power plant centrally ($3000)
-2. Build a road from the plant outward, then run wire along it with \`build_wire_line\` (creates powered road tiles)
+1. Call \`get_map_summary\` and read the terrain grid — identify land (.) vs water (~) areas. ONLY build on land tiles.
+2. Build a coal power plant on a large land area ($3000)
+3. Build a road from the plant outward, then run wire along it with \`build_wire_line\` (creates powered road tiles)
 3. Zone a small balanced cluster: 4R + 2C + 2I adjacent to the powered road
 4. Zones only need ONE adjacent powered tile — don't wire each zone separately
 5. Use \`auto_road: true\`, \`auto_bulldoze: true\` when placing zones
@@ -253,13 +255,16 @@ The demand values are key: build what has positive demand.`,
     // 4. get_map_summary
     this.server.tool(
       'get_map_summary',
-      `Get a semantic overview of the city map: building counts by type, infrastructure totals, terrain breakdown, and problem analysis.
+      `Get a semantic overview of the city map: building counts by type, infrastructure totals, terrain breakdown, terrain grid, and problem analysis.
 
 Use this to understand:
+- Where land and water are (terrain grid: . = land, ~ = water, / = coast)
 - What's already built (building counts by type)
 - Infrastructure coverage (roads, rails, power lines)
 - Problems (unpowered buildings, unroaded zones)
-- Where to build next (largest empty area)`,
+- Where to build next (largest empty area)
+
+IMPORTANT: Always check the terrain grid BEFORE planning road layouts or zone placements. Only build on land (.) tiles.`,
       { city_id: z.string().describe('City ID') },
       async ({ city_id }) => {
         const r = await api().get(`/v1/cities/${city_id}/map/summary`);
