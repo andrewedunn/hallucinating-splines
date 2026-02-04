@@ -27,7 +27,6 @@ const [stats, mapData, actionsData] = await Promise.all([
     </div>
     <div class="header-badges">
       <span id="live-indicator"></span>
-      <span class={`status ${city.status}`}>{city.status}</span>
     </div>
   </div>
 
@@ -294,34 +293,36 @@ const [stats, mapData, actionsData] = await Promise.all([
 
   async function pollStats() {
     try {
-      const res = await fetch(`${apiBase}/v1/cities/${cityId}/stats`);
-      if (!res.ok) return;
-      const stats = await res.json();
+      // Always fetch stats + map together to keep data in sync
+      const [statsRes, mapRes] = await Promise.all([
+        fetch(`${apiBase}/v1/cities/${cityId}/stats`).then((r) => r.ok ? r.json() : null),
+        fetch(`${apiBase}/v1/cities/${cityId}/map`).then((r) => r.ok ? r.json() : null),
+      ]);
 
-      updateStatsDOM(stats);
-      renderLiveIndicator();
+      if (!statsRes) return;
 
-      const newYear = stats.year;
+      updateStatsDOM(statsRes);
+
+      if (mapRes?.tiles) {
+        liveTiles = mapRes.tiles;
+        if (!isUserScrubbing) {
+          currentTiles = liveTiles;
+          renderMap(currentTiles);
+        }
+      }
+
+      const newYear = statsRes.year;
       if (newYear !== gameYear) {
         // City actually advanced — update the timestamp
         lastUpdated = Date.now();
-        renderLiveIndicator();
         gameYear = newYear;
-        // Year changed — fetch heavy data in parallel
-        const [mapRes, historyRes, snapshotsRes, actionsRes] = await Promise.all([
-          fetch(`${apiBase}/v1/cities/${cityId}/map`).then((r) => r.ok ? r.json() : null),
+
+        // Year changed — fetch history, snapshots, actions
+        const [historyRes, snapshotsRes, actionsRes] = await Promise.all([
           fetch(`${apiBase}/v1/cities/${cityId}/history`).then((r) => r.ok ? r.json() : null),
           fetch(`${apiBase}/v1/cities/${cityId}/snapshots?limit=100`).then((r) => r.ok ? r.json() : null),
           fetch(`${apiBase}/v1/cities/${cityId}/actions?limit=50`).then((r) => r.ok ? r.json() : null),
         ]);
-
-        if (mapRes?.tiles) {
-          liveTiles = mapRes.tiles;
-          if (!isUserScrubbing) {
-            currentTiles = liveTiles;
-            renderMap(currentTiles);
-          }
-        }
 
         if (historyRes || snapshotsRes) {
           renderCharts(historyRes, snapshotsRes?.snapshots);
@@ -331,6 +332,8 @@ const [stats, mapData, actionsData] = await Promise.all([
           updateActionLogDOM(actionsRes.actions, actionsRes.total ?? 0);
         }
       }
+
+      renderLiveIndicator();
     } catch {
       // Silently skip, retry next cycle
     }
@@ -372,9 +375,6 @@ const [stats, mapData, actionsData] = await Promise.all([
 @keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 .mayor { color: var(--text-muted); }
 .mayor:hover { color: var(--accent); }
-.status { font-size: 0.875rem; padding: 0.25rem 0.75rem; border-radius: 9999px; background: var(--border); }
-.status.active { background: #166534; color: #86efac; }
-.status.ended { background: #7f1d1d; color: #fca5a5; }
 .city-layout { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; }
 .map-column { min-width: 0; }
 @media (max-width: 900px) {
