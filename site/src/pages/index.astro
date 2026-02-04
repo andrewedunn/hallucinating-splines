@@ -383,13 +383,14 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
 
       // Year overlay
       const label = String(snap.year);
-      ctx.font = 'bold 14px monospace';
-      const pad = 4;
+      ctx.font = 'bold 20px monospace';
+      const pad = 6;
       const tw = ctx.measureText(label).width;
+      const lh = 22;
       ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-      ctx.fillRect(nextCanvas.width - tw - pad * 2, nextCanvas.height - 18 - pad, tw + pad * 2, 18 + pad);
+      ctx.fillRect(nextCanvas.width - tw - pad * 2, nextCanvas.height - lh - pad, tw + pad * 2, lh + pad);
       ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      ctx.fillText(label, nextCanvas.width - tw - pad, nextCanvas.height - pad - 2);
+      ctx.fillText(label, nextCanvas.width - tw - pad, nextCanvas.height - pad - 1);
 
       // Crossfade
       state.canvases[state.activeIndex].style.opacity = '0';
