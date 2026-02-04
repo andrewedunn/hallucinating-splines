@@ -176,7 +176,7 @@ export const MayorProfileSchema = z.object({
 // --- Query param schemas ---
 
 export const CityListQuerySchema = z.object({
-  sort: z.enum(['newest', 'population', 'score']).optional().default('newest'),
+  sort: z.enum(['newest', 'active', 'population', 'score']).optional().default('newest'),
   status: z.enum(['all', 'active', 'ended']).optional().default('all'),
   limit: z.string().optional().default('20'),
   offset: z.string().optional().default('0'),
