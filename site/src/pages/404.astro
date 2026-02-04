@@ -1,0 +1,165 @@
+---
+// ABOUTME: Custom 404 page with a fun city-disaster theme.
+// ABOUTME: Shows an ASCII art destroyed city and a cheeky message about the missing zone.
+import Base from '../layouts/Base.astro';
+---
+<Base title="404 — Zone Not Found" description="This zone doesn't exist. Maybe a tornado got it.">
+  <div class="not-found">
+    <pre class="disaster-art" aria-hidden="true">{`
+        .  *  .    *       .   *
+   *       .       *   .       .
+      .        ____         *
+   *     .    /    \\   .       .
+     .      _|  ✕  |_     *
+   .    *  | |      | |  .    .
+        .  | | ///  | |    *
+   *       | |//////| |  .     .
+     .     | |______| |     *
+  .     ___|__________|___    .
+       |   R.I.P. ZONE    |
+  *    |___________________|  *
+  __|__|__|__|__|__|__|__|__|__|__
+    `}</pre>
+
+    <h1>404 — Zone Not Found</h1>
+    <p class="subtitle">
+      Looks like this zone was demolished by an overzealous AI mayor.<br />
+      Or maybe it never existed. Budget cuts, you know how it is.
+    </p>
+
+    <div class="disaster-report">
+      <h2>Disaster Report</h2>
+      <ul>
+        <li><strong>Type:</strong> HTTP 404 — Missing Infrastructure</li>
+        <li><strong>Severity:</strong> Catastrophic (for this URL)</li>
+        <li><strong>Cause:</strong> Mayor hallucinated this page into existence</li>
+        <li><strong>Casualties:</strong> 0 (the residents were never here)</li>
+        <li><strong>Power Grid:</strong> Not connected (obviously)</li>
+        <li><strong>Property Value:</strong> $0</li>
+      </ul>
+    </div>
+
+    <div class="actions">
+      <a href="/" class="btn-primary">Return to City Hall</a>
+      <a href="/docs" class="btn-secondary">Read the Zoning Docs</a>
+    </div>
+
+    <p class="hint">Pro tip: Even AI mayors can't build on tiles that don't exist.</p>
+  </div>
+</Base>
+
+<style>
+  .not-found {
+    text-align: center;
+    padding: 2rem 1rem 4rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .disaster-art {
+    font-size: 0.75rem;
+    line-height: 1.3;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    text-align: left;
+  }
+
+  h1 {
+    font-size: 2.25rem;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+
+  .disaster-report {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    text-align: left;
+    margin-bottom: 2rem;
+  }
+
+  .disaster-report h2 {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .disaster-report ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .disaster-report li {
+    padding: 0.35rem 0;
+    font-size: 0.9rem;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .disaster-report li:last-child {
+    border-bottom: none;
+  }
+
+  .actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+
+  .btn-primary {
+    padding: 0.6rem 1.5rem;
+    background: var(--accent);
+    color: white;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: background 0.15s;
+  }
+
+  .btn-primary:hover {
+    background: var(--accent-hover);
+    color: white;
+  }
+
+  .btn-secondary {
+    padding: 0.6rem 1.5rem;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: background 0.15s;
+  }
+
+  .btn-secondary:hover {
+    background: var(--border);
+  }
+
+  .hint {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-style: italic;
+    opacity: 0.7;
+  }
+
+  @media (max-width: 480px) {
+    h1 { font-size: 1.5rem; }
+    .disaster-art { font-size: 0.6rem; }
+    .subtitle { font-size: 1rem; }
+  }
+</style>
