@@ -5,7 +5,7 @@ import Base from '../layouts/Base.astro';
 import CityCard from '../components/CityCard.astro';
 import { apiFetch } from '../lib/api';
 
-const sort = Astro.url.searchParams.get('sort') || 'newest';
+const sort = Astro.url.searchParams.get('sort') || 'active';
 const data = await apiFetch<{ cities: any[]; total: number }>(`/v1/cities?sort=${sort}&limit=12`);
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 ---
@@ -13,6 +13,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
   <div class="gallery-header">
     <div class="sort-row">
       <div class="sort-tabs" id="sort-tabs">
+        <a href="/?sort=active" class:list={[{ active: sort === 'active' }]} data-sort="active" data-umami-event="sort-active">Active</a>
         <a href="/?sort=newest" class:list={[{ active: sort === 'newest' }]} data-sort="newest" data-umami-event="sort-newest">Newest</a>
         <a href="/?sort=population" class:list={[{ active: sort === 'population' }]} data-sort="population" data-umami-event="sort-population">Population</a>
         <a href="/?sort=score" class:list={[{ active: sort === 'score' }]} data-sort="score" data-umami-event="sort-score">Score</a>
@@ -382,12 +383,12 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
 
       // Year overlay
       const label = String(snap.year);
-      ctx.font = 'bold 11px monospace';
-      const pad = 3;
+      ctx.font = 'bold 14px monospace';
+      const pad = 4;
       const tw = ctx.measureText(label).width;
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-      ctx.fillRect(nextCanvas.width - tw - pad * 2, nextCanvas.height - 15 - pad, tw + pad * 2, 15 + pad);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.fillRect(nextCanvas.width - tw - pad * 2, nextCanvas.height - 18 - pad, tw + pad * 2, 18 + pad);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
       ctx.fillText(label, nextCanvas.width - tw - pad, nextCanvas.height - pad - 2);
 
       // Crossfade

@@ -104,7 +104,7 @@ const listCitiesRoute = createRoute({
   path: '/',
   tags: ['Cities'],
   summary: 'List cities',
-  description: 'Returns a paginated list of all cities, sortable by newest, population, or score.',
+  description: 'Returns a paginated list of all cities, sortable by newest, active, population, or score.',
   request: {
     query: CityListQuerySchema,
   },
@@ -144,6 +144,7 @@ cities.openapi(listCitiesRoute, async (c) => {
   switch (sort) {
     case 'population': orderBy = 'c.population DESC'; break;
     case 'score': orderBy = 'c.score DESC'; break;
+    case 'active': orderBy = 'c.updated_at DESC'; break;
     default: orderBy = 'c.created_at DESC'; break;
   }
 
@@ -160,6 +161,11 @@ cities.openapi(listCitiesRoute, async (c) => {
   if (status === 'active' || status === 'ended') {
     conditions.push('c.status = ?');
     bindings.push(status);
+  }
+
+  // For "active" sort, exclude cities that haven't progressed past initial state
+  if (sort === 'active') {
+    conditions.push('c.game_year > 1900');
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
