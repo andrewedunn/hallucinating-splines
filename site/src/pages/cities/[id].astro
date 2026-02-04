@@ -17,12 +17,15 @@ const [city, stats, mapData, actionsData] = await Promise.all([
 ]);
 ---
 <Base title={city.name}>
-  <div class="city-header" data-game-year={stats.year}>
+  <div class="city-header" data-game-year={stats.year} data-status={city.status}>
     <div>
       <h1>{city.name}</h1>
       <a href={`/mayors/${city.api_key_id}`} class="mayor">{city.mayor}</a>
     </div>
-    <span class={`status ${city.status}`}>{city.status}</span>
+    <div class="header-badges">
+      <span id="live-indicator"></span>
+      <span class={`status ${city.status}`}>{city.status}</span>
+    </div>
   </div>
 
   <div class="city-layout">
@@ -45,6 +48,7 @@ const [city, stats, mapData, actionsData] = await Promise.all([
   import MapViewer from '../../components/MapViewer';
   import HistoryScrubber from '../../components/HistoryScrubber';
   import HistoryCharts from '../../components/HistoryCharts';
+  import LiveIndicator from '../../components/LiveIndicator';
 
   const mapEl = document.getElementById('map-container')!;
   const tiles = JSON.parse(mapEl.dataset.tiles!);
@@ -53,11 +57,18 @@ const [city, stats, mapData, actionsData] = await Promise.all([
   const cityId = mapEl.dataset.cityId!;
   const apiBase = mapEl.dataset.apiBase!;
 
+  const headerEl = document.querySelector('.city-header')!;
+  const cityStatus = headerEl.getAttribute('data-status') || 'ended';
+
   let currentTiles = tiles;
+  let isUserScrubbing = false;
+  let liveTiles: number[] = tiles;
 
   const mapRoot = createRoot(mapEl);
   const scrubberRoot = createRoot(document.getElementById('scrubber-container')!);
   const chartsRoot = createRoot(document.getElementById('history-charts-container')!);
+  const liveIndicatorEl = document.getElementById('live-indicator')!;
+  const liveRoot = cityStatus === 'active' ? createRoot(liveIndicatorEl) : null;
 
   function renderMap(t: number[]) {
     mapRoot.render(createElement(MapViewer, { tiles: t, width, height }));
@@ -69,18 +80,279 @@ const [city, stats, mapData, actionsData] = await Promise.all([
     cityId,
     apiBase,
     onSnapshotLoad: (snapshotTiles: number[]) => {
+      isUserScrubbing = true;
       currentTiles = snapshotTiles;
       renderMap(currentTiles);
     },
   }));
 
-  // Stats are embedded as data attributes from SSR
-  const gameYear = parseInt(document.querySelector('[data-game-year]')?.getAttribute('data-game-year') || '1900');
+  let gameYear = parseInt(headerEl.getAttribute('data-game-year') || '1900');
   chartsRoot.render(createElement(HistoryCharts, { cityId, apiBase, gameYear }));
+
+  // --- Live polling (active cities only) ---
+
+  const POLL_INTERVAL = 5000;
+  const PROBLEM_COLORS: Record<string, string> = {
+    crime: '#ef4444', pollution: '#a855f7', housing: '#f97316',
+    taxes: '#eab308', traffic: '#6b7280', unemployment: '#3b82f6', fire: '#dc2626',
+  };
+  const ACTION_LABELS: Record<string, string> = {
+    zone_residential: 'Zone Residential', zone_commercial: 'Zone Commercial',
+    zone_industrial: 'Zone Industrial', build_road: 'Build Road',
+    build_rail: 'Build Rail', build_power_line: 'Build Power Line',
+    build_park: 'Build Park', build_fire_station: 'Build Fire Station',
+    build_police_station: 'Build Police Station', build_coal_power: 'Build Coal Power',
+    build_nuclear_power: 'Build Nuclear Power', build_seaport: 'Build Seaport',
+    build_airport: 'Build Airport', build_stadium: 'Build Stadium',
+    bulldoze: 'Bulldoze', advance: 'Advance', set_budget: 'Set Budget',
+  };
+
+  let lastUpdated = Date.now();
+  let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+  function demandPct(val: number): number {
+    return Math.max(0, Math.min(100, (val / 2000) * 50 + 50));
+  }
+
+  function updateStatsDOM(stats: any) {
+    const set = (key: string, text: string) => {
+      const el = document.querySelector(`[data-live="${key}"]`);
+      if (el) el.textContent = text;
+    };
+    const setBar = (key: string, pct: number) => {
+      const el = document.querySelector(`[data-live-bar="${key}"]`) as HTMLElement | null;
+      if (el) el.style.width = `${pct}%`;
+    };
+
+    set('population', stats.population.toLocaleString());
+    set('funds', `$${stats.funds.toLocaleString()}`);
+    set('year', String(stats.year));
+    set('score', String(stats.score));
+    set('classification', stats.classification);
+
+    const approval = stats.evaluation?.approval ?? 0;
+    set('approval', `${approval}%`);
+    setBar('approval', approval);
+
+    setBar('residential', demandPct(stats.demand?.residential ?? 0));
+    setBar('commercial', demandPct(stats.demand?.commercial ?? 0));
+    setBar('industrial', demandPct(stats.demand?.industrial ?? 0));
+
+    const c = stats.census || {};
+    set('resPop', (c.resPop ?? 0).toLocaleString());
+    set('comPop', (c.comPop ?? 0).toLocaleString());
+    set('indPop', (c.indPop ?? 0).toLocaleString());
+    set('assessedValue', `$${(stats.evaluation?.assessedValue ?? 0).toLocaleString()}`);
+
+    set('policeStationPop', String(c.policeStationPop ?? 0));
+    set('fireStationPop', String(c.fireStationPop ?? 0));
+    set('powerPlants', String((c.coalPowerPop ?? 0) + (c.nuclearPowerPop ?? 0)));
+    set('seaportPop', String(c.seaportPop ?? 0));
+    set('airportPop', String(c.airportPop ?? 0));
+    set('stadiumPop', String(c.stadiumPop ?? 0));
+    set('roadTotal', String(c.roadTotal ?? 0));
+    set('railTotal', String(c.railTotal ?? 0));
+
+    const totalZones = (c.poweredZoneCount ?? 0) + (c.unpoweredZoneCount ?? 0);
+    const powerPct = totalZones > 0 ? Math.round((c.poweredZoneCount / totalZones) * 100) : 0;
+    set('power', `${c.poweredZoneCount ?? 0} / ${totalZones} (${powerPct}%)`);
+
+    const b = stats.budget || {};
+    set('taxRate', `${b.taxRate ?? 0}%`);
+    const cashFlowEl = document.querySelector('[data-live="cashFlow"]');
+    if (cashFlowEl) {
+      cashFlowEl.textContent = `$${(b.cashFlow ?? 0).toLocaleString()}`;
+      cashFlowEl.className = `value ${(b.cashFlow ?? 0) >= 0 ? 'positive' : 'negative'}`;
+    }
+    set('firePercent', `${b.firePercent ?? 0}%`);
+    set('policePercent', `${b.policePercent ?? 0}%`);
+    set('roadPercent', `${b.roadPercent ?? 0}%`);
+
+    set('crimeAverage', String(c.crimeAverage ?? 0));
+    set('pollutionAverage', String(c.pollutionAverage ?? 0));
+    set('landValueAverage', String(c.landValueAverage ?? 0));
+
+    // Problems
+    const problemsEl = document.querySelector('[data-live="problems"]');
+    const problemsTitleEl = document.querySelector('[data-live-problems-title]');
+    if (problemsEl) {
+      const problems: string[] = stats.evaluation?.problems || [];
+      const show = problems.length > 0 ? '' : 'none';
+      if (problemsTitleEl) (problemsTitleEl as HTMLElement).style.display = show;
+      (problemsEl as HTMLElement).style.display = show;
+      problemsEl.innerHTML = problems.map((p: string) => {
+        const color = PROBLEM_COLORS[p] || '#6b7280';
+        return `<span class="problem-tag" style="background: ${color}22; color: ${color}; border: 1px solid ${color}44">${p}</span>`;
+      }).join('');
+    }
+
+    headerEl.setAttribute('data-game-year', String(stats.year));
+  }
+
+  function formatActionDetail(a: any): string {
+    const p = a.params || {};
+    if (a.action_type === 'advance') return `${p.months || 1} month${(p.months || 1) > 1 ? 's' : ''}`;
+    if (a.action_type === 'set_budget') {
+      const parts: string[] = [];
+      if (p.tax_rate !== undefined) parts.push(`tax ${p.tax_rate}%`);
+      if (p.fire_percent !== undefined) parts.push(`fire ${p.fire_percent}%`);
+      if (p.police_percent !== undefined) parts.push(`police ${p.police_percent}%`);
+      if (p.road_percent !== undefined) parts.push(`road ${p.road_percent}%`);
+      return parts.join(', ') || '-';
+    }
+    if (typeof p.x === 'number' && typeof p.y === 'number') return `(${p.x}, ${p.y})`;
+    return '-';
+  }
+
+  function updateActionLogDOM(actions: any[], total: number) {
+    const totalEl = document.getElementById('action-total');
+    if (totalEl) totalEl.textContent = `(${total})`;
+
+    const tbody = document.getElementById('action-log-body');
+    if (!tbody) return;
+
+    const existingIds = new Set<string>();
+    tbody.querySelectorAll('[data-action-id]').forEach((el) => {
+      existingIds.add(el.getAttribute('data-action-id')!);
+    });
+
+    // Prepend new actions (actions come newest-first from API)
+    const newActions = actions.filter((a) => !existingIds.has(String(a.id)));
+    for (const a of newActions.reverse()) {
+      const tr = document.createElement('tr');
+      tr.className = 'action-row';
+      tr.setAttribute('data-action-id', String(a.id));
+      tr.innerHTML = `
+        <td class="year">${a.game_year}</td>
+        <td>${ACTION_LABELS[a.action_type] || a.action_type}</td>
+        <td class="detail">${formatActionDetail(a)}</td>
+        <td class="cost">${a.cost > 0 ? `$${a.cost.toLocaleString()}` : '-'}</td>
+        <td><span class="badge ${a.result}">${a.result}</span></td>
+      `;
+      tbody.insertBefore(tr, tbody.firstChild);
+    }
+
+    // Handle empty state: if tbody was previously empty (just a <p class="empty">), replace
+    const emptyEl = document.querySelector('.action-log .empty');
+    if (emptyEl && newActions.length > 0) {
+      // Need to create the table structure
+      const content = document.getElementById('action-log-content');
+      if (content) {
+        content.innerHTML = `<div class="log-table-wrap"><table class="log-table">
+          <thead><tr><th>Year</th><th>Action</th><th>Detail</th><th>Cost</th><th>Result</th></tr></thead>
+          <tbody id="action-log-body"></tbody></table></div>`;
+        const newTbody = document.getElementById('action-log-body')!;
+        for (const a of actions) {
+          const tr = document.createElement('tr');
+          tr.className = 'action-row';
+          tr.setAttribute('data-action-id', String(a.id));
+          tr.innerHTML = `
+            <td class="year">${a.game_year}</td>
+            <td>${ACTION_LABELS[a.action_type] || a.action_type}</td>
+            <td class="detail">${formatActionDetail(a)}</td>
+            <td class="cost">${a.cost > 0 ? `$${a.cost.toLocaleString()}` : '-'}</td>
+            <td><span class="badge ${a.result}">${a.result}</span></td>
+          `;
+          newTbody.appendChild(tr);
+        }
+      }
+    }
+  }
+
+  function renderLiveIndicator() {
+    if (liveRoot) {
+      liveRoot.render(createElement(LiveIndicator, { lastUpdated }));
+    }
+  }
+
+  function renderCharts(historyData?: any, snapshotsData?: any) {
+    const props: any = { cityId, apiBase, gameYear };
+    if (historyData) props.historyData = historyData;
+    if (snapshotsData) props.snapshotsData = snapshotsData;
+    chartsRoot.render(createElement(HistoryCharts, props));
+  }
+
+  function returnToLive() {
+    isUserScrubbing = false;
+    renderMap(liveTiles);
+  }
+
+  async function pollStats() {
+    try {
+      const res = await fetch(`${apiBase}/v1/cities/${cityId}/stats`);
+      if (!res.ok) return;
+      const stats = await res.json();
+
+      lastUpdated = Date.now();
+      updateStatsDOM(stats);
+      renderLiveIndicator();
+
+      const newYear = stats.year;
+      if (newYear !== gameYear) {
+        gameYear = newYear;
+        // Year changed — fetch heavy data in parallel
+        const [mapRes, historyRes, snapshotsRes, actionsRes] = await Promise.all([
+          fetch(`${apiBase}/v1/cities/${cityId}/map`).then((r) => r.ok ? r.json() : null),
+          fetch(`${apiBase}/v1/cities/${cityId}/history`).then((r) => r.ok ? r.json() : null),
+          fetch(`${apiBase}/v1/cities/${cityId}/snapshots?limit=100`).then((r) => r.ok ? r.json() : null),
+          fetch(`${apiBase}/v1/cities/${cityId}/actions?limit=50`).then((r) => r.ok ? r.json() : null),
+        ]);
+
+        if (mapRes?.tiles) {
+          liveTiles = mapRes.tiles;
+          if (!isUserScrubbing) {
+            currentTiles = liveTiles;
+            renderMap(currentTiles);
+          }
+        }
+
+        if (historyRes || snapshotsRes) {
+          renderCharts(historyRes, snapshotsRes?.snapshots);
+        }
+
+        if (actionsRes?.actions) {
+          updateActionLogDOM(actionsRes.actions, actionsRes.total ?? 0);
+        }
+      }
+    } catch {
+      // Silently skip, retry next cycle
+    }
+  }
+
+  function startPolling() {
+    if (pollTimer) return;
+    pollStats();
+    pollTimer = setInterval(pollStats, POLL_INTERVAL);
+  }
+
+  function stopPolling() {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  }
+
+  if (cityStatus === 'active') {
+    renderLiveIndicator();
+    startPolling();
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        startPolling();
+      }
+    });
+  }
+
+  // Expose returnToLive for the "Return to live" button
+  (window as any).__returnToLive = returnToLive;
 </script>
 
 <style>
 .city-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem; }
+.header-badges { display: flex; align-items: center; gap: 0.75rem; }
+@keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 .mayor { color: var(--text-muted); }
 .mayor:hover { color: var(--accent); }
 .status { font-size: 0.875rem; padding: 0.25rem 0.75rem; border-radius: 9999px; background: var(--border); }

@@ -53,110 +53,108 @@ const problemColors: Record<string, string> = {
 <div class="stats-panel">
   <div class="stat-row">
     <span class="label">Population</span>
-    <span class="value">{stats.population.toLocaleString()}</span>
+    <span class="value" data-live="population">{stats.population.toLocaleString()}</span>
   </div>
   <div class="stat-row">
     <span class="label">Funds</span>
-    <span class="value">${stats.funds.toLocaleString()}</span>
+    <span class="value" data-live="funds">${stats.funds.toLocaleString()}</span>
   </div>
   <div class="stat-row">
     <span class="label">Year</span>
-    <span class="value">{stats.year}</span>
+    <span class="value" data-live="year">{stats.year}</span>
   </div>
   <div class="stat-row">
     <span class="label">Score</span>
-    <span class="value">{stats.score}</span>
+    <span class="value" data-live="score">{stats.score}</span>
   </div>
   <div class="stat-row">
     <span class="label">Class</span>
-    <span class="value">{stats.classification}</span>
+    <span class="value" data-live="classification">{stats.classification}</span>
   </div>
 
   <h3 class="section-title">Approval</h3>
   <div class="approval-bar">
     <div class="bar-track">
-      <div class="bar-fill approval" style={`width: ${evaluation.approval ?? 0}%`}></div>
+      <div class="bar-fill approval" data-live-bar="approval" style={`width: ${evaluation.approval ?? 0}%`}></div>
     </div>
-    <span class="approval-pct">{evaluation.approval ?? 0}%</span>
+    <span class="approval-pct" data-live="approval">{evaluation.approval ?? 0}%</span>
   </div>
 
   <h3 class="section-title">Demand</h3>
   <div class="demand-bars">
     <div class="demand-bar">
       <span class="demand-label">R</span>
-      <div class="bar-track"><div class="bar-fill res" style={`width: ${demandPct(demand.residential)}%`}></div></div>
+      <div class="bar-track"><div class="bar-fill res" data-live-bar="residential" style={`width: ${demandPct(demand.residential)}%`}></div></div>
     </div>
     <div class="demand-bar">
       <span class="demand-label">C</span>
-      <div class="bar-track"><div class="bar-fill com" style={`width: ${demandPct(demand.commercial)}%`}></div></div>
+      <div class="bar-track"><div class="bar-fill com" data-live-bar="commercial" style={`width: ${demandPct(demand.commercial)}%`}></div></div>
     </div>
     <div class="demand-bar">
       <span class="demand-label">I</span>
-      <div class="bar-track"><div class="bar-fill ind" style={`width: ${demandPct(demand.industrial)}%`}></div></div>
+      <div class="bar-track"><div class="bar-fill ind" data-live-bar="industrial" style={`width: ${demandPct(demand.industrial)}%`}></div></div>
     </div>
   </div>
 
   <h3 class="section-title">Population Breakdown</h3>
   <div class="stat-row sub">
     <span class="label">Residential</span>
-    <span class="value">{census.resPop.toLocaleString()}</span>
+    <span class="value" data-live="resPop">{census.resPop.toLocaleString()}</span>
   </div>
   <div class="stat-row sub">
     <span class="label">Commercial</span>
-    <span class="value">{census.comPop.toLocaleString()}</span>
+    <span class="value" data-live="comPop">{census.comPop.toLocaleString()}</span>
   </div>
   <div class="stat-row sub">
     <span class="label">Industrial</span>
-    <span class="value">{census.indPop.toLocaleString()}</span>
+    <span class="value" data-live="indPop">{census.indPop.toLocaleString()}</span>
   </div>
 
   <h3 class="section-title">Assessed Value</h3>
   <div class="stat-row sub">
     <span class="label">Value</span>
-    <span class="value">${(evaluation.assessedValue ?? 0).toLocaleString()}</span>
+    <span class="value" data-live="assessedValue">${(evaluation.assessedValue ?? 0).toLocaleString()}</span>
   </div>
 
-  {evaluation.problems.length > 0 && (
-    <h3 class="section-title">Top Problems</h3>
-    <div class="problem-tags">
-      {evaluation.problems.map((p) => (
-        <span class="problem-tag" style={`background: ${problemColors[p] || '#6b7280'}22; color: ${problemColors[p] || '#6b7280'}; border: 1px solid ${problemColors[p] || '#6b7280'}44`}>{p}</span>
-      ))}
-    </div>
-  )}
+  <h3 class="section-title" data-live-problems-title style={evaluation.problems.length === 0 ? 'display:none' : ''}>Top Problems</h3>
+  <div class="problem-tags" data-live="problems" style={evaluation.problems.length === 0 ? 'display:none' : ''}>
+    {evaluation.problems.map((p) => (
+      <span class="problem-tag" style={`background: ${problemColors[p] || '#6b7280'}22; color: ${problemColors[p] || '#6b7280'}; border: 1px solid ${problemColors[p] || '#6b7280'}44`}>{p}</span>
+    ))}
+  </div>
 
   <h3 class="section-title">Infrastructure</h3>
   <div class="infra-grid">
     <div class="infra-item">
-      <span class="infra-count">{census.policeStationPop}</span>
+      <span class="infra-count" data-live="policeStationPop">{census.policeStationPop}</span>
       <span class="infra-label">Police</span>
     </div>
     <div class="infra-item">
-      <span class="infra-count">{census.fireStationPop}</span>
+      <span class="infra-count" data-live="fireStationPop">{census.fireStationPop}</span>
       <span class="infra-label">Fire</span>
     </div>
     <div class="infra-item">
-      <span class="infra-count">{census.coalPowerPop + census.nuclearPowerPop}</span>
+      <span class="infra-count" data-live="powerPlants">{census.coalPowerPop + census.nuclearPowerPop}</span>
       <span class="infra-label">Power</span>
     </div>
     <div class="infra-item">
-      <span class="infra-count">{census.seaportPop}</span>
+      <span class="infra-count" data-live="seaportPop">{census.seaportPop}</span>
       <span class="infra-label">Ports</span>
     </div>
     <div class="infra-item">
-      <span class="infra-count">{census.airportPop}</span>
+      <span class="infra-count" data-live="airportPop">{census.airportPop}</span>
       <span class="infra-label">Airports</span>
     </div>
     <div class="infra-item">
-      <span class="infra-count">{census.stadiumPop}</span>
+      <span class="infra-count" data-live="stadiumPop">{census.stadiumPop}</span>
       <span class="infra-label">Stadiums</span>
     </div>
     <div class="infra-item">
-      <span class="infra-count">{census.roadTotal}</span>
+      <span class="infra-count" data-live="roadTotal">{census.roadTotal}</span>
       <span class="infra-label">Roads</span>
     </div>
     <div class="infra-item">
-      <span class="infra-count">{census.railTotal}</span>
+      <span class="infra-count" data-live="railTotal">{census.railTotal}</span>
       <span class="infra-label">Rail</span>
     </div>
   </div>
@@ -164,45 +162,45 @@ const problemColors: Record<string, string> = {
   <h3 class="section-title">Power</h3>
   <div class="stat-row sub">
     <span class="label">Powered / Total</span>
-    <span class="value">{census.poweredZoneCount} / {totalZones} ({powerPct}%)</span>
+    <span class="value" data-live="power">{census.poweredZoneCount} / {totalZones} ({powerPct}%)</span>
   </div>
 
   <h3 class="section-title">Budget</h3>
   <div class="stat-row sub">
     <span class="label">Tax Rate</span>
-    <span class="value">{budget.taxRate}%</span>
+    <span class="value" data-live="taxRate">{budget.taxRate}%</span>
   </div>
   <div class="stat-row sub">
     <span class="label">Cash Flow</span>
-    <span class={`value ${budget.cashFlow >= 0 ? 'positive' : 'negative'}`}>${budget.cashFlow.toLocaleString()}</span>
+    <span class={`value ${budget.cashFlow >= 0 ? 'positive' : 'negative'}`} data-live="cashFlow">${budget.cashFlow.toLocaleString()}</span>
   </div>
   <div class="budget-services">
     <div class="budget-service">
       <span class="label">Fire</span>
-      <span class="value">{budget.firePercent}%</span>
+      <span class="value" data-live="firePercent">{budget.firePercent}%</span>
     </div>
     <div class="budget-service">
       <span class="label">Police</span>
-      <span class="value">{budget.policePercent}%</span>
+      <span class="value" data-live="policePercent">{budget.policePercent}%</span>
     </div>
     <div class="budget-service">
       <span class="label">Road</span>
-      <span class="value">{budget.roadPercent}%</span>
+      <span class="value" data-live="roadPercent">{budget.roadPercent}%</span>
     </div>
   </div>
 
   <h3 class="section-title">Environment</h3>
   <div class="stat-row sub">
     <span class="label">Crime</span>
-    <span class="value">{census.crimeAverage}</span>
+    <span class="value" data-live="crimeAverage">{census.crimeAverage}</span>
   </div>
   <div class="stat-row sub">
     <span class="label">Pollution</span>
-    <span class="value">{census.pollutionAverage}</span>
+    <span class="value" data-live="pollutionAverage">{census.pollutionAverage}</span>
   </div>
   <div class="stat-row sub">
     <span class="label">Land Value</span>
-    <span class="value">{census.landValueAverage}</span>
+    <span class="value" data-live="landValueAverage">{census.landValueAverage}</span>
   </div>
 </div>
 

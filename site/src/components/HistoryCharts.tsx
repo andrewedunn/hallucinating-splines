@@ -22,6 +22,8 @@ interface Props {
   cityId: string;
   apiBase: string;
   gameYear?: number;
+  historyData?: CensusHistory;
+  snapshotsData?: Snapshot[];
 }
 
 const CHART_WIDTH = 200;
@@ -184,13 +186,24 @@ function Sparkline({
   );
 }
 
-export default function HistoryCharts({ cityId, apiBase, gameYear = 1900 }: Props) {
-  const [history, setHistory] = useState<CensusHistory | null>(null);
-  const [snapshots, setSnapshots] = useState<Snapshot[] | null>(null);
+export default function HistoryCharts({ cityId, apiBase, gameYear = 1900, historyData: historyProp, snapshotsData: snapshotsProp }: Props) {
+  const [history, setHistory] = useState<CensusHistory | null>(historyProp ?? null);
+  const [snapshots, setSnapshots] = useState<Snapshot[] | null>(snapshotsProp ?? null);
   const [error, setError] = useState(false);
   const [hoverFraction, setHoverFraction] = useState<number | null>(null);
 
+  // Update from props when provided by live poller
   useEffect(() => {
+    if (historyProp) setHistory(historyProp);
+  }, [historyProp]);
+
+  useEffect(() => {
+    if (snapshotsProp) setSnapshots(snapshotsProp);
+  }, [snapshotsProp]);
+
+  // Fetch on mount only if props not provided
+  useEffect(() => {
+    if (historyProp && snapshotsProp) return;
     Promise.all([
       fetch(`${apiBase}/v1/cities/${cityId}/history`).then((r) => {
         if (!r.ok) throw new Error('fetch failed');
@@ -201,12 +214,12 @@ export default function HistoryCharts({ cityId, apiBase, gameYear = 1900 }: Prop
         return r.json();
       }),
     ])
-      .then(([historyData, snapshotData]: [CensusHistory, { snapshots: Snapshot[] }]) => {
-        setHistory(historyData);
+      .then(([hData, snapshotData]: [CensusHistory, { snapshots: Snapshot[] }]) => {
+        setHistory(hData);
         setSnapshots(snapshotData.snapshots);
       })
       .catch(() => setError(true));
-  }, [cityId, apiBase]);
+  }, [cityId, apiBase, historyProp, snapshotsProp]);
 
   const handleHover = useCallback((fraction: number | null) => {
     setHoverFraction(fraction);

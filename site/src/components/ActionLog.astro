@@ -57,7 +57,7 @@ function formatDetail(a: Action): string {
 ---
 <div class="action-log">
   <button class="log-toggle" id="action-log-toggle" aria-expanded="false">
-    <span class="log-title">Action Log <span class="log-count">({total})</span></span>
+    <span class="log-title">Action Log <span class="log-count" id="action-total">({total})</span></span>
     <span class="toggle-icon" id="toggle-icon">&#9654;</span>
   </button>
   <div class="log-content" id="action-log-content" hidden>
@@ -77,7 +77,7 @@ function formatDetail(a: Action): string {
           </thead>
           <tbody id="action-log-body">
             {actions.map((a) => (
-              <tr class="action-row">
+              <tr class="action-row" data-action-id={a.id}>
                 <td class="year">{a.game_year}</td>
                 <td>{ACTION_LABELS[a.action_type] || a.action_type}</td>
                 <td class="detail">{formatDetail(a)}</td>
