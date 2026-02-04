@@ -122,7 +122,10 @@ function formatDetail(a: Action): string {
       const btn = document.createElement('button');
       btn.textContent = String(i + 1);
       btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
-      btn.addEventListener('click', () => showPage(i));
+      btn.addEventListener('click', () => {
+        (window as any).umami?.track('action-log-page');
+        showPage(i);
+      });
       paginationEl.appendChild(btn);
     }
   }
@@ -132,8 +135,11 @@ function formatDetail(a: Action): string {
     content.hidden = !expanded;
     toggle.setAttribute('aria-expanded', String(expanded));
     icon.style.transform = expanded ? 'rotate(90deg)' : '';
-    if (expanded && rows.length > ROWS_PER_PAGE) {
-      showPage(0);
+    if (expanded) {
+      (window as any).umami?.track('action-log-toggle');
+      if (rows.length > ROWS_PER_PAGE) {
+        showPage(0);
+      }
     }
   });
 

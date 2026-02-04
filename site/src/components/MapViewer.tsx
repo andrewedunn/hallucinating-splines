@@ -5,6 +5,12 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { loadSpriteSheet, TILE_SIZE } from '../lib/sprites';
 import { renderMap } from '../lib/tileRenderer';
 
+declare global {
+  interface Window {
+    umami?: { track: (event: string) => void };
+  }
+}
+
 interface Props {
   tiles: number[];
   width: number;
@@ -183,14 +189,17 @@ export default function MapViewer({ tiles, width, height }: Props) {
   }, []);
 
   const zoomIn = useCallback(() => {
+    window.umami?.track('map-zoom-in');
     setZoom(z => Math.min(4, z * 1.3));
   }, []);
 
   const zoomOut = useCallback(() => {
+    window.umami?.track('map-zoom-out');
     setZoom(z => Math.max(0.5, z * 0.7));
   }, []);
 
   const resetView = useCallback(() => {
+    window.umami?.track('map-reset');
     setZoom(1);
     setOffset({ x: 0, y: 0 });
   }, []);

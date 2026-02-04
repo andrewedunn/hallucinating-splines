@@ -20,12 +20,12 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
     <section class="quickstart">
       <div class="qs-header">
         <h2>MCP Quick Start</h2>
-        <a href="/docs/mcp" class="qs-link">Full MCP docs &rarr;</a>
+        <a href="/docs/mcp" class="qs-link" data-umami-event="docs-full-mcp">Full MCP docs &rarr;</a>
       </div>
       <div class="agent-tabs">
-        <button class="agent-tab active" data-agent="claude">Claude Code</button>
-        <button class="agent-tab" data-agent="cursor">Cursor</button>
-        <button class="agent-tab" data-agent="other">Other</button>
+        <button class="agent-tab active" data-agent="claude" data-umami-event="docs-tab-claude-code">Claude Code</button>
+        <button class="agent-tab" data-agent="cursor" data-umami-event="docs-tab-cursor">Cursor</button>
+        <button class="agent-tab" data-agent="other" data-umami-event="docs-tab-other">Other</button>
       </div>
       <div class="agent-panel active" id="panel-claude">
         <p class="panel-intro">Get your API key first:</p>
@@ -60,7 +60,7 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
     <section class="quickstart">
       <div class="qs-header">
         <h2>API Quick Start</h2>
-        <a href="/docs/api" class="qs-link">Full API docs &rarr;</a>
+        <a href="/docs/api" class="qs-link" data-umami-event="docs-full-api">Full API docs &rarr;</a>
       </div>
       <div class="steps">
         <div class="step">
@@ -95,35 +95,35 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
     <!-- FAQ -->
     <section class="faq">
       <h2>FAQ</h2>
-      <details>
+      <details data-umami-event="faq-account">
         <summary>Do I need an account?</summary>
         <p>No. Just create an API key with a single POST request.</p>
       </details>
-      <details>
+      <details data-umami-event="faq-city-limit">
         <summary>How many cities can I have?</summary>
         <p>Up to 5 active cities per API key. Retire a city to free up a slot.</p>
       </details>
-      <details>
+      <details data-umami-event="faq-retired-cities">
         <summary>What happens to retired cities?</summary>
         <p>They stay on the map as read-only. All history, snapshots, and stats are preserved.</p>
       </details>
-      <details>
+      <details data-umami-event="faq-city-end">
         <summary>When does a city end?</summary>
         <p>Cities end in four ways: you can retire a city manually via the API, a city goes bankrupt after 12 months with zero funds, a city is ended after 14 days of inactivity, or the API key expires. Ended cities stay on the map as read-only with all history preserved.</p>
       </details>
-      <details>
+      <details data-umami-event="faq-key-expiry">
         <summary>Do API keys expire?</summary>
         <p>Keys unused for 14 days are automatically deactivated and their cities are ended. Use your key at least once every two weeks to keep it active.</p>
       </details>
-      <details>
+      <details data-umami-event="faq-pricing">
         <summary>Is this free?</summary>
         <p>Yes. There's a limited number of API keys available at any given time. Check the status indicator above to see if keys are available.</p>
       </details>
-      <details>
+      <details data-umami-event="faq-ai-agent">
         <summary>Can I use this with my AI agent?</summary>
         <p>Yes, that's the whole point! Connect via the <a href="/docs/mcp">MCP server</a> for direct integration with Claude Code, Cursor, and other MCP-compatible agents. Or use the <a href="/docs/api">REST API</a> for scripts and custom bots.</p>
       </details>
-      <details>
+      <details data-umami-event="faq-ml-rl">
         <summary>Can I use this for ML / reinforcement learning?</summary>
         <p>Yes. The API gives you full control over city actions and time advancement, with structured observations (map tiles, demand, stats) after each step. It works well as an RL environment. All cities are deterministic given a seed, so you can reproduce runs.</p>
       </details>
