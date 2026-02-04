@@ -185,17 +185,6 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
     }
   }
 
-  const ctaLines = [
-    'Vibe a City',
-    'Become a Mayor',
-    'Build Something',
-    'Zone It Up',
-    'Grow a City',
-    'Lay Some Roads',
-    'Power the Grid',
-  ];
-  let ctaIndex = 0;
-
   async function pollStats() {
     try {
       const res = await fetch(`${API_BASE}/v1/stats`);
@@ -207,11 +196,6 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
       if (mayors) animateStat(mayors, String(stats.mayors));
       if (cities) animateStat(cities, String(stats.cities));
       if (pop) animateStat(pop, stats.population.toLocaleString());
-
-      // Rotate CTA tagline
-      ctaIndex = (ctaIndex + 1) % ctaLines.length;
-      const ctaLabel = document.getElementById('pstat-cta-label');
-      if (ctaLabel) ctaLabel.textContent = ctaLines[ctaIndex];
     } catch { /* ignore */ }
   }
 
