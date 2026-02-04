@@ -231,6 +231,28 @@ describe('HeadlessGame', () => {
         expect(history[key].every((v: number) => typeof v === 'number')).toBe(true);
       }
     });
+
+    test('crime history contains non-zero values for a developed city', () => {
+      const game = HeadlessGame.fromSeed(42);
+
+      // Build a small city: coal + residential + road
+      const spot = findClearSpot(game, 4);
+      game.placeTool('coal', spot.x, spot.y);
+      const rx = spot.x + 9;
+      game.placeTool('residential', rx, spot.y);
+      for (let x = spot.x + 3; x <= rx - 2; x++) game.placeTool('wire', x, spot.y);
+      game.placeTool('road', rx, spot.y + 3);
+      game.placeTool('road', rx - 1, spot.y + 3);
+      game.placeTool('road', rx + 1, spot.y + 3);
+      game.placeTool('road', rx, spot.y + 2);
+
+      // Advance 5 years — enough for crime to appear
+      game.tick(60);
+
+      const history = game.getCensusHistory();
+      const nonZeroCrime = history.crime.filter((v: number) => v > 0);
+      expect(nonZeroCrime.length).toBeGreaterThan(0);
+    });
   });
 });
 
