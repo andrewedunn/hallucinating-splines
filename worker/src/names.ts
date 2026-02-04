@@ -14,6 +14,23 @@ const ADJECTIVES = [
   // Scale/power
   'Iron', 'Titan', 'Vast', 'Twin', 'Ancient', 'Eternal', 'Obsidian', 'Marble',
   'Granite', 'Cobalt', 'Ivory', 'Scarlet', 'Jade', 'Onyx', 'Platinum', 'Bronze',
+  // Loading screen participles
+  'Reticulated', 'Tessellated', 'Coalesced', 'Perturbed', 'Sublimated', 'Calibrated', 'Synthesized', 'Obfuscated',
+  'Gesticulated', 'Iterated', 'Partitioned', 'Stratified', 'Compounded', 'Decomposed',
+  // SimCity gameplay verbs
+  'Zoned', 'Bulldozed', 'Terraformed', 'Plopped', 'Sprawled', 'Annexed', 'Gridded', 'Funded',
+  'Rezoned', 'Budgeted', 'Surveyed', 'Plotted',
+  // SimCity tech/buildings (as adjectives)
+  'Orbital', 'Fusion', 'Hydro', 'Elevated', 'Microwave', 'Arcological',
+  // Speed settings & mascots
+  'Cheetah', 'Llama', 'Turtle',
+  // The Sims
+  'Plumbob', 'Woohoo',
+  // Sim-game culture
+  'Procedural', 'Isometric', 'Seeded', 'Tiled', 'Simulated', 'Pixelated', 'Bungeling', 'Maxis',
+  // City-builder vibes
+  'Commuter', 'Suburban', 'Metro', 'Transit', 'Civic', 'Municipal', 'Polluted', 'Renewable',
+  'Sprawling', 'Layered',
 ];
 
 const NOUNS = [
@@ -30,6 +47,31 @@ const NOUNS = [
   // Industrial/modern
   'Forge', 'Foundry', 'Works', 'Mill', 'Yards', 'Docks', 'Depot', 'Hub',
   'Exchange', 'Terminal', 'Annex', 'Complex', 'Concourse', 'Pavilion', 'Atrium', 'Vault',
+  // SimCity buildings/structures
+  'Arcology', 'Reactor', 'Turbine', 'Monorail', 'Aqueduct', 'Seaport', 'Runway', 'Precinct',
+  'Overpass', 'Underpass', 'Freeway', 'Causeway', 'Pipeline', 'Substation', 'Incinerator',
+  // SC2000 arcology names
+  'Plymouth', 'Darco',
+  // SimCity zones/planning
+  'Zone', 'Grid', 'Plat', 'Tract', 'Parcel', 'Sprawl', 'Corridor', 'Setback', 'Easement',
+  // Power/utilities
+  'Generator', 'Conduit', 'Pylon', 'Transformer', 'Cistern', 'Reservoir', 'Outfall',
+  // SimCity disasters
+  'Tornado', 'Quake', 'Meltdown', 'Inferno',
+  // Maxis culture
+  'Spline', 'Matrix',
+  // Other Maxis Sim games
+  'Colony', 'Anthill', 'Biome', 'Terrarium', 'Safari', 'Canopy', 'Atoll',
+  // Civilization
+  'Settler', 'Wonder', 'Granary', 'Barracks', 'Colossus', 'Oracle', 'Pantheon', 'Ziggurat',
+  // Cities: Skylines
+  'Chirper', 'Roundabout', 'Interchange', 'Bypass', 'Offramp',
+  // City-builder culture
+  'Skyline', 'Footprint', 'Brownfield', 'Greenfield', 'Density',
+  // Loading screens (as place-nouns)
+  'Exemplar', 'Automaton',
+  // Will Wright's legacy
+  'Wright',
 ];
 
 function simpleHash(str: string): number {
