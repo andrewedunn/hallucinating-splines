@@ -131,7 +131,7 @@ app.openapi(mayorRoute, async (c) => {
   if (!mayor) return errorResponse(c, 404, 'not_found', 'Mayor not found');
 
   const citiesResult = await c.env.DB.prepare(
-    `SELECT id, name, population, game_year, score, status, seed
+    `SELECT id, name, population, game_year, score, status, seed, updated_at, api_key_id as mayor_id
      FROM cities WHERE api_key_id = ? ORDER BY created_at DESC`
   ).bind(keyId).all();
 
