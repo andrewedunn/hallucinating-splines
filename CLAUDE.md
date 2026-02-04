@@ -59,6 +59,15 @@ site/
     styles/global.css  # Dark theme, layout, responsive breakpoints
     tiles.png          # Micropolis sprite sheet
 
+mcp/
+  src/
+    index.ts           # Worker entry point + routing
+    agent.ts           # McpAgent with 11 tool definitions
+    api.ts             # HTTP client for REST API
+    format.ts          # Response formatters for LLM output
+  wrangler.toml        # Worker config (DO binding, API_BASE var)
+  package.json
+
 docs/                  # PRDs and design documents
 docs/plans/            # Implementation plans (dated)
 ```
@@ -91,6 +100,14 @@ npm run dev           # Local Astro dev server
 npm run build         # Build for production
 npm run preview       # Preview production build
 # Deploy via Cloudflare Pages (manual or wrangler pages deploy dist/)
+```
+
+### MCP Server
+```bash
+cd mcp
+npm run dev           # Local MCP dev server
+npm run deploy        # Deploy to Cloudflare Workers
+npm run typecheck     # Type check MCP server code
 ```
 
 GitHub is NOT connected to Cloudflare — deploys are manual.
@@ -141,6 +158,7 @@ These details matter when working with the simulation:
 ## URLs
 
 - **API:** `https://api.hallucinatingsplines.com`
+- **MCP:** `https://mcp.hallucinatingsplines.com/mcp`
 - **Site:** `https://hallucinatingsplines.com`
 
 ## Key Docs
