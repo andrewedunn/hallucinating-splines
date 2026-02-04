@@ -109,8 +109,14 @@ export const ActionNameEnum = z.enum([
 
 export const PlaceActionBodySchema = z.object({
   action: ActionNameEnum,
-  x: z.number().int(),
-  y: z.number().int(),
+  x: z.number().int().optional(),
+  y: z.number().int().optional(),
+  x1: z.number().int().optional(),
+  y1: z.number().int().optional(),
+  x2: z.number().int().optional(),
+  y2: z.number().int().optional(),
+  width: z.number().int().optional(),
+  height: z.number().int().optional(),
   auto_bulldoze: z.boolean().optional(),
   auto_power: z.boolean().optional(),
   auto_road: z.boolean().optional(),

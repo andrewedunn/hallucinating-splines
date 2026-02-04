@@ -340,12 +340,14 @@ Action types and their sizes/costs:
 - build_stadium (4×4, $3000) — boosts happiness
 - bulldoze (1×1, $1) — clear rubble or demolish
 
-IMPORTANT: Power connectivity requires a contiguous chain of conductive tiles (road, wire, rail) from a power plant to the zone. Use auto_power: true to automatically connect power lines.
+IMPORTANT: Coordinates are CENTER-BASED for multi-tile buildings. A 3×3 zone at (10, 10) occupies (9-11, 9-11). A 4×4 plant at (10, 10) occupies (9-12, 9-12). Plan coordinates accordingly to avoid overlapping existing tiles.
+
+IMPORTANT: Power connectivity requires a contiguous chain of conductive tiles (road, wire, rail) from a power plant to the zone. auto_power places a single wire adjacent to the zone — it does NOT trace a full path back to the power plant. If the zone isn't adjacent to existing powered infrastructure, you must manually connect power lines back to the grid.
 
 Recommended flags for easier building:
 - auto_bulldoze: true — clears rubble before placing
-- auto_power: true — automatically connects power lines
-- auto_road: true — automatically connects roads
+- auto_power: true — places one wire adjacent to zone (still need contiguous path to plant)
+- auto_road: true — places one road adjacent to zone
 
 Rate limit: 30 actions per minute per city.`,
       {
