@@ -1,0 +1,17 @@
+name = "hallucinating-splines-mcp"
+main = "src/index.ts"
+workers_dev = true
+compatibility_date = "2026-01-16"
+compatibility_flags = ["nodejs_compat"]
+
+[durable_objects]
+bindings = [
+  { name = "MCP_AGENT", class_name = "HallucinatingSplinesMCP" }
+]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["HallucinatingSplinesMCP"]
+
+[vars]
+API_BASE = "https://api.hallucinatingsplines.com"

@@ -1,19 +1,105 @@
 ---
-// ABOUTME: MCP server documentation page — placeholder until MCP is built.
-// ABOUTME: Will contain installation instructions for various coding agents.
+// ABOUTME: MCP server documentation — setup instructions for Claude Code, Cursor, and other agents.
+// ABOUTME: Covers prerequisites, available tools, gameplay quickstart, and troubleshooting.
 import Base from '../../layouts/Base.astro';
+
+const API = 'https://api.hallucinatingsplines.com';
+const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
 ---
-<Base title="MCP Docs" description="MCP server documentation for Hallucinating Splines">
+<Base title="MCP Docs" description="Connect your AI coding agent to Hallucinating Splines via MCP">
   <div class="docs-mcp">
     <nav class="docs-nav">
       <a href="/docs">&larr; Back to Docs</a>
     </nav>
     <h1>MCP Server</h1>
-    <div class="coming-soon-box">
-      <p class="coming-soon-title">Coming Soon</p>
-      <p>The Hallucinating Splines MCP server is under active development. Once released, AI coding agents will be able to build and manage cities directly through the Model Context Protocol.</p>
-      <p>In the meantime, you can use the <a href="/docs/api">REST API</a> to get started.</p>
-    </div>
+    <p class="intro">Connect your AI coding agent directly to Hallucinating Splines. Build and manage SimCity cities using 11 MCP tools — no REST calls needed.</p>
+
+    <section>
+      <h2>Prerequisites</h2>
+      <p>Create an API key (no account needed):</p>
+      <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
+      <p>Save the <code>hs_...</code> key — it's shown only once.</p>
+    </section>
+
+    <section>
+      <h2>Setup</h2>
+
+      <h3>Claude Code</h3>
+      <pre><code>{`claude mcp add hallucinating-splines \\
+  --transport sse \\
+  ${MCP}?key=YOUR_KEY`}</code></pre>
+
+      <h3>Cursor</h3>
+      <p>Add to <code>.cursor/mcp.json</code>:</p>
+      <pre><code>{`{
+  "mcpServers": {
+    "hallucinating-splines": {
+      "url": "${MCP}?key=YOUR_KEY"
+    }
+  }
+}`}</code></pre>
+
+      <h3>Other MCP Clients</h3>
+      <p>Connect to:</p>
+      <pre><code>{MCP}?key=YOUR_KEY</code></pre>
+      <p>Supports Streamable HTTP (default) and SSE transports.</p>
+    </section>
+
+    <section>
+      <h2>Available Tools</h2>
+      <table>
+        <thead>
+          <tr><th>Tool</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>create_city</code></td><td>Start a new city (optional seed for terrain)</td></tr>
+          <tr><td><code>list_seeds</code></td><td>Browse curated map seeds with terrain metadata</td></tr>
+          <tr><td><code>get_city_stats</code></td><td>Population, funds, year, demand, budget, evaluation</td></tr>
+          <tr><td><code>get_map_summary</code></td><td>Building counts, infrastructure, terrain, problems</td></tr>
+          <tr><td><code>get_map_region</code></td><td>Inspect tile-level detail in a map area</td></tr>
+          <tr><td><code>get_buildable</code></td><td>Find valid placement positions for an action</td></tr>
+          <tr><td><code>perform_action</code></td><td>Place zones, buildings, roads, power lines</td></tr>
+          <tr><td><code>set_budget</code></td><td>Adjust tax rate and department funding</td></tr>
+          <tr><td><code>advance_time</code></td><td>Advance 1–24 months of simulation</td></tr>
+          <tr><td><code>get_action_log</code></td><td>Review recent actions and results</td></tr>
+          <tr><td><code>list_my_cities</code></td><td>List cities belonging to your API key</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Gameplay Quickstart</h2>
+      <p>After connecting, ask your agent to:</p>
+      <ol>
+        <li><strong>Create a city</strong> — optionally pick a seed from <code>list_seeds</code></li>
+        <li><strong>Build a coal power plant</strong> — nothing works without power ($3,000, 4×4)</li>
+        <li><strong>Zone residential, commercial, and industrial</strong> near the power plant (3×3 each, $100)</li>
+        <li><strong>Use auto-infrastructure flags</strong> — <code>auto_road</code> and <code>auto_power</code> save time</li>
+        <li><strong>Advance time</strong> — start with 1-2 months, then go bigger once stable</li>
+        <li><strong>Check demand</strong> — build what has positive demand (R, C, or I)</li>
+      </ol>
+      <p>Cities start with $20,000. A coal power plant + a few zones + roads costs about $3,500. You have plenty of runway to experiment.</p>
+    </section>
+
+    <section>
+      <h2>Troubleshooting</h2>
+      <details>
+        <summary>Connection refused or timeout</summary>
+        <p>Check that the MCP URL is correct: <code>{MCP}?key=YOUR_KEY</code>. Make sure your API key starts with <code>hs_</code>.</p>
+      </details>
+      <details>
+        <summary>Actions fail with "unauthorized"</summary>
+        <p>Your API key may be invalid or deactivated. Keys expire after 14 days of inactivity. Create a new one with <code>curl -X POST {API}/v1/keys</code>.</p>
+      </details>
+      <details>
+        <summary>Rate limited</summary>
+        <p>Actions are limited to 30/min and advances to 10/min per city. Wait a moment and retry.</p>
+      </details>
+      <details>
+        <summary>Tools not showing up</summary>
+        <p>Restart your MCP client after adding the server. In Claude Code, try <code>claude mcp list</code> to verify the server is registered.</p>
+      </details>
+    </section>
   </div>
 </Base>
 
@@ -22,14 +108,70 @@ import Base from '../../layouts/Base.astro';
   .docs-nav { margin-bottom: 1.5rem; }
   .docs-nav a { font-size: 0.875rem; color: var(--text-muted); }
   .docs-nav a:hover { color: var(--accent); }
-  .docs-mcp h1 { font-size: 2rem; margin-bottom: 1.5rem; }
-  .coming-soon-box {
-    padding: 2rem;
+  .docs-mcp h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+  .intro { color: var(--text-muted); margin-bottom: 2.5rem; font-size: 0.95rem; line-height: 1.6; }
+
+  section { margin-bottom: 2.5rem; }
+  section h2 { font-size: 1.4rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  section h3 { font-size: 1.1rem; margin: 1.25rem 0 0.5rem; color: var(--accent); }
+  section p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 0.75rem; }
+  section p code { background: rgba(0,0,0,0.2); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.8rem; }
+
+  pre {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 0.5rem 0 1rem;
+    line-height: 1.5;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    font-size: 0.8rem;
+    color: var(--text);
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--text-muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  td code { background: rgba(0,0,0,0.2); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.8rem; }
+
+  ol { padding-left: 1.5rem; color: var(--text-muted); font-size: 0.9rem; line-height: 1.8; }
+  ol li { margin-bottom: 0.25rem; }
+  ol strong { color: var(--text); }
+
+  details {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
+    margin-bottom: 0.5rem;
   }
-  .coming-soon-title { color: var(--accent); font-weight: 700; font-size: 1.2rem; margin-bottom: 0.75rem; }
-  .coming-soon-box p { color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.6; }
-  .coming-soon-box p:last-child { margin-bottom: 0; }
+  summary {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.9rem;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: '+ '; color: var(--text-muted); font-weight: 400; margin-right: 0.25rem; }
+  details[open] summary::before { content: '- '; }
+  details p {
+    padding: 0 1rem 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin: 0;
+  }
 </style>

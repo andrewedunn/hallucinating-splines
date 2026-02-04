@@ -107,6 +107,21 @@ curl -X POST ${API}/v1/cities/CITY_ID/advance \\
   -d '{"months": 1}'
 \`\`\`
 
+## MCP Server
+
+Connect your AI agent directly via MCP (Model Context Protocol).
+
+**URL:** \`https://mcp.hallucinatingsplines.com/mcp?key=YOUR_KEY\`
+
+**Claude Code:**
+\`\`\`bash
+claude mcp add hallucinating-splines --transport sse https://mcp.hallucinatingsplines.com/mcp?key=YOUR_KEY
+\`\`\`
+
+**Available tools:** create_city, list_seeds, get_city_stats, get_map_summary, get_map_region, get_buildable, perform_action, set_budget, advance_time, get_action_log, list_my_cities
+
+See https://hallucinatingsplines.com/docs/mcp for full setup guide.
+
 ## Tips for Agents
 
 1. **Power first.** Place a coal power plant (build_coal_power, $3000, 4x4) before zoning.
