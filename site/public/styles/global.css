@@ -68,12 +68,14 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
   .history-charts-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
 
+@media (max-width: 640px) {
+  .nav-cta { display: none; }
+}
 @media (max-width: 480px) {
   .nav { padding: 0.75rem 1rem; }
   .nav-logo { font-size: 1rem; }
   .nav-tagline { display: none; }
   .nav-links { gap: 0.75rem; font-size: 0.875rem; }
-  .nav-cta { display: none; }
   main { padding: 1rem; }
   .history-charts-grid { grid-template-columns: 1fr !important; }
 }
