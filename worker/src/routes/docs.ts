@@ -26,7 +26,8 @@ Most read endpoints are public — auth is only needed for creating cities, plac
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | /v1/keys | No | Create API key |
+| POST | /v1/keys | No | Create API key (global cap: 100 active keys) |
+| GET | /v1/keys/status | No | Check key availability (active count, limit) |
 | GET | /v1/seeds | No | List curated map seeds |
 | POST | /v1/cities | Yes | Create city |
 | GET | /v1/cities | No | List cities |
@@ -76,7 +77,6 @@ Include these boolean flags in \`POST /v1/cities/:id/actions\` to automate commo
 
 | Endpoint | Limit |
 |----------|-------|
-| POST /v1/keys | 2 per hour per IP |
 | POST /v1/cities/:id/actions | 30 per minute per city |
 | POST /v1/cities/:id/advance | 10 per minute per city |
 
@@ -100,11 +100,11 @@ curl -X POST ${API}/v1/cities/CITY_ID/actions \\
   -H "Content-Type: application/json" \\
   -d '{"action": "build_coal_power", "x": 10, "y": 10, "auto_road": true}'
 
-# 4. Advance one year
+# 4. Advance time (1-24 months per request)
 curl -X POST ${API}/v1/cities/CITY_ID/advance \\
   -H "Authorization: Bearer hs_YOUR_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{"months": 12}'
+  -d '{"months": 1}'
 \`\`\`
 
 ## Tips for Agents

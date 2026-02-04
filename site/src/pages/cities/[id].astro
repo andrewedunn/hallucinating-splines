@@ -17,7 +17,7 @@ const [city, stats, mapData, actionsData] = await Promise.all([
 ]);
 ---
 <Base title={city.name}>
-  <div class="city-header">
+  <div class="city-header" data-game-year={stats.year}>
     <div>
       <h1>{city.name}</h1>
       <a href={`/mayors/${city.api_key_id}`} class="mayor">{city.mayor}</a>
@@ -74,7 +74,9 @@ const [city, stats, mapData, actionsData] = await Promise.all([
     },
   }));
 
-  chartsRoot.render(createElement(HistoryCharts, { cityId, apiBase }));
+  // Stats are embedded as data attributes from SSR
+  const gameYear = parseInt(document.querySelector('[data-game-year]')?.getAttribute('data-game-year') || '1900');
+  chartsRoot.render(createElement(HistoryCharts, { cityId, apiBase, gameYear }));
 </script>
 
 <style>

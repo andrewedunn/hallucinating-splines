@@ -36,7 +36,8 @@ a:hover { color: var(--accent-hover); }
   flex-wrap: wrap;
 }
 
-.nav-logo { font-size: 1.2rem; font-weight: 700; color: var(--text); }
+.nav-logo { font-size: 1.2rem; font-weight: 700; color: var(--text); display: flex; flex-direction: column; line-height: 1.2; }
+.nav-tagline { font-size: 0.65rem; font-weight: 400; color: var(--text-muted); letter-spacing: 0.03em; }
 .nav-links { display: flex; gap: 1.5rem; align-items: center; }
 
 .nav-cta {
@@ -68,6 +69,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
 @media (max-width: 480px) {
   .nav { padding: 0.75rem 1rem; }
   .nav-logo { font-size: 1rem; }
+  .nav-tagline { display: none; }
   .nav-links { gap: 1rem; font-size: 0.875rem; }
   main { padding: 1rem; }
   .history-charts-grid { grid-template-columns: 1fr !important; }

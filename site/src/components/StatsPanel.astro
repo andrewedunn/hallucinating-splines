@@ -21,10 +21,10 @@ interface Props {
       crimeAverage: number; pollutionAverage: number; landValueAverage: number;
     };
     evaluation: {
-      approval: number;
-      populationDelta: number;
-      assessedValue: number;
-      scoreDelta: number;
+      approval?: number;
+      populationDelta?: number;
+      assessedValue?: number;
+      scoreDelta?: number;
       problems: string[];
     };
     budget: {
@@ -75,9 +75,9 @@ const problemColors: Record<string, string> = {
   <h3 class="section-title">Approval</h3>
   <div class="approval-bar">
     <div class="bar-track">
-      <div class="bar-fill approval" style={`width: ${evaluation.approval}%`}></div>
+      <div class="bar-fill approval" style={`width: ${evaluation.approval ?? 0}%`}></div>
     </div>
-    <span class="approval-pct">{evaluation.approval}%</span>
+    <span class="approval-pct">{evaluation.approval ?? 0}%</span>
   </div>
 
   <h3 class="section-title">Demand</h3>
@@ -113,7 +113,7 @@ const problemColors: Record<string, string> = {
   <h3 class="section-title">Assessed Value</h3>
   <div class="stat-row sub">
     <span class="label">Value</span>
-    <span class="value">${evaluation.assessedValue.toLocaleString()}</span>
+    <span class="value">${(evaluation.assessedValue ?? 0).toLocaleString()}</span>
   </div>
 
   {evaluation.problems.length > 0 && (

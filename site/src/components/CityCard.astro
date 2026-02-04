@@ -44,7 +44,7 @@ function activityColor(dateStr?: string): string {
 const timeAgo = relativeTime(updated_at);
 const freshness = activityColor(updated_at);
 ---
-<div class="city-card">
+<div class="city-card" data-city-id={id}>
   <a href={`/cities/${id}`} class="card-thumb" data-city-id={id} data-api-base={API_BASE}>
   </a>
   <div class="card-body">
@@ -59,15 +59,15 @@ const freshness = activityColor(updated_at);
     )}
     <div class="card-stats">
       <div class="stat">
-        <span class="stat-value">{population.toLocaleString()}</span>
+        <span class="stat-value" data-stat="population">{population.toLocaleString()}</span>
         <span class="stat-label">pop</span>
       </div>
       <div class="stat">
-        <span class="stat-value">{game_year}</span>
+        <span class="stat-value" data-stat="game_year">{game_year}</span>
         <span class="stat-label">year</span>
       </div>
       <div class="stat">
-        <span class="stat-value">{score}</span>
+        <span class="stat-value" data-stat="score">{score}</span>
         <span class="stat-label">score</span>
       </div>
     </div>
@@ -104,6 +104,7 @@ const freshness = activityColor(updated_at);
 a.card-mayor:hover { color: var(--accent); }
 .card-stats { display: flex; gap: 1.5rem; }
 .stat { display: flex; flex-direction: column; }
-.stat-value { font-weight: 600; font-size: 1rem; }
+.stat-value { font-weight: 600; font-size: 1rem; transition: color 0.4s; }
+.stat-value.changed { color: var(--accent); }
 .stat-label { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
 </style>

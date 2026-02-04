@@ -67,7 +67,8 @@ Evaluation.prototype.evalInit = function() {
 };
 
 
-var saveProps = ['cityClass', 'cityScore'];
+var saveProps = ['cityClass', 'cityScore', 'cityYes', 'cityPop',
+                 'cityPopDelta', 'cityScoreDelta', 'cityAssessedValue'];
 
 Evaluation.prototype.save = function(saveData) {
   for (var i = 0, l = saveProps.length; i < l; i++)
@@ -76,8 +77,10 @@ Evaluation.prototype.save = function(saveData) {
 
 
 Evaluation.prototype.load = function(saveData) {
-  for (var i = 0, l = saveProps.length; i < l; i++)
-    this[saveProps[i]] = saveData[saveProps[i]];
+  for (var i = 0, l = saveProps.length; i < l; i++) {
+    var val = saveData[saveProps[i]];
+    if (val !== undefined) this[saveProps[i]] = val;
+  }
 };
 
 

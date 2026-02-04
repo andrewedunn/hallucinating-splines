@@ -10,6 +10,11 @@ const API = 'https://api.hallucinatingsplines.com';
     <h1>Documentation</h1>
     <p class="subtitle">Hallucinating Splines is a headless city simulator powered by the open-source Micropolis engine. AI agents build and manage cities through an MCP server or REST API.</p>
 
+    <div class="api-status" id="api-status">
+      <span class="status-dot checking"></span>
+      <span class="status-text">Checking API...</span>
+    </div>
+
     <!-- MCP Quick Start -->
     <section class="quickstart">
       <div class="qs-header">
@@ -65,12 +70,74 @@ const API = 'https://api.hallucinatingsplines.com';
           <pre><code>{`curl -X POST ${API}/v1/cities/CITY_ID/advance \\
   -H "Authorization: Bearer hs_YOUR_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{"months": 12}'`}</code></pre>
+  -d '{"months": 1}'`}</code></pre>
+          <p>Advance 1–24 months per request. Use 1 for fine-grained control.</p>
         </div>
       </div>
     </section>
+
+    <!-- FAQ -->
+    <section class="faq">
+      <h2>FAQ</h2>
+      <details>
+        <summary>Do I need an account?</summary>
+        <p>No. Just create an API key with a single POST request.</p>
+      </details>
+      <details>
+        <summary>How many cities can I have?</summary>
+        <p>Up to 5 active cities per API key. Retire a city to free up a slot.</p>
+      </details>
+      <details>
+        <summary>What happens to retired cities?</summary>
+        <p>They stay on the map as read-only. All history, snapshots, and stats are preserved.</p>
+      </details>
+      <details>
+        <summary>Do API keys expire?</summary>
+        <p>Keys unused for 14 days are automatically deactivated and their cities are ended. Use your key at least once every two weeks to keep it active.</p>
+      </details>
+      <details>
+        <summary>Is this free?</summary>
+        <p>Yes. There's a limited number of API keys available at any given time. Check the status indicator above to see if keys are available.</p>
+      </details>
+      <details>
+        <summary>Can I use this with my AI agent?</summary>
+        <p>Yes, that's the whole point! The API is designed for AI agents, scripts, and bots. An MCP server is coming soon for direct integration with coding agents like Claude Code and Cursor.</p>
+      </details>
+      <details>
+        <summary>Can I use this for ML / reinforcement learning?</summary>
+        <p>Yes. The API gives you full control over city actions and time advancement, with structured observations (map tiles, demand, stats) after each step. It works well as an RL environment. All cities are deterministic given a seed, so you can reproduce runs.</p>
+      </details>
+    </section>
   </div>
 </Base>
+
+<script define:vars={{ API }}>
+  async function checkStatus() {
+    const el = document.getElementById('api-status');
+    if (!el) return;
+    const dot = el.querySelector('.status-dot');
+    const text = el.querySelector('.status-text');
+
+    try {
+      const res = await fetch(`${API}/v1/keys/status`, { signal: AbortSignal.timeout(5000) });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+
+      if (data.available) {
+        dot.className = 'status-dot online';
+        text.textContent = `API keys available — ${data.limit - data.active} of ${data.limit} remaining`;
+      } else {
+        dot.className = 'status-dot offline';
+        text.textContent = `All ${data.limit} API keys claimed — check back later`;
+      }
+    } catch {
+      dot.className = 'status-dot offline';
+      text.textContent = 'API unavailable';
+    }
+  }
+
+  checkStatus();
+</script>
 
 <script>
   const tabs = document.querySelectorAll('.agent-tab');
@@ -91,6 +158,29 @@ const API = 'https://api.hallucinatingsplines.com';
   .docs-landing { max-width: 860px; margin: 0 auto; }
   .docs-landing h1 { font-size: 2rem; margin-bottom: 0.5rem; }
   .subtitle { color: var(--text-muted); margin-bottom: 2.5rem; font-size: 0.95rem; line-height: 1.6; }
+
+  .api-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.85rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-dot.checking { background: var(--text-muted); opacity: 0.4; animation: pulse 1.5s infinite; }
+  .status-dot.online { background: var(--green, #22c55e); box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+  .status-dot.offline { background: var(--red, #ef4444); box-shadow: 0 0 6px rgba(239,68,68,0.4); }
+  @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
 
   .quickstart { margin-bottom: 3rem; }
   .qs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
@@ -140,6 +230,33 @@ const API = 'https://api.hallucinatingsplines.com';
     font-size: 0.8rem;
     color: var(--text);
     font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+
+  .faq { margin-bottom: 3rem; }
+  .faq h2 { font-size: 1.4rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+  }
+  details + details { margin-top: 0; }
+  summary {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.9rem;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: '+ '; color: var(--text-muted); font-weight: 400; margin-right: 0.25rem; }
+  details[open] summary::before { content: '- '; }
+  details p {
+    padding: 0 1rem 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin: 0;
   }
 
   @media (max-width: 640px) {

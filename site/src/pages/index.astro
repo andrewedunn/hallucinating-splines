@@ -10,10 +10,6 @@ const data = await apiFetch<{ cities: any[]; total: number }>(`/v1/cities?sort=$
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 ---
 <Base title="Home">
-  <div class="hero">
-    <p class="hero-sub">A headless city simulator where AI agents are the mayors.</p>
-  </div>
-
   <div class="gallery-header">
     <div class="sort-row">
       <div class="sort-tabs" id="sort-tabs">
@@ -43,12 +39,54 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
 </Base>
 
 <script define:vars={{ API_BASE, sort }}>
-  // Poll for updated city data every 30s
+  // Poll for updated city data every 30s, stagger card updates so it feels alive
   let currentSort = sort;
   let pollTimer = null;
 
-  function formatTimeAgo() {
-    return 'Updated just now';
+  function relativeTime(dateStr) {
+    if (!dateStr) return 'unknown';
+    const diffMs = Date.now() - new Date(dateStr + 'Z').getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days}d ago`;
+    return `${Math.floor(days / 30)}mo ago`;
+  }
+
+  function freshnessClass(dateStr) {
+    if (!dateStr) return 'stale';
+    const hours = (Date.now() - new Date(dateStr + 'Z').getTime()) / 3600000;
+    if (hours < 1) return 'fresh';
+    if (hours < 24) return 'recent';
+    if (hours < 168) return 'aging';
+    return 'stale';
+  }
+
+  function animateStat(el, newText) {
+    if (el.textContent === newText) return;
+    el.textContent = newText;
+    el.classList.add('changed');
+    setTimeout(() => el.classList.remove('changed'), 1200);
+  }
+
+  function updateCard(card, city) {
+    const pop = card.querySelector('[data-stat="population"]');
+    const year = card.querySelector('[data-stat="game_year"]');
+    const score = card.querySelector('[data-stat="score"]');
+
+    if (pop) animateStat(pop, city.population.toLocaleString());
+    if (year) animateStat(year, String(city.game_year));
+    if (score) animateStat(score, String(city.score));
+
+    // Update activity badge
+    const badge = card.querySelector('.activity');
+    if (badge && city.updated_at) {
+      badge.textContent = relativeTime(city.updated_at);
+      badge.className = `activity ${freshnessClass(city.updated_at)}`;
+    }
   }
 
   async function pollCities() {
@@ -58,10 +96,23 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
       const data = await res.json();
 
       const status = document.getElementById('poll-status');
-      if (status) status.textContent = formatTimeAgo();
+      if (status) status.textContent = '';
 
-      // Full page reload would be cleaner but polling just updates the timestamp
-      // to show the page is "live". Cards are SSR'd and thumbnails are expensive.
+      // Build a lookup by city ID
+      const cityMap = {};
+      for (const city of data.cities) {
+        cityMap[city.id] = city;
+      }
+
+      // Stagger updates: each card updates at a random delay (200ms–2s)
+      const cards = document.querySelectorAll('.city-card[data-city-id]');
+      cards.forEach((card) => {
+        const id = card.dataset.cityId;
+        const city = cityMap[id];
+        if (!city) return;
+        const delay = 200 + Math.random() * 1800;
+        setTimeout(() => updateCard(card, city), delay);
+      });
     } catch {
       // Silently ignore poll failures
     }
@@ -73,7 +124,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
       if (document.visibilityState === 'visible') {
         pollCities();
       }
-    }, 30000);
+    }, 10000);
   }
 
   startPolling();
@@ -138,10 +189,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
 </script>
 
 <style>
-.hero { text-align: center; padding: 2rem 0 1.5rem; }
-.hero-sub { color: var(--text-muted); font-size: 1.1rem; }
-
-.gallery-header { margin-bottom: 1.5rem; }
+.gallery-header { margin-bottom: 1.5rem; margin-top: 1.5rem; }
 .sort-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .sort-tabs { display: flex; gap: 0.5rem; }
 .sort-tabs a {

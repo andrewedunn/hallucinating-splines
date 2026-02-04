@@ -183,6 +183,36 @@ describe('HeadlessGame', () => {
     });
   });
 
+  describe('evaluation persistence', () => {
+    test('approval survives save/load cycle', () => {
+      const game = HeadlessGame.fromSeed(42);
+
+      // Build a small city: power + residential + road
+      const spot = findClearSpot(game, 4);
+      game.placeTool('coal', spot.x, spot.y);
+      game.placeTool('road', spot.x - 1, spot.y);
+      game.placeTool('road', spot.x - 1, spot.y + 1);
+      game.placeTool('road', spot.x - 1, spot.y + 2);
+      game.placeTool('residential', spot.x - 4, spot.y);
+      game.placeTool('residential', spot.x - 4, spot.y + 3);
+
+      // Advance enough for evaluation to run (TAX_FREQUENCY = 48 cityTime)
+      game.tick(24); // 2 years
+
+      const statsBefore = game.getFullStats();
+      // With a score > 0, approval should be > 0 after evaluation runs
+      expect(statsBefore.evaluation.approval).toBeGreaterThan(0);
+
+      // Save and reload
+      const saveData = game.save();
+      const restored = HeadlessGame.fromSave(saveData);
+      const statsAfter = restored.getFullStats();
+
+      expect(statsAfter.evaluation.approval).toBe(statsBefore.evaluation.approval);
+      expect(statsAfter.evaluation.assessedValue).toBe(statsBefore.evaluation.assessedValue);
+    });
+  });
+
   describe('getCensusHistory', () => {
     test('returns six 120-entry arrays', () => {
       const game = HeadlessGame.fromSeed(42);
