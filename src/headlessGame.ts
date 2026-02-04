@@ -32,6 +32,13 @@ const PROBLEM_NAMES: Record<number, string> = {
   6: 'fire',
 };
 
+const RESULT_REASONS: Record<number, string> = {
+  0: 'ok',
+  1: 'placement_failed',
+  2: 'insufficient_funds',
+  3: 'needs_bulldoze',
+};
+
 const CITY_CLASS_NAMES: Record<string, string> = {
   VILLAGE: 'Village',
   TOWN: 'Town',
@@ -96,7 +103,7 @@ export class HeadlessGame {
   placeTool(toolName: string, x: number, y: number): PlaceResult {
     const tool = this.tools[toolName];
     if (!tool) {
-      return { success: false, cost: 0, result: -1 };
+      return { success: false, cost: 0, result: -1, reason: 'unknown_tool' };
     }
 
     tool.doTool(x, y, this.sim.blockMaps);
@@ -107,6 +114,7 @@ export class HeadlessGame {
       success: applied,
       cost: applied ? tool.toolCost : 0,
       result,
+      reason: applied ? undefined : (RESULT_REASONS[result] || 'placement_failed'),
     };
   }
 

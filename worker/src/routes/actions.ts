@@ -155,6 +155,9 @@ actions.openapi(placeActionRoute, async (c) => {
     cost: result.cost,
     funds_remaining: result.stats?.funds,
   };
+  if (!result.success && result.reason) {
+    response.reason = result.reason;
+  }
   if (result.auto_actions) {
     response.auto_actions = result.auto_actions;
   }

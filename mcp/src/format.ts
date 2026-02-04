@@ -207,7 +207,7 @@ export function formatActionResult(data: Record<string, unknown>): string {
   const autoActions = data.auto_actions as Array<Record<string, unknown>> | undefined;
 
   if (!success) {
-    const reason = (data.error as string) || (data.reason as string) || 'unknown';
+    const reason = (data.reason as string) || (data.error as string) || 'unknown';
     return `Action failed: ${reason}`;
   }
 

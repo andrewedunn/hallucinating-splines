@@ -42,6 +42,7 @@ export interface PlaceResult {
   success: boolean;
   cost: number;
   result: number; // TOOLRESULT_* constant
+  reason?: string;
 }
 
 export interface BudgetOpts {
