@@ -218,9 +218,10 @@ export function formatActionResult(data: Record<string, unknown>): string {
   if (autoActions?.length) {
     lines.push('', '  Auto-infrastructure:');
     for (const a of autoActions) {
-      const tiles = a.tiles as Array<[number, number]> | undefined;
-      const count = tiles?.length || 0;
-      lines.push(`    ${count} tiles placed (cost: $${a.cost || 0})`);
+      const tilesOrPath = (a.path || a.tiles) as Array<[number, number]> | undefined;
+      const count = tilesOrPath?.length || 0;
+      const typeName = a.type === 'bulldoze' ? 'cleared' : (a.type as string || 'infra');
+      lines.push(`    ${typeName}: ${count} placed (cost: $${a.cost || 0})`);
     }
   }
 
