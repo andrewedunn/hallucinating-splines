@@ -188,16 +188,47 @@ describe('autoInfra', () => {
       expect(rdResult.cost).toBeGreaterThanOrEqual(0);
     });
 
-    test('returns failure when no road is reachable', () => {
+    test('places road stub when no existing roads on map', () => {
       const game = HeadlessGame.fromSeed(42);
 
-      // Place a residential zone with no roads
+      // Place a residential zone with no roads anywhere
       const res = findClearSpot(game, 3);
       const resResult = game.placeTool('residential', res.x, res.y);
       expect(resResult.success).toBe(true);
 
       const rdResult = autoRoad(game, res.x, res.y, 3);
-      expect(rdResult.failed).toBe(true);
+      // Should NOT fail — should place a road stub instead
+      expect(rdResult.failed).not.toBe(true);
+      expect(rdResult.path!.length).toBeGreaterThan(0);
+      expect(rdResult.cost).toBeGreaterThan(0);
+
+      // Verify road tiles actually exist on the map now
+      const map = game.getMap();
+      let roadCount = 0;
+      for (const [rx, ry] of rdResult.path!) {
+        const tileId = map.tiles[ry * map.width + rx] & 0x3ff;
+        if (tileId >= ROADBASE && tileId <= LASTROAD) roadCount++;
+      }
+      expect(roadCount).toBeGreaterThan(0);
+    });
+
+    test('second zone connects to first zones road stub', () => {
+      const game = HeadlessGame.fromSeed(42);
+
+      // Place first zone — auto_road bootstraps a road stub
+      const zone1 = findClearSpot(game, 3);
+      game.placeTool('residential', zone1.x, zone1.y);
+      const rd1 = autoRoad(game, zone1.x, zone1.y, 3);
+      expect(rd1.failed).not.toBe(true);
+      expect(rd1.path!.length).toBeGreaterThan(0);
+
+      // Place second zone nearby
+      const zone2 = findClearSpotNear(game, zone1.x, zone1.y, 3, 5);
+      game.placeTool('residential', zone2.x, zone2.y);
+
+      // Second auto_road should connect to the road network seeded by the first
+      const rd2 = autoRoad(game, zone2.x, zone2.y, 3);
+      expect(rd2.failed).not.toBe(true);
     });
 
     test('prefers routing through existing roads (zero cost)', () => {

@@ -422,6 +422,91 @@ export function autoPower(game: HeadlessGame, x: number, y: number, toolSize: nu
 }
 
 /**
+ * Place a road stub adjacent to a zone when no roads exist on the map.
+ * Picks the zone edge closest to map center to encourage connected growth.
+ */
+function bootstrapRoadStub(
+  game: HeadlessGame,
+  map: { width: number; height: number; tiles: number[] },
+  centerX: number,
+  centerY: number,
+  toolSize: number,
+): AutoAction {
+  const halfBelow = Math.floor((toolSize - 1) / 2);
+  const halfAbove = Math.floor(toolSize / 2);
+  const zoneLeft = centerX - halfBelow;
+  const zoneTop = centerY - halfBelow;
+  const zoneRight = centerX + halfAbove;
+  const zoneBottom = centerY + halfAbove;
+
+  const mapCenterX = Math.floor(map.width / 2);
+  const mapCenterY = Math.floor(map.height / 2);
+
+  // Determine which edge is closest to map center
+  type Edge = { tiles: [number, number][]; dist: number };
+  const edges: Edge[] = [
+    { // top edge (y = zoneTop - 1)
+      tiles: Array.from({ length: toolSize }, (_, i) => [zoneLeft + i, zoneTop - 1] as [number, number]),
+      dist: Math.abs(zoneTop - 1 - mapCenterY),
+    },
+    { // bottom edge (y = zoneBottom + 1)
+      tiles: Array.from({ length: toolSize }, (_, i) => [zoneLeft + i, zoneBottom + 1] as [number, number]),
+      dist: Math.abs(zoneBottom + 1 - mapCenterY),
+    },
+    { // left edge (x = zoneLeft - 1)
+      tiles: Array.from({ length: toolSize }, (_, i) => [zoneLeft - 1, zoneTop + i] as [number, number]),
+      dist: Math.abs(zoneLeft - 1 - mapCenterX),
+    },
+    { // right edge (x = zoneRight + 1)
+      tiles: Array.from({ length: toolSize }, (_, i) => [zoneRight + 1, zoneTop + i] as [number, number]),
+      dist: Math.abs(zoneRight + 1 - mapCenterX),
+    },
+  ];
+
+  // Sort by distance to map center (closest first)
+  edges.sort((a, b) => a.dist - b.dist);
+
+  for (const edge of edges) {
+    const placed: number[][] = [];
+    let totalCost = 0;
+    let anyFailed = false;
+
+    for (const [tx, ty] of edge.tiles) {
+      if (tx < 0 || ty < 0 || tx >= map.width || ty >= map.height) { anyFailed = true; break; }
+
+      const raw = map.tiles[ty * map.width + tx];
+      const tileId = raw & BIT_MASK;
+
+      // Skip if already a road
+      if (isRoad(tileId)) { placed.push([tx, ty]); continue; }
+      // Can't place on water or buildings
+      if (isWater(tileId) || isBuilding(tileId)) { anyFailed = true; break; }
+
+      // Bulldoze trees/rubble first
+      if (isTree(tileId) || isRubble(tileId)) {
+        const bdResult = game.placeTool('bulldozer', tx, ty);
+        if (bdResult.success) totalCost += bdResult.cost;
+      }
+
+      const roadResult = game.placeTool('road', tx, ty);
+      if (roadResult.success) {
+        totalCost += roadResult.cost;
+        placed.push([tx, ty]);
+      } else {
+        anyFailed = true;
+        break;
+      }
+    }
+
+    if (!anyFailed && placed.length > 0) {
+      return { type: 'road', path: placed, cost: totalCost };
+    }
+  }
+
+  return { type: 'road', cost: 0, failed: true, reason: 'no_road_reachable' };
+}
+
+/**
  * Dijkstra from zone at (x,y) to nearest road tile; place road tiles along the path.
  * Prefers routing through existing roads (free traversal).
  * Supports water crossings and bulldozes trees along the path.
@@ -441,7 +526,9 @@ export function autoRoad(game: HeadlessGame, x: number, y: number, toolSize: num
   );
 
   if (result === null) {
-    return { type: 'road', cost: 0, failed: true, reason: 'no_road_reachable' };
+    // Bootstrap: no roads exist yet — place a road stub along the zone edge
+    // closest to map center to encourage connected growth
+    return bootstrapRoadStub(game, map, x, y, toolSize);
   }
 
   const { path } = result;
