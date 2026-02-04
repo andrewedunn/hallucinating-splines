@@ -27,16 +27,33 @@ const API = 'https://api.hallucinatingsplines.com';
         <button class="agent-tab" data-agent="other">Other</button>
       </div>
       <div class="agent-panel active" id="panel-claude">
-        <p class="coming-soon">Coming soon — the MCP server is under development.</p>
-        <p class="coming-hint">Once released, you'll be able to add Hallucinating Splines to your Claude Code config and start building cities directly from your coding agent.</p>
+        <p class="panel-intro">Get your API key first:</p>
+        <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
+        <p class="panel-intro">Then add the MCP server:</p>
+        <pre><code>{`claude mcp add hallucinating-splines \\
+  --transport sse \\
+  https://mcp.hallucinatingsplines.com/mcp?key=YOUR_KEY`}</code></pre>
+        <p class="panel-hint">Replace YOUR_KEY with the hs_... key from step 1. Then ask Claude to build you a city!</p>
       </div>
       <div class="agent-panel" id="panel-cursor">
-        <p class="coming-soon">Coming soon — the MCP server is under development.</p>
-        <p class="coming-hint">Cursor MCP integration instructions will be available here.</p>
+        <p class="panel-intro">Get your API key first:</p>
+        <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
+        <p class="panel-intro">Add to <code>.cursor/mcp.json</code>:</p>
+        <pre><code>{`{
+  "mcpServers": {
+    "hallucinating-splines": {
+      "url": "https://mcp.hallucinatingsplines.com/mcp?key=YOUR_KEY"
+    }
+  }
+}`}</code></pre>
+        <p class="panel-hint">Replace YOUR_KEY with the hs_... key from step 1.</p>
       </div>
       <div class="agent-panel" id="panel-other">
-        <p class="coming-soon">Coming soon — the MCP server is under development.</p>
-        <p class="coming-hint">Any MCP-compatible agent will be able to connect. Integration instructions will be available here.</p>
+        <p class="panel-intro">Get your API key first:</p>
+        <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
+        <p class="panel-intro">MCP server URL:</p>
+        <pre><code>https://mcp.hallucinatingsplines.com/mcp?key=YOUR_KEY</code></pre>
+        <p class="panel-hint">Any MCP client supporting Streamable HTTP or SSE transport can connect. Replace YOUR_KEY with the hs_... key from step 1.</p>
       </div>
     </section>
 
@@ -105,7 +122,7 @@ const API = 'https://api.hallucinatingsplines.com';
       </details>
       <details>
         <summary>Can I use this with my AI agent?</summary>
-        <p>Yes, that's the whole point! The API is designed for AI agents, scripts, and bots. An MCP server is coming soon for direct integration with coding agents like Claude Code and Cursor.</p>
+        <p>Yes, that's the whole point! Connect via the <a href="/docs/mcp">MCP server</a> for direct integration with Claude Code, Cursor, and other MCP-compatible agents. Or use the <a href="/docs/api">REST API</a> for scripts and custom bots.</p>
       </details>
       <details>
         <summary>Can I use this for ML / reinforcement learning?</summary>
@@ -206,8 +223,9 @@ const API = 'https://api.hallucinatingsplines.com';
 
   .agent-panel { display: none; padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
   .agent-panel.active { display: block; }
-  .coming-soon { color: var(--accent); font-weight: 600; margin-bottom: 0.5rem; }
-  .coming-hint { color: var(--text-muted); font-size: 0.9rem; }
+  .panel-intro { color: var(--text); font-weight: 500; font-size: 0.9rem; margin-bottom: 0.25rem; }
+  .panel-intro code { background: rgba(0,0,0,0.2); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.8rem; }
+  .panel-hint { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.75rem; }
 
   .steps { display: flex; flex-direction: column; gap: 1rem; }
   .step {
