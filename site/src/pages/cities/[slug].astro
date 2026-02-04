@@ -13,35 +13,56 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
 const city = await apiFetch<any>(`/v1/cities/resolve/${code}`);
 const cityId = city.id;
 
+async function tryFetch<T>(path: string): Promise<T | null> {
+  try { return await apiFetch<T>(path); } catch { return null; }
+}
+
 const [stats, mapData, actionsData] = await Promise.all([
-  apiFetch<any>(`/v1/cities/${cityId}/stats`),
-  apiFetch<any>(`/v1/cities/${cityId}/map`),
-  apiFetch<any>(`/v1/cities/${cityId}/actions?limit=50`),
+  tryFetch<any>(`/v1/cities/${cityId}/stats`),
+  tryFetch<any>(`/v1/cities/${cityId}/map`),
+  tryFetch<any>(`/v1/cities/${cityId}/actions?limit=50`),
 ]);
+
+const hasGameState = !!(stats && mapData);
 ---
 <Base title={city.name}>
-  <div class="city-header" data-game-year={stats.year} data-status={city.status} data-updated-at={city.updated_at}>
+  <div class="city-header" data-game-year={stats?.year ?? city.game_year} data-status={city.status} data-updated-at={city.updated_at}>
     <div>
       <h1>{city.name}</h1>
       <a href={`/mayors/${city.mayor_slug}`} class="mayor">{city.mayor}</a>
     </div>
     <div class="header-badges">
+      {city.status === 'ended' && <span class="ended-badge">Ended</span>}
       <span id="live-indicator"></span>
     </div>
   </div>
 
-  <div class="city-layout">
-    <div class="map-column">
-      <div id="map-container" data-tiles={JSON.stringify(mapData.tiles)} data-width={mapData.width} data-height={mapData.height} data-city-id={cityId} data-api-base={API_BASE}>
+  {hasGameState ? (
+    <div class="city-layout">
+      <div class="map-column">
+        <div id="map-container" data-tiles={JSON.stringify(mapData.tiles)} data-width={mapData.width} data-height={mapData.height} data-city-id={cityId} data-api-base={API_BASE}>
+        </div>
+        <div id="scrubber-container"></div>
+        <div id="history-charts-container"></div>
+        <ActionLog actions={actionsData?.actions || []} total={actionsData?.total || 0} />
       </div>
-      <div id="scrubber-container"></div>
-      <div id="history-charts-container"></div>
-      <ActionLog actions={actionsData.actions || []} total={actionsData.total || 0} />
+      <div class="stats-column">
+        <StatsPanel stats={stats} />
+      </div>
     </div>
-    <div class="stats-column">
-      <StatsPanel stats={stats} />
+  ) : (
+    <div class="no-game-state">
+      <p>Game data for this city is no longer available.</p>
+      <div class="city-meta">
+        <span>Population: {city.population?.toLocaleString() ?? 0}</span>
+        <span>Year: {city.game_year ?? '?'}</span>
+        <span>Score: {city.score ?? 0}</span>
+      </div>
+      {actionsData?.actions?.length > 0 && (
+        <ActionLog actions={actionsData.actions} total={actionsData.total || 0} />
+      )}
     </div>
-  </div>
+  )}
 </Base>
 
 <script>
@@ -52,7 +73,10 @@ const [stats, mapData, actionsData] = await Promise.all([
   import HistoryCharts from '../../components/HistoryCharts';
   import LiveIndicator from '../../components/LiveIndicator';
 
-  const mapEl = document.getElementById('map-container')!;
+  const mapEl = document.getElementById('map-container');
+  if (!mapEl) {
+    // No game state — skip all map/polling setup
+  } else {
   const tiles = JSON.parse(mapEl.dataset.tiles!);
   const width = parseInt(mapEl.dataset.width!);
   const height = parseInt(mapEl.dataset.height!);
@@ -362,6 +386,7 @@ const [stats, mapData, actionsData] = await Promise.all([
 
   // Expose returnToLive for the "Return to live" button
   (window as any).__returnToLive = returnToLive;
+  } // end if (mapEl)
 </script>
 
 <style>
@@ -375,6 +400,10 @@ const [stats, mapData, actionsData] = await Promise.all([
 @media (max-width: 900px) {
   .city-layout { grid-template-columns: 1fr; }
 }
+.ended-badge { font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 9999px; background: var(--border); color: var(--text-muted); }
+.no-game-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+.no-game-state p { font-size: 1.1rem; margin-bottom: 1rem; }
+.city-meta { display: flex; gap: 2rem; justify-content: center; font-size: 1rem; color: var(--text); }
 @media (max-width: 480px) {
   .city-header { flex-direction: column; gap: 0.5rem; }
 }
