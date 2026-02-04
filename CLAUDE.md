@@ -26,9 +26,9 @@ worker/
     index.ts           # Hono app entry point + scheduled handler
     auth.ts            # API key generation, SHA-256 hashing, auth middleware
     errors.ts          # Standardized error response helper
-    names.ts           # Deterministic mayor/city name generation
+    names.ts           # Deterministic mayor/city name generation + slug URLs
     cityDO.ts          # Durable Object — one HeadlessGame per city
-    autoInfra.ts       # Auto-bulldoze, auto-power, auto-road logic
+    autoInfra.ts       # Dijkstra-based auto-power, auto-road, and auto-bulldoze
     mapAnalysis.ts     # Semantic map analysis (zone counts, power coverage)
     routes/
       keys.ts          # POST /v1/keys — API key creation
@@ -127,6 +127,8 @@ GitHub is NOT connected to Cloudflare — deploys are manual.
 - Key IDs: `key_` + 16 hex chars
 - API keys: `hs_` + 64 hex chars (only the hash is stored)
 - Mayor/city names are deterministically generated from the key/city ID hash
+- Slug URLs: `name-XXXX` where XXXX is the first 4 hex chars of the ID (e.g. `/cities/crystal-bay-a1b2`)
+- Resolve endpoints: `/v1/cities/resolve/:code` and `/v1/mayors/resolve/:code` for short-code lookup
 
 ## Engine Internals
 
@@ -144,6 +146,7 @@ These details matter when working with the simulation:
 1. **`simulation.js` lines 343, 346:** Fixed bare `budget` variable → `this.budget` in `take10Census()` and `take120Census()` calls.
 2. **`boatSprite.js`:** Removed dead `SpriteConstants` import (no such named export).
 3. **`queryTool.js`:** Stripped jQuery dependency. All `$('#...').text(...)` DOM writes replaced with no-ops.
+4. **`blockMapUtils.js`:** Fixed `crimeScan` using non-existent `mapWidth`/`mapHeight` → `gameMapWidth`/`gameMapHeight`.
 
 ## Conventions
 
