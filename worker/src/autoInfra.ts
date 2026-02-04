@@ -131,9 +131,9 @@ function tileCost(raw: number, tileId: number, mode: PathMode): number {
     return mode === 'wire' ? 5 : 10;
   }
 
-  // Road tiles when laying wire — wire-on-road creates powered road, costs wire price
+  // Road tiles when laying wire — wire-on-road creates powered road, strongly preferred
   if (mode === 'wire' && isRoad(tileId)) {
-    return 5;
+    return 1;
   }
 
   // Power line tiles when laying road — road-on-wire, costs road price
@@ -350,7 +350,7 @@ function estimatePathCost(
     if (mode === 'wire') {
       if (!isPowerLine(tileId) && !isPoweredRoad(tileId) && !(raw & CONDBIT)) {
         if (isWater(tileId)) cost += 25;
-        else if (isRoad(tileId)) cost += 5;
+        else if (isRoad(tileId)) cost += 1;
         else cost += 5;
       }
     } else {
