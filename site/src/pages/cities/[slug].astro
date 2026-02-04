@@ -112,7 +112,7 @@ const [stats, mapData, actionsData] = await Promise.all([
   const updatedAtStr = headerEl.getAttribute('data-updated-at');
   let lastUpdated = updatedAtStr ? new Date(updatedAtStr + 'Z').getTime() : Date.now();
   let pollTimer: ReturnType<typeof setInterval> | null = null;
-  let pollingEnabled = true;
+  let lastStatsJSON = '';
 
   function demandPct(val: number): number {
     return Math.max(0, Math.min(100, (val / 2000) * 50 + 50));
@@ -263,19 +263,9 @@ const [stats, mapData, actionsData] = await Promise.all([
     }
   }
 
-  function togglePolling() {
-    pollingEnabled = !pollingEnabled;
-    if (pollingEnabled) {
-      startPolling();
-    } else {
-      stopPolling();
-    }
-    renderLiveIndicator();
-  }
-
   function renderLiveIndicator() {
     if (liveRoot) {
-      liveRoot.render(createElement(LiveIndicator, { lastUpdated, polling: pollingEnabled, onTogglePolling: togglePolling }));
+      liveRoot.render(createElement(LiveIndicator, { lastUpdated }));
     }
   }
 
@@ -301,6 +291,13 @@ const [stats, mapData, actionsData] = await Promise.all([
 
       if (!statsRes) return;
 
+      // Detect any change in stats — means an action happened
+      const statsJSON = JSON.stringify(statsRes);
+      if (statsJSON !== lastStatsJSON) {
+        lastStatsJSON = statsJSON;
+        lastUpdated = Date.now();
+      }
+
       updateStatsDOM(statsRes);
 
       if (mapRes?.tiles) {
@@ -313,8 +310,6 @@ const [stats, mapData, actionsData] = await Promise.all([
 
       const newYear = statsRes.year;
       if (newYear !== gameYear) {
-        // City actually advanced — update the timestamp
-        lastUpdated = Date.now();
         gameYear = newYear;
 
         // Year changed — fetch history, snapshots, actions

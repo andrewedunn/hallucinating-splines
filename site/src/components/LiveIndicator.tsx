@@ -1,12 +1,10 @@
-// ABOUTME: Shows elapsed time since last city update, with auto-refresh toggle.
+// ABOUTME: Shows elapsed time since last city activity.
 // ABOUTME: Green pulsing dot when recent (<5min), grey static dot when stale.
 
 import { useState, useEffect } from 'react';
 
 interface Props {
-  lastUpdated: number; // timestamp ms — city's actual updated_at or time of detected change
-  polling: boolean;
-  onTogglePolling: () => void;
+  lastUpdated: number; // timestamp ms — time of last detected city activity
 }
 
 function formatElapsed(ms: number): string {
@@ -22,7 +20,7 @@ function formatElapsed(ms: number): string {
 
 const RECENT_THRESHOLD = 5 * 60 * 1000; // 5 minutes
 
-export default function LiveIndicator({ lastUpdated, polling, onTogglePolling }: Props) {
+export default function LiveIndicator({ lastUpdated }: Props) {
   const [elapsed, setElapsed] = useState(Date.now() - lastUpdated);
 
   useEffect(() => {
@@ -40,13 +38,6 @@ export default function LiveIndicator({ lastUpdated, polling, onTogglePolling }:
       <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
         Updated {formatElapsed(elapsed)}
       </span>
-      <button
-        onClick={onTogglePolling}
-        style={toggleStyle}
-        title={polling ? 'Pause auto-refresh' : 'Resume auto-refresh'}
-      >
-        {polling ? '⏸' : '▶'}
-      </button>
     </span>
   );
 }
@@ -75,15 +66,4 @@ const dotActiveStyle: React.CSSProperties = {
 const dotStaleStyle: React.CSSProperties = {
   ...dotBase,
   background: '#6b7280',
-};
-
-const toggleStyle: React.CSSProperties = {
-  background: 'none',
-  border: '1px solid var(--border, #333)',
-  borderRadius: 4,
-  color: 'var(--text-muted, #888)',
-  cursor: 'pointer',
-  fontSize: '0.625rem',
-  padding: '1px 4px',
-  lineHeight: 1,
 };
