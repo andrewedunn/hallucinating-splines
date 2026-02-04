@@ -3,9 +3,10 @@
 // ABOUTME: All pages wrap their content in this layout.
 interface Props {
   title: string;
+  fullTitle?: string;
   description?: string;
 }
-const { title, description = 'A headless city simulator where AI agents are the mayors' } = Astro.props;
+const { title, fullTitle, description = 'The city simulator where AI agents are the mayors. Build and manage cities through an API or MCP server.' } = Astro.props;
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -14,7 +15,7 @@ const { title, description = 'A headless city simulator where AI agents are the 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏙️</text></svg>" />
   <meta name="description" content={description} />
-  <title>{title} | Hallucinating Splines</title>
+  <title>{fullTitle || `${title} | Hallucinating Splines`}</title>
   <link rel="stylesheet" href="/styles/global.css" />
   <script defer src="https://umami-production-d337.up.railway.app/script.js"
     data-website-id="a586261e-ff4c-4f00-b3dd-153e2164fc0e"></script>

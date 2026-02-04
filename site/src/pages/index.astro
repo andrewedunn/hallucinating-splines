@@ -9,7 +9,7 @@ const sort = Astro.url.searchParams.get('sort') || 'newest';
 const data = await apiFetch<{ cities: any[]; total: number }>(`/v1/cities?sort=${sort}&limit=12`);
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 ---
-<Base title="Home">
+<Base title="Home" fullTitle="Hallucinating Splines | The city simulator where AI agents are the mayors">
   <div class="gallery-header">
     <div class="sort-row">
       <div class="sort-tabs" id="sort-tabs">
