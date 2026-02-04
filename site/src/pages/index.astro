@@ -1,6 +1,6 @@
 ---
 // ABOUTME: Homepage showing hero text and a gallery of cities sorted by population, score, or newest.
-// ABOUTME: Fetches city list from the API, renders card grid with map thumbnails, polls every 30s.
+// ABOUTME: Fetches city list from the API, renders card grid with map thumbnails, polls every 15s.
 import Base from '../layouts/Base.astro';
 import CityCard from '../components/CityCard.astro';
 import { apiFetch } from '../lib/api';
@@ -65,11 +65,37 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
     return 'stale';
   }
 
+  function parseLocaleNumber(str) {
+    return parseInt(str.replace(/[^0-9\-]/g, ''), 10) || 0;
+  }
+
   function animateStat(el, newText) {
-    if (el.textContent === newText) return;
-    el.textContent = newText;
+    if (el.textContent === newText) return false;
+    const stat = el.dataset.stat;
+    // Count-up for numeric stats (population, score), instant for year
+    if (stat === 'population' || stat === 'score') {
+      const from = parseLocaleNumber(el.textContent);
+      const to = parseLocaleNumber(newText);
+      if (from !== to && !isNaN(from) && !isNaN(to)) {
+        const duration = 800;
+        const start = performance.now();
+        function tick(now) {
+          const t = Math.min((now - start) / duration, 1);
+          const ease = 1 - (1 - t) * (1 - t); // ease-out quad
+          const current = Math.round(from + (to - from) * ease);
+          el.textContent = current.toLocaleString();
+          if (t < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      } else {
+        el.textContent = newText;
+      }
+    } else {
+      el.textContent = newText;
+    }
     el.classList.add('changed');
     setTimeout(() => el.classList.remove('changed'), 1200);
+    return true;
   }
 
   function updateCard(card, city) {
@@ -77,9 +103,18 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
     const year = card.querySelector('[data-stat="game_year"]');
     const score = card.querySelector('[data-stat="score"]');
 
-    if (pop) animateStat(pop, city.population.toLocaleString());
-    if (year) animateStat(year, String(city.game_year));
-    if (score) animateStat(score, String(city.score));
+    let changed = false;
+    if (pop) changed = animateStat(pop, city.population.toLocaleString()) || changed;
+    if (year) changed = animateStat(year, String(city.game_year)) || changed;
+    if (score) changed = animateStat(score, String(city.score)) || changed;
+
+    if (changed) {
+      card.classList.remove('card-glow');
+      // Force reflow so re-adding the class restarts the animation
+      void card.offsetWidth;
+      card.classList.add('card-glow');
+      setTimeout(() => card.classList.remove('card-glow'), 2000);
+    }
 
     // Update activity badge
     const badge = card.querySelector('.activity');
@@ -124,7 +159,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
       if (document.visibilityState === 'visible') {
         pollCities();
       }
-    }, 10000);
+    }, 15000);
   }
 
   startPolling();
@@ -134,6 +169,65 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
   import { loadSpriteSheet, TILE_SIZE, tileIdFromRaw, spriteCoords } from '../lib/sprites';
 
   let spriteSheet: HTMLImageElement | null = null;
+
+  interface ThumbState {
+    canvases: [HTMLCanvasElement, HTMLCanvasElement];
+    activeIndex: number;
+    snapshots: number[][];
+    snapshotIndex: number;
+    cycleTimer: ReturnType<typeof setTimeout> | null;
+    isVisible: boolean;
+    isHovered: boolean;
+    rendered: boolean;
+    width: number;
+    height: number;
+  }
+
+  const thumbStates = new Map<string, ThumbState>();
+
+  function renderTilesToCanvas(
+    sheet: HTMLImageElement,
+    tiles: number[],
+    mapWidth: number,
+    mapHeight: number,
+    targetWidth: number,
+    targetHeight: number,
+  ): HTMLCanvasElement {
+    const offscreen = document.createElement('canvas');
+    offscreen.width = mapWidth * TILE_SIZE;
+    offscreen.height = mapHeight * TILE_SIZE;
+    const offCtx = offscreen.getContext('2d')!;
+    for (let y = 0; y < mapHeight; y++) {
+      for (let x = 0; x < mapWidth; x++) {
+        const raw = tiles[y * mapWidth + x];
+        const tileId = tileIdFromRaw(raw);
+        const { sx, sy } = spriteCoords(tileId);
+        offCtx.drawImage(sheet, sx, sy, TILE_SIZE, TILE_SIZE, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+      }
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext('2d')!;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(offscreen, 0, 0, targetWidth, targetHeight);
+    return canvas;
+  }
+
+  function createThumbCanvas(el: HTMLElement): HTMLCanvasElement {
+    const c = document.createElement('canvas');
+    c.width = el.clientWidth * 2;
+    c.height = el.clientHeight * 2;
+    c.style.width = '100%';
+    c.style.height = '100%';
+    c.style.display = 'block';
+    c.style.position = 'absolute';
+    c.style.top = '0';
+    c.style.left = '0';
+    c.style.transition = 'opacity 0.8s ease';
+    return c;
+  }
 
   async function renderThumbnail(el: HTMLElement) {
     const cityId = el.dataset.cityId;
@@ -145,42 +239,167 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
       fetch(`${apiBase}/v1/cities/${cityId}/map`).then(r => r.json()),
     ]);
 
-    const canvas = document.createElement('canvas');
     const mapWidth = mapRes.width;
     const mapHeight = mapRes.height;
+    const targetW = el.clientWidth * 2;
+    const targetH = el.clientHeight * 2;
 
-    // Draw full map offscreen
-    const offscreen = document.createElement('canvas');
-    offscreen.width = mapWidth * TILE_SIZE;
-    offscreen.height = mapHeight * TILE_SIZE;
-    const offCtx = offscreen.getContext('2d')!;
-    for (let y = 0; y < mapHeight; y++) {
-      for (let x = 0; x < mapWidth; x++) {
-        const raw = mapRes.tiles[y * mapWidth + x];
-        const tileId = tileIdFromRaw(raw);
-        const { sx, sy } = spriteCoords(tileId);
-        offCtx.drawImage(sheet, sx, sy, TILE_SIZE, TILE_SIZE, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    // Set up dual canvases for crossfade
+    el.style.position = 'relative';
+    const c0 = createThumbCanvas(el);
+    const c1 = createThumbCanvas(el);
+    c1.style.opacity = '0';
+    el.appendChild(c0);
+    el.appendChild(c1);
+
+    // Render live map onto first canvas
+    const rendered = renderTilesToCanvas(sheet, mapRes.tiles, mapWidth, mapHeight, targetW, targetH);
+    c0.getContext('2d')!.drawImage(rendered, 0, 0);
+
+    const state: ThumbState = {
+      canvases: [c0, c1],
+      activeIndex: 0,
+      snapshots: [],
+      snapshotIndex: 0,
+      cycleTimer: null,
+      isVisible: true,
+      isHovered: false,
+      rendered: true,
+      width: mapWidth,
+      height: mapHeight,
+    };
+    thumbStates.set(cityId, state);
+
+    // Hover: pause cycling, show live map
+    el.addEventListener('mouseenter', () => {
+      state.isHovered = true;
+      stopCycling(state);
+    });
+    el.addEventListener('mouseleave', () => {
+      state.isHovered = false;
+      if (state.isVisible && state.snapshots.length >= 3) {
+        startCycling(cityId, state, sheet, targetW, targetH);
       }
-    }
+    });
 
-    // Scale to thumbnail
-    canvas.width = el.clientWidth * 2;
-    canvas.height = el.clientHeight * 2;
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    canvas.style.display = 'block';
-    const ctx = canvas.getContext('2d')!;
-    ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(offscreen, 0, 0, canvas.width, canvas.height);
-    el.appendChild(canvas);
+    // Fetch snapshots for cycling
+    loadSnapshots(cityId, apiBase, sheet, state, targetW, targetH);
   }
 
-  // Use IntersectionObserver for lazy loading
+  async function loadSnapshots(
+    cityId: string,
+    apiBase: string,
+    sheet: HTMLImageElement,
+    state: ThumbState,
+    targetW: number,
+    targetH: number,
+  ) {
+    try {
+      const res = await fetch(`${apiBase}/v1/cities/${cityId}/snapshots?limit=100`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const snaps: any[] = data.snapshots || [];
+      if (snaps.length < 3) return;
+
+      // Pick ~6-8 evenly spaced snapshots
+      const count = Math.min(8, snaps.length);
+      const step = snaps.length / count;
+      const picked: any[] = [];
+      for (let i = 0; i < count; i++) {
+        picked.push(snaps[Math.floor(i * step)]);
+      }
+
+      // Fetch tile data sequentially to avoid hammering the API
+      for (const snap of picked) {
+        try {
+          const tileRes = await fetch(`${apiBase}/v1/cities/${cityId}/snapshots/${snap.id}/tiles`);
+          if (!tileRes.ok) continue;
+          const tileData = await tileRes.json();
+          if (tileData.tiles) state.snapshots.push(tileData.tiles);
+        } catch { /* skip failed snapshot */ }
+      }
+
+      if (state.snapshots.length >= 3 && state.isVisible && !state.isHovered) {
+        // Stagger start: random 0-4s delay
+        const delay = Math.random() * 4000;
+        setTimeout(() => {
+          if (state.isVisible && !state.isHovered) {
+            startCycling(cityId, state, sheet, targetW, targetH);
+          }
+        }, delay);
+      }
+    } catch { /* ignore snapshot fetch failure */ }
+  }
+
+  function startCycling(
+    cityId: string,
+    state: ThumbState,
+    sheet: HTMLImageElement,
+    targetW: number,
+    targetH: number,
+  ) {
+    if (state.cycleTimer) return;
+    function cycle() {
+      if (!state.isVisible || state.isHovered) {
+        state.cycleTimer = null;
+        return;
+      }
+
+      state.snapshotIndex = (state.snapshotIndex + 1) % state.snapshots.length;
+      const tiles = state.snapshots[state.snapshotIndex];
+      const nextIndex = state.activeIndex === 0 ? 1 : 0;
+
+      // Render onto the hidden canvas
+      const rendered = renderTilesToCanvas(sheet, tiles, state.width, state.height, targetW, targetH);
+      const nextCanvas = state.canvases[nextIndex];
+      nextCanvas.getContext('2d')!.drawImage(rendered, 0, 0);
+
+      // Crossfade
+      state.canvases[state.activeIndex].style.opacity = '0';
+      nextCanvas.style.opacity = '1';
+      state.activeIndex = nextIndex;
+
+      // Randomized 4-5s interval
+      const interval = 4000 + Math.random() * 1000;
+      state.cycleTimer = setTimeout(cycle, interval);
+    }
+
+    const interval = 4000 + Math.random() * 1000;
+    state.cycleTimer = setTimeout(cycle, interval);
+  }
+
+  function stopCycling(state: ThumbState) {
+    if (state.cycleTimer) {
+      clearTimeout(state.cycleTimer);
+      state.cycleTimer = null;
+    }
+  }
+
+  // Visibility-aware observer: keeps observing to pause/resume cycling
   const observer = new IntersectionObserver((entries) => {
     for (const entry of entries) {
+      const el = entry.target as HTMLElement;
+      const cityId = el.dataset.cityId;
+      if (!cityId) continue;
+
+      const state = thumbStates.get(cityId);
+
       if (entry.isIntersecting) {
-        observer.unobserve(entry.target);
-        renderThumbnail(entry.target as HTMLElement);
+        if (!state) {
+          // First time visible — render thumbnail
+          renderThumbnail(el);
+        } else {
+          state.isVisible = true;
+          // Resume cycling if we have snapshots
+          if (state.snapshots.length >= 3 && !state.isHovered && !state.cycleTimer && spriteSheet) {
+            const targetW = el.clientWidth * 2;
+            const targetH = el.clientHeight * 2;
+            startCycling(cityId, state, spriteSheet, targetW, targetH);
+          }
+        }
+      } else if (state) {
+        state.isVisible = false;
+        stopCycling(state);
       }
     }
   }, { rootMargin: '200px' });
@@ -217,6 +436,22 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
   transition: background 0.15s;
 }
 .cta-link:hover { background: var(--accent-hover); color: white; }
+
+@keyframes stat-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+:global(.stat-value.changed) {
+  animation: stat-pulse 0.4s ease-out;
+}
+@keyframes card-glow-fade {
+  0% { border-color: var(--accent); box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 40%, transparent); }
+  100% { border-color: var(--border); box-shadow: none; }
+}
+:global(.city-card.card-glow) {
+  animation: card-glow-fade 2s ease-out forwards;
+}
 
 @media (max-width: 480px) {
   .hero h1 { font-size: 1.5rem; }

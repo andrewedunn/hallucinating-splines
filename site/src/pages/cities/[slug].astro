@@ -117,7 +117,11 @@ const hasGameState = !!(stats && mapData);
 
   // --- Live polling (active cities only) ---
 
-  const POLL_INTERVAL = 5000;
+  const POLL_TIERS = [5000, 15000, 30000, 60000];
+  const UNCHANGED_THRESHOLD = 3; // polls without change before backing off
+  let pollTierIndex = 0;
+  let unchangedCount = 0;
+
   const PROBLEM_COLORS: Record<string, string> = {
     crime: '#ef4444', pollution: '#a855f7', housing: '#f97316',
     taxes: '#eab308', traffic: '#6b7280', unemployment: '#3b82f6', fire: '#dc2626',
@@ -135,7 +139,7 @@ const hasGameState = !!(stats && mapData);
 
   const updatedAtStr = headerEl.getAttribute('data-updated-at');
   let lastUpdated = updatedAtStr ? new Date(updatedAtStr + 'Z').getTime() : Date.now();
-  let pollTimer: ReturnType<typeof setInterval> | null = null;
+  let pollTimer: ReturnType<typeof setTimeout> | null = null;
   let lastStatsJSON = '';
 
   function demandPct(val: number): number {
@@ -320,6 +324,15 @@ const hasGameState = !!(stats && mapData);
       if (statsJSON !== lastStatsJSON) {
         lastStatsJSON = statsJSON;
         lastUpdated = Date.now();
+        // Reset backoff on change
+        unchangedCount = 0;
+        pollTierIndex = 0;
+      } else {
+        unchangedCount++;
+        if (unchangedCount >= UNCHANGED_THRESHOLD && pollTierIndex < POLL_TIERS.length - 1) {
+          pollTierIndex++;
+          unchangedCount = 0;
+        }
       }
 
       updateStatsDOM(statsRes);
@@ -358,15 +371,22 @@ const hasGameState = !!(stats && mapData);
     }
   }
 
+  function schedulePoll() {
+    pollTimer = setTimeout(async () => {
+      await pollStats();
+      if (!document.hidden) schedulePoll();
+    }, POLL_TIERS[pollTierIndex]);
+  }
+
   function startPolling() {
     if (pollTimer) return;
     pollStats();
-    pollTimer = setInterval(pollStats, POLL_INTERVAL);
+    schedulePoll();
   }
 
   function stopPolling() {
     if (pollTimer) {
-      clearInterval(pollTimer);
+      clearTimeout(pollTimer);
       pollTimer = null;
     }
   }
@@ -379,6 +399,9 @@ const hasGameState = !!(stats && mapData);
       if (document.hidden) {
         stopPolling();
       } else {
+        // Reset backoff when tab becomes visible
+        pollTierIndex = 0;
+        unchangedCount = 0;
         startPolling();
       }
     });
