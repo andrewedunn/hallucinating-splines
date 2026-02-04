@@ -299,20 +299,26 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
       if (!res.ok) return;
       const data = await res.json();
       const snaps: any[] = data.snapshots || [];
-      if (snaps.length < 3) return;
+      // Deduplicate by game_year (API may have multiple snapshots per year)
+      const uniqueYears = new Map<number, any>();
+      for (const s of snaps) {
+        if (!uniqueYears.has(s.game_year)) uniqueYears.set(s.game_year, s);
+      }
+      const dedupedSnaps = Array.from(uniqueYears.values());
+      if (dedupedSnaps.length < 3) return;
 
       // Pick ~6-8 evenly spaced snapshots
-      const count = Math.min(8, snaps.length);
-      const step = snaps.length / count;
+      const count = Math.min(8, dedupedSnaps.length);
+      const step = dedupedSnaps.length / count;
       const picked: any[] = [];
       for (let i = 0; i < count; i++) {
-        picked.push(snaps[Math.floor(i * step)]);
+        picked.push(dedupedSnaps[Math.floor(i * step)]);
       }
 
       // Fetch tile data sequentially to avoid hammering the API
       for (const snap of picked) {
         try {
-          const tileRes = await fetch(`${apiBase}/v1/cities/${cityId}/snapshots/${snap.id}/tiles`);
+          const tileRes = await fetch(`${apiBase}/v1/cities/${cityId}/snapshots/${snap.game_year}`);
           if (!tileRes.ok) continue;
           const tileData = await tileRes.json();
           if (tileData.tiles) state.snapshots.push(tileData.tiles);
