@@ -4,6 +4,7 @@
 import {
   DIRT, RIVER, WATER_HIGH, TREEBASE, WOODS_HIGH,
   RUBBLE, LASTRUBBLE, ROADBASE, LASTROAD, POWERBASE, LASTPOWER,
+  COALBASE, LASTPOWERPLANT, NUCLEARBASE, LASTZONE,
 } from '../../src/engine/tileValues';
 import { BIT_MASK, POWERBIT } from '../../src/engine/tileFlags';
 
@@ -39,6 +40,11 @@ function isRoad(tileId: number): boolean {
 
 function isPowerLine(tileId: number): boolean {
   return tileId >= POWERBASE && tileId <= LASTPOWER;
+}
+
+function isPowerPlant(tileId: number): boolean {
+  return (tileId >= COALBASE && tileId <= LASTPOWERPLANT) ||
+         (tileId >= NUCLEARBASE && tileId <= LASTZONE);
 }
 
 /** True if a tile can be traversed by BFS pathfinding (buildable land or existing infra). */
@@ -82,47 +88,74 @@ export function autoBulldoze(game: HeadlessGame, x: number, y: number, toolSize:
 }
 
 /**
- * BFS from (x,y) outward; returns path from start to target (exclusive of start).
+ * BFS outward from a zone footprint; returns path from perimeter to target.
+ * The zone occupies a rectangle from (zoneLeft, zoneTop) to (zoneRight, zoneBottom) inclusive.
+ * BFS seeds from tiles adjacent to the zone perimeter, skipping all tiles inside the zone.
  * `isTarget` checks whether a tile qualifies as the destination.
  */
 function bfsPath(
   map: { width: number; height: number; tiles: number[] },
-  startX: number,
-  startY: number,
+  centerX: number,
+  centerY: number,
+  toolSize: number,
   isTarget: (raw: number, tileId: number) => boolean,
 ): number[][] | null {
   const key = (cx: number, cy: number) => cy * map.width + cx;
   const visited = new Set<number>();
-  // Each entry: [x, y, parentKey | -1]
   const queue: [number, number, number][] = [];
   const parents = new Map<number, number>(); // childKey -> parentKey
   const coords = new Map<number, [number, number]>(); // key -> [x, y]
 
-  const startKey = key(startX, startY);
-  visited.add(startKey);
-  coords.set(startKey, [startX, startY]);
+  // Zone footprint: tools place with (x,y) as top-left for size=1, but for
+  // zones (3x3, 4x4, 6x6) the engine uses (x,y) as center. The zone occupies
+  // tiles from (center - floor((size-1)/2)) to (center + floor(size/2)).
+  const halfBelow = Math.floor((toolSize - 1) / 2);
+  const halfAbove = Math.floor(toolSize / 2);
+  const zoneLeft = centerX - halfBelow;
+  const zoneTop = centerY - halfBelow;
+  const zoneRight = centerX + halfAbove;
+  const zoneBottom = centerY + halfAbove;
 
-  // Seed with neighbors of start
-  for (const [ddx, ddy] of DIRS) {
-    const nx = startX + ddx;
-    const ny = startY + ddy;
-    if (nx < 0 || ny < 0 || nx >= map.width || ny >= map.height) continue;
-    const nk = key(nx, ny);
-    if (visited.has(nk)) continue;
+  // Use a sentinel key for path reconstruction from any perimeter seed
+  const ORIGIN_KEY = -1;
 
-    const raw = map.tiles[ny * map.width + nx];
-    const tileId = raw & BIT_MASK;
-
-    if (isTarget(raw, tileId)) {
-      // Immediate neighbor is target -- no path tiles needed
-      return [];
+  // Mark all zone tiles as visited so BFS won't traverse through them
+  for (let zy = zoneTop; zy <= zoneBottom; zy++) {
+    for (let zx = zoneLeft; zx <= zoneRight; zx++) {
+      if (zx >= 0 && zy >= 0 && zx < map.width && zy < map.height) {
+        visited.add(key(zx, zy));
+      }
     }
+  }
 
-    if (isPassable(tileId) && !isWater(tileId)) {
-      visited.add(nk);
-      coords.set(nk, [nx, ny]);
-      parents.set(nk, startKey);
-      queue.push([nx, ny, 0]); // depth 0 from first ring
+  // Seed BFS from tiles adjacent to the zone perimeter
+  const perimeterNeighbors = new Set<number>();
+  for (let zy = zoneTop; zy <= zoneBottom; zy++) {
+    for (let zx = zoneLeft; zx <= zoneRight; zx++) {
+      // Only check edge tiles of the zone
+      if (zx > zoneLeft && zx < zoneRight && zy > zoneTop && zy < zoneBottom) continue;
+      for (const [ddx, ddy] of DIRS) {
+        const nx = zx + ddx;
+        const ny = zy + ddy;
+        if (nx < 0 || ny < 0 || nx >= map.width || ny >= map.height) continue;
+        const nk = key(nx, ny);
+        if (visited.has(nk) || perimeterNeighbors.has(nk)) continue;
+        perimeterNeighbors.add(nk);
+
+        const raw = map.tiles[ny * map.width + nx];
+        const tileId = raw & BIT_MASK;
+
+        if (isTarget(raw, tileId)) {
+          return []; // Target is adjacent to zone — no path tiles needed
+        }
+
+        if (isPassable(tileId) && !isWater(tileId)) {
+          visited.add(nk);
+          coords.set(nk, [nx, ny]);
+          parents.set(nk, ORIGIN_KEY);
+          queue.push([nx, ny, 0]);
+        }
+      }
     }
   }
 
@@ -142,10 +175,10 @@ function bfsPath(
       const tileId = raw & BIT_MASK;
 
       if (isTarget(raw, tileId)) {
-        // Reconstruct path from (cx,cy) back to start (exclusive of start and target)
+        // Reconstruct path from (cx,cy) back to zone perimeter
         const path: number[][] = [];
         let cur = key(cx, cy);
-        while (cur !== startKey) {
+        while (cur !== ORIGIN_KEY) {
           const [px, py] = coords.get(cur)!;
           path.push([px, py]);
           cur = parents.get(cur)!;
@@ -167,18 +200,20 @@ function bfsPath(
 }
 
 /**
- * BFS from (x,y) to nearest powered tile; place power lines along the path.
+ * BFS from zone at (x,y) to nearest powered tile; place power lines along the path.
+ * toolSize is the zone footprint size (e.g. 3 for residential, 4 for coal power, 1 for road).
  */
-export function autoPower(game: HeadlessGame, x: number, y: number): AutoAction {
+export function autoPower(game: HeadlessGame, x: number, y: number, toolSize: number = 1): AutoAction {
   const map = game.getMap();
 
-  // Check if origin is already powered
+  // Check if origin is already powered or is a power plant
   const originRaw = map.tiles[y * map.width + x];
-  if (originRaw & POWERBIT) {
+  const originTileId = originRaw & BIT_MASK;
+  if ((originRaw & POWERBIT) || isPowerPlant(originTileId)) {
     return { type: 'power_line', path: [], cost: 0 };
   }
 
-  const path = bfsPath(map, x, y, (raw) => (raw & POWERBIT) !== 0);
+  const path = bfsPath(map, x, y, toolSize, (raw, tileId) => (raw & POWERBIT) !== 0 || isPowerPlant(tileId));
 
   if (path === null) {
     return { type: 'power_line', cost: 0, failed: true, reason: 'no_powered_tile_reachable' };
@@ -208,9 +243,10 @@ export function autoPower(game: HeadlessGame, x: number, y: number): AutoAction 
 }
 
 /**
- * BFS from (x,y) to nearest road tile; place road tiles along the path.
+ * BFS from zone at (x,y) to nearest road tile; place road tiles along the path.
+ * toolSize is the zone footprint size (e.g. 3 for residential, 4 for coal power, 1 for road).
  */
-export function autoRoad(game: HeadlessGame, x: number, y: number): AutoAction {
+export function autoRoad(game: HeadlessGame, x: number, y: number, toolSize: number = 1): AutoAction {
   const map = game.getMap();
 
   // Check if origin is already a road
@@ -219,7 +255,7 @@ export function autoRoad(game: HeadlessGame, x: number, y: number): AutoAction {
     return { type: 'road', path: [], cost: 0 };
   }
 
-  const path = bfsPath(map, x, y, (_raw, tileId) => isRoad(tileId));
+  const path = bfsPath(map, x, y, toolSize, (_raw, tileId) => isRoad(tileId));
 
   if (path === null) {
     return { type: 'road', cost: 0, failed: true, reason: 'no_road_reachable' };

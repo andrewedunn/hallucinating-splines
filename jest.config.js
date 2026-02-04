@@ -18,6 +18,7 @@ export default {
         tsconfig: {
           allowJs: true,
           checkJs: false,
+          rootDir: '.',
         },
       },
     ],
@@ -28,6 +29,7 @@ export default {
         tsconfig: {
           allowJs: true,
           checkJs: false,
+          rootDir: '.',
         },
       },
     ],

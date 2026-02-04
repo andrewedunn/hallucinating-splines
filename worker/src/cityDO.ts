@@ -128,7 +128,7 @@ export class CityDO extends DurableObject<Env> {
     if (result.success) {
       // Step 3: auto-power after successful placement
       if (flags.auto_power) {
-        const pwResult = autoPower(game, x, y);
+        const pwResult = autoPower(game, x, y, toolSize);
         if (!pwResult.failed) {
           autoActions.push(pwResult);
         }
@@ -136,7 +136,7 @@ export class CityDO extends DurableObject<Env> {
 
       // Step 4: auto-road after successful placement
       if (flags.auto_road) {
-        const rdResult = autoRoad(game, x, y);
+        const rdResult = autoRoad(game, x, y, toolSize);
         if (!rdResult.failed) {
           autoActions.push(rdResult);
         }
