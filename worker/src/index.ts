@@ -7,6 +7,7 @@ import { keys } from './routes/keys';
 import { seeds } from './routes/seeds';
 import { cities } from './routes/cities';
 import { actions } from './routes/actions';
+import { docs } from './routes/docs';
 import { errorResponse } from './errors';
 
 type Bindings = {
@@ -23,6 +24,7 @@ app.get('/health', (c) => c.json({ status: 'ok' }));
 
 app.route('/v1/keys', keys);
 app.route('/v1/seeds', seeds);
+app.route('/v1/docs', docs);
 app.route('/v1/cities', cities);
 app.route('/v1/cities', actions);
 
@@ -97,9 +99,28 @@ export { CityDO } from './cityDO';
 export default {
   fetch: app.fetch,
   async scheduled(event: ScheduledEvent, env: { DB: D1Database }, ctx: ExecutionContext) {
+    // End inactive cities (no updates in 14 days)
     await env.DB.prepare(
-      `UPDATE cities SET status = 'ended'
+      `UPDATE cities SET status = 'ended', ended_reason = 'inactivity'
        WHERE status = 'active' AND updated_at < datetime('now', '-14 days')`
+    ).run();
+
+    // Deactivate keys never used after 7 days
+    await env.DB.prepare(
+      `UPDATE api_keys SET active = 0
+       WHERE active = 1 AND last_used IS NULL AND created_at < datetime('now', '-7 days')`
+    ).run();
+
+    // Deactivate keys unused for 14 days
+    await env.DB.prepare(
+      `UPDATE api_keys SET active = 0
+       WHERE active = 1 AND last_used IS NOT NULL AND last_used < datetime('now', '-14 days')`
+    ).run();
+
+    // End active cities belonging to deactivated keys
+    await env.DB.prepare(
+      `UPDATE cities SET status = 'ended', ended_reason = 'key_expired'
+       WHERE status = 'active' AND api_key_id IN (SELECT id FROM api_keys WHERE active = 0)`
     ).run();
   },
 };

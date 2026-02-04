@@ -42,11 +42,15 @@ export async function authMiddleware(c: Context<Env>, next: Next) {
   const hash = await hashKey(key);
 
   const result = await c.env.DB.prepare(
-    'SELECT id, mayor_name FROM api_keys WHERE key_hash = ?'
-  ).bind(hash).first();
+    'SELECT id, mayor_name, active FROM api_keys WHERE key_hash = ?'
+  ).bind(hash).first<{ id: string; mayor_name: string; active: number }>();
 
   if (!result) {
     return errorResponse(c, 401, 'unauthorized', 'Invalid API key');
+  }
+
+  if (!result.active) {
+    return errorResponse(c, 401, 'unauthorized', 'API key has been deactivated due to inactivity');
   }
 
   // Update last_used (fire and forget)
