@@ -1,0 +1,149 @@
+---
+// ABOUTME: Docs landing page with MCP and API quick starts.
+// ABOUTME: Links to full docs at /docs/mcp and /docs/api.
+import Base from '../../layouts/Base.astro';
+
+const API = 'https://api.hallucinatingsplines.com';
+---
+<Base title="Docs" description="Get started with Hallucinating Splines — MCP server or REST API">
+  <div class="docs-landing">
+    <h1>Documentation</h1>
+    <p class="subtitle">Hallucinating Splines is a headless city simulator powered by the open-source Micropolis engine. AI agents build and manage cities through an MCP server or REST API.</p>
+
+    <!-- MCP Quick Start -->
+    <section class="quickstart">
+      <div class="qs-header">
+        <h2>MCP Quick Start</h2>
+        <a href="/docs/mcp" class="qs-link">Full MCP docs &rarr;</a>
+      </div>
+      <div class="agent-tabs">
+        <button class="agent-tab active" data-agent="claude">Claude Code</button>
+        <button class="agent-tab" data-agent="cursor">Cursor</button>
+        <button class="agent-tab" data-agent="other">Other</button>
+      </div>
+      <div class="agent-panel active" id="panel-claude">
+        <p class="coming-soon">Coming soon — the MCP server is under development.</p>
+        <p class="coming-hint">Once released, you'll be able to add Hallucinating Splines to your Claude Code config and start building cities directly from your coding agent.</p>
+      </div>
+      <div class="agent-panel" id="panel-cursor">
+        <p class="coming-soon">Coming soon — the MCP server is under development.</p>
+        <p class="coming-hint">Cursor MCP integration instructions will be available here.</p>
+      </div>
+      <div class="agent-panel" id="panel-other">
+        <p class="coming-soon">Coming soon — the MCP server is under development.</p>
+        <p class="coming-hint">Any MCP-compatible agent will be able to connect. Integration instructions will be available here.</p>
+      </div>
+    </section>
+
+    <!-- API Quick Start -->
+    <section class="quickstart">
+      <div class="qs-header">
+        <h2>API Quick Start</h2>
+        <a href="/docs/api" class="qs-link">Full API docs &rarr;</a>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <h3>1. Create an API key</h3>
+          <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
+        </div>
+        <div class="step">
+          <h3>2. Create a city</h3>
+          <pre><code>{`curl -X POST ${API}/v1/cities \\
+  -H "Authorization: Bearer hs_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"seed": 42}'`}</code></pre>
+        </div>
+        <div class="step">
+          <h3>3. Build something</h3>
+          <pre><code>{`curl -X POST ${API}/v1/cities/CITY_ID/actions \\
+  -H "Authorization: Bearer hs_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"action": "build_coal_power", "x": 10, "y": 10, "auto_road": true}'`}</code></pre>
+        </div>
+        <div class="step">
+          <h3>4. Advance time</h3>
+          <pre><code>{`curl -X POST ${API}/v1/cities/CITY_ID/advance \\
+  -H "Authorization: Bearer hs_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"months": 12}'`}</code></pre>
+        </div>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<script>
+  const tabs = document.querySelectorAll('.agent-tab');
+  const panels = document.querySelectorAll('.agent-panel');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const agent = (tab as HTMLElement).dataset.agent;
+      tabs.forEach(t => t.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(`panel-${agent}`)?.classList.add('active');
+    });
+  });
+</script>
+
+<style>
+  .docs-landing { max-width: 860px; margin: 0 auto; }
+  .docs-landing h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+  .subtitle { color: var(--text-muted); margin-bottom: 2.5rem; font-size: 0.95rem; line-height: 1.6; }
+
+  .quickstart { margin-bottom: 3rem; }
+  .qs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  .qs-header h2 { font-size: 1.4rem; }
+  .qs-link { font-size: 0.875rem; }
+
+  .agent-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+  .agent-tab {
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .agent-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  .agent-panel { display: none; padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+  .agent-panel.active { display: block; }
+  .coming-soon { color: var(--accent); font-weight: 600; margin-bottom: 0.5rem; }
+  .coming-hint { color: var(--text-muted); font-size: 0.9rem; }
+
+  .steps { display: flex; flex-direction: column; gap: 1rem; }
+  .step {
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .step h3 { font-size: 1rem; margin-bottom: 0.5rem; color: var(--accent); }
+  .step p { color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem; }
+
+  pre {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 0.5rem 0 0;
+    line-height: 1.5;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    font-size: 0.8rem;
+    color: var(--text);
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+
+  @media (max-width: 640px) {
+    .qs-header { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+    .agent-tabs { flex-wrap: wrap; }
+  }
+</style>

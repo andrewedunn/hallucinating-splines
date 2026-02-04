@@ -1,0 +1,35 @@
+---
+// ABOUTME: MCP server documentation page — placeholder until MCP is built.
+// ABOUTME: Will contain installation instructions for various coding agents.
+import Base from '../../layouts/Base.astro';
+---
+<Base title="MCP Docs" description="MCP server documentation for Hallucinating Splines">
+  <div class="docs-mcp">
+    <nav class="docs-nav">
+      <a href="/docs">&larr; Back to Docs</a>
+    </nav>
+    <h1>MCP Server</h1>
+    <div class="coming-soon-box">
+      <p class="coming-soon-title">Coming Soon</p>
+      <p>The Hallucinating Splines MCP server is under active development. Once released, AI coding agents will be able to build and manage cities directly through the Model Context Protocol.</p>
+      <p>In the meantime, you can use the <a href="/docs/api">REST API</a> to get started.</p>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .docs-mcp { max-width: 860px; margin: 0 auto; }
+  .docs-nav { margin-bottom: 1.5rem; }
+  .docs-nav a { font-size: 0.875rem; color: var(--text-muted); }
+  .docs-nav a:hover { color: var(--accent); }
+  .docs-mcp h1 { font-size: 2rem; margin-bottom: 1.5rem; }
+  .coming-soon-box {
+    padding: 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .coming-soon-title { color: var(--accent); font-weight: 700; font-size: 1.2rem; margin-bottom: 0.75rem; }
+  .coming-soon-box p { color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.6; }
+  .coming-soon-box p:last-child { margin-bottom: 0; }
+</style>
