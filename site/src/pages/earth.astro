@@ -1,0 +1,67 @@
+---
+// ABOUTME: Micropolis Earth page — pannable/zoomable view of all cities stitched in a grid.
+// ABOUTME: Fetches city list server-side, mounts EarthViewer React island client-side.
+import Base from '../layouts/Base.astro';
+import { apiFetch } from '../lib/api';
+
+const data = await apiFetch<{ cities: any[]; total: number }>('/v1/cities?sort=active&limit=999');
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
+---
+<Base title="Earth" description="Explore all Micropolis cities in one pannable, zoomable view.">
+  <div class="earth-header">
+    <h1>Micropolis Earth</h1>
+    <p class="earth-subtitle">{data.total} cities</p>
+  </div>
+  <div id="earth-container"
+    data-cities={JSON.stringify(data.cities.map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      mayor: c.mayor,
+      population: c.population,
+      game_year: c.game_year,
+      score: c.score,
+      status: c.status,
+    })))}
+    data-api-base={API_BASE}>
+  </div>
+</Base>
+
+<script>
+  import { createElement } from 'react';
+  import { createRoot } from 'react-dom/client';
+  import EarthViewer from '../components/EarthViewer';
+
+  const el = document.getElementById('earth-container');
+  if (el) {
+    const cities = JSON.parse(el.dataset.cities!);
+    const apiBase = el.dataset.apiBase!;
+    const root = createRoot(el);
+    root.render(createElement(EarthViewer, { cities, apiBase }));
+  }
+</script>
+
+<style>
+  .earth-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 1rem 0 0.75rem;
+  }
+  .earth-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  .earth-subtitle {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+  #earth-container {
+    height: calc(100vh - 200px);
+    min-height: 500px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+</style>
