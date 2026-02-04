@@ -103,7 +103,7 @@ Clamp to 0–1000, then average with previous score: \`finalScore = (oldScore + 
 
 ## 4. City Design Principles
 
-- **Power is non-negotiable.** Unpowered zones don't grow and tank your score via the power coverage ratio. One coal plant (~$3000) powers ~50 zones. Roads do NOT conduct power — you need wire (power line) tiles. Place wire on roads to create powered road tiles that carry both.
+- **Power is non-negotiable.** Unpowered zones don't grow and tank your score via the power coverage ratio. One coal plant (~$3000) powers ~50 zones. Roads do NOT conduct power — you need wire (power line) tiles. Place wire on roads to create powered road tiles that carry both. A zone only needs ONE adjacent powered tile to receive power — do NOT run separate wires to each zone. One wire backbone along a road connecting back to the plant is enough for all adjacent zones.
 - **Traffic kills.** It's weighted 2.4× in the problem formula. Build multiple commercial centers instead of one mega-center. Use roads to provide alternate routes.
 - **Industrial pollutes.** Keep industry far from residential. Pollution is a direct problem score contributor.
 - **Police are cheap crime prevention.** A $500 police station covers ~15 tile radius and directly reduces crime (a problem score factor).
@@ -114,16 +114,18 @@ Clamp to 0–1000, then average with previous score: \`finalScore = (oldScore + 
 
 **Phase A — Bootstrap (years 0–5):**
 1. Build a coal power plant centrally ($3000)
-2. Zone a small balanced cluster: 4R + 2C + 2I near the plant
-3. Always use \`auto_road: true\`, \`auto_power: true\`, \`auto_bulldoze: true\`
-4. Advance 2 months at a time, check demand between advances
-5. Build what has positive demand; stop zoning what's negative
+2. Build a road from the plant outward, then run wire along it with \`build_wire_line\` (creates powered road tiles)
+3. Zone a small balanced cluster: 4R + 2C + 2I adjacent to the powered road
+4. Zones only need ONE adjacent powered tile — don't wire each zone separately
+5. Use \`auto_road: true\`, \`auto_bulldoze: true\` when placing zones
+6. Advance 2 months at a time, check demand between advances
+7. Build what has positive demand; stop zoning what's negative
 
 **Phase B — Stabilize (years 5–20):**
 1. Add a police station once crime appears in problems
 2. Add a fire station when population reaches ~2000
 3. Start a second neighborhood cluster (reduces traffic by splitting demand)
-4. Use \`build_road_rect\` to lay out city blocks, then zone the interior with \`batch_actions\`
+4. Use \`build_road_rect\` to lay out city blocks, then run \`build_wire_line\` along one road in the block to power it, then zone the interior with \`batch_actions\`
 5. Sprinkle parks near residential to raise land value
 6. Build alternate road connections between clusters with \`build_road_line\`
 
@@ -342,7 +344,11 @@ Action types and their sizes/costs:
 
 IMPORTANT: Coordinates are CENTER-BASED for multi-tile buildings. A 3×3 zone at (10, 10) occupies (9-11, 9-11). A 4×4 plant at (10, 10) occupies (9-12, 9-12). Plan coordinates accordingly to avoid overlapping existing tiles.
 
-IMPORTANT: Roads do NOT conduct power on their own. Power requires a contiguous chain of wire (power line) tiles from a power plant to the zone. Placing wire on a road creates a powered road tile that carries both power and traffic — this is the most efficient way to connect power. auto_power places a single wire adjacent to the zone but does NOT trace a full path back to the power plant. You must ensure a complete wire path exists.
+IMPORTANT: Roads do NOT conduct power on their own. Power requires a contiguous chain of wire (power line) tiles from a power plant to the zone. Placing wire on a road creates a powered road tile that carries both power and traffic — this is the most efficient way to connect power.
+
+A zone only needs ONE adjacent powered tile to receive power. Do NOT wire each zone individually — that wastes money. Instead, run a single wire backbone (e.g., build_wire_line along a road) connecting back to the power plant, and all zones adjacent to that powered road will receive power.
+
+auto_power places a single wire adjacent to the zone but does NOT trace a full path back to the power plant. For reliable power, manually run a wire line from the plant along your main road.
 
 Recommended flags for easier building:
 - auto_bulldoze: true — clears rubble before placing
