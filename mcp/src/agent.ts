@@ -13,6 +13,7 @@ import {
   formatMapRegion,
   formatBuildable,
   formatActionResult,
+  formatBatchResult,
   formatBudgetResult,
   formatAdvanceResult,
   formatActionLog,
@@ -359,7 +360,33 @@ Rate limit: 30 actions per minute per city.`,
       },
     );
 
-    // 8. set_budget
+    // 8. batch_actions
+    this.server.tool(
+      'batch_actions',
+      `Execute up to 50 actions in a single call. Counts as 1 action for rate limiting. Stops on first failure.
+
+Use this for repetitive operations like laying a road grid, placing multiple zones, or any sequence of placements. Much more efficient than individual perform_action calls.
+
+Each action in the batch supports the same action types and auto_* flags as perform_action.`,
+      {
+        city_id: z.string().describe('City ID'),
+        actions: z.array(z.object({
+          action: z.string().describe('Action type (e.g., build_road, zone_residential)'),
+          x: z.number().int().describe('X coordinate'),
+          y: z.number().int().describe('Y coordinate'),
+          auto_bulldoze: z.boolean().optional().describe('Auto-clear rubble'),
+          auto_power: z.boolean().optional().describe('Auto-connect power'),
+          auto_road: z.boolean().optional().describe('Auto-connect roads'),
+        })).min(1).max(50).describe('Array of actions to execute'),
+      },
+      async ({ city_id, actions: batchActions }) => {
+        const r = await api().post(`/v1/cities/${city_id}/batch`, { actions: batchActions });
+        if (!r.ok) return errorResult(`Batch failed: ${r.reason}`);
+        return text(formatBatchResult(r.data as Record<string, unknown>));
+      },
+    );
+
+    // 9. set_budget
     this.server.tool(
       'set_budget',
       `Adjust tax rate and department funding. Tax rate affects growth and revenue. Department funding affects service quality.

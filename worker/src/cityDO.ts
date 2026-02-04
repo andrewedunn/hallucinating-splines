@@ -156,6 +156,81 @@ export class CityDO extends DurableObject<Env> {
     };
   }
 
+  async executeBatch(
+    actions: Array<{ toolName: string; x: number; y: number; flags?: { auto_bulldoze?: boolean; auto_power?: boolean; auto_road?: boolean } }>,
+  ): Promise<any> {
+    if (!this.checkRateLimit(this.actionTimestamps, 30)) {
+      return { error: 'rate_limited', reason: 'Max 30 actions per minute' };
+    }
+    const game = await this.ensureGame();
+    const results: any[] = [];
+    let totalCost = 0;
+    let anyChange = false;
+
+    for (const action of actions) {
+      const { toolName, x, y, flags } = action;
+      const TOOL_SIZES: Record<string, number> = {
+        residential: 3, commercial: 3, industrial: 3,
+        coal: 4, nuclear: 4, port: 4, stadium: 4,
+        airport: 6,
+      };
+      const toolSize = TOOL_SIZES[toolName] ?? 1;
+      const useAuto = flags && (flags.auto_bulldoze || flags.auto_power || flags.auto_road);
+
+      if (useAuto) {
+        const autoActions: AutoAction[] = [];
+
+        if (flags!.auto_bulldoze) {
+          const bdResult = autoBulldoze(game, x, y, toolSize);
+          if (bdResult.tiles && bdResult.tiles.length > 0) autoActions.push(bdResult);
+        }
+
+        const result = game.placeTool(toolName, x, y);
+        if (result.success) {
+          anyChange = true;
+          if (flags!.auto_road) {
+            const rdResult = autoRoad(game, x, y, toolSize);
+            if (!rdResult.failed) autoActions.push(rdResult);
+          }
+          if (flags!.auto_power) {
+            const pwResult = autoPower(game, x, y, toolSize);
+            if (!pwResult.failed) autoActions.push(pwResult);
+          }
+        }
+
+        const autoCost = autoActions.reduce((sum, a) => sum + a.cost, 0);
+        const cost = result.cost + autoCost;
+        totalCost += cost;
+        const entry: any = { success: result.success, cost };
+        if (!result.success && result.reason) entry.reason = result.reason;
+        if (autoActions.length > 0) entry.auto_actions = autoActions;
+        results.push(entry);
+
+        if (!result.success) break; // stop on first failure
+      } else {
+        const result = game.placeTool(toolName, x, y);
+        totalCost += result.cost;
+        const entry: any = { success: result.success, cost: result.cost };
+        if (!result.success && result.reason) entry.reason = result.reason;
+        results.push(entry);
+        if (result.success) anyChange = true;
+        if (!result.success) break; // stop on first failure
+      }
+    }
+
+    if (anyChange) await this.persist();
+
+    const stats = this.getStatsInternal();
+    return {
+      results,
+      total_cost: totalCost,
+      funds_remaining: stats?.funds,
+      completed: results.length,
+      total: actions.length,
+      stats,
+    };
+  }
+
   async advance(months: number): Promise<any> {
     if (!this.checkRateLimit(this.advanceTimestamps, 10)) {
       return { error: 'rate_limited', reason: 'Max 10 advances per minute' };

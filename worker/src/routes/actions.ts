@@ -361,4 +361,118 @@ actions.openapi(advanceRoute, async (c) => {
   return c.json(result, 200);
 });
 
+// --- POST /v1/cities/:id/batch ---
+
+const batchRoute = createRoute({
+  method: 'post',
+  path: '/{id}/batch',
+  tags: ['Actions'],
+  summary: 'Batch actions',
+  description: 'Execute up to 50 actions in a single call. Counts as 1 action for rate limiting. Stops on first failure.',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: CityIdParam }),
+    body: { content: { 'application/json': { schema: z.object({
+      actions: z.array(z.object({
+        action: z.string(),
+        x: z.number().int(),
+        y: z.number().int(),
+        auto_bulldoze: z.boolean().optional(),
+        auto_power: z.boolean().optional(),
+        auto_road: z.boolean().optional(),
+      })).min(1).max(50),
+    }) } } },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.any() } },
+      description: 'Batch result',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Bad request',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Unauthorized',
+    },
+    403: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Not your city or city not active',
+    },
+    429: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Rate limited',
+    },
+  },
+});
+
+actions.openapi(batchRoute, async (c) => {
+  const authResult = await authMiddleware(c, async () => {});
+  if (authResult) return authResult;
+
+  const cityId = c.req.param('id');
+
+  if (!await verifyCityOwner(c, cityId)) {
+    return errorResponse(c, 403, 'forbidden', 'City not found or not owned by you');
+  }
+
+  const body = await c.req.json();
+  const batchActions = body.actions;
+
+  if (!Array.isArray(batchActions) || batchActions.length === 0 || batchActions.length > 50) {
+    return errorResponse(c, 400, 'bad_request', 'actions must be an array of 1-50 items');
+  }
+
+  // Validate and map all actions upfront
+  const mapped: Array<{ toolName: string; x: number; y: number; flags?: { auto_bulldoze?: boolean; auto_power?: boolean; auto_road?: boolean } }> = [];
+  for (const a of batchActions) {
+    const toolName = TOOL_MAP[a.action];
+    if (!toolName) return errorResponse(c, 400, 'bad_request', `Unknown action: ${a.action}`);
+    if (typeof a.x !== 'number' || typeof a.y !== 'number') {
+      return errorResponse(c, 400, 'bad_request', 'Each action needs x and y coordinates');
+    }
+    const flags = (a.auto_bulldoze || a.auto_power || a.auto_road)
+      ? { auto_bulldoze: a.auto_bulldoze === true, auto_power: a.auto_power === true, auto_road: a.auto_road === true }
+      : undefined;
+    mapped.push({ toolName, x: a.x, y: a.y, flags });
+  }
+
+  const doId = c.env.CITY.idFromName(cityId);
+  const stub = c.env.CITY.get(doId);
+  const result = await stub.executeBatch(mapped);
+
+  if (result.error === 'rate_limited') {
+    return errorResponse(c, 429, 'rate_limited', result.reason);
+  }
+
+  // Sync stats to D1
+  if (result.stats) {
+    c.executionCtx.waitUntil(syncStats(c.env.DB, cityId, result.stats));
+  }
+
+  // Log batch action to D1
+  c.executionCtx.waitUntil(
+    c.env.DB.prepare(
+      `INSERT INTO actions (city_id, game_year, action_type, params, result, cost)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(
+      cityId,
+      result.stats?.year || 0,
+      'batch',
+      JSON.stringify({ count: batchActions.length }),
+      result.completed === result.total ? 'success' : 'partial',
+      result.total_cost || 0
+    ).run()
+  );
+
+  return c.json({
+    results: result.results,
+    total_cost: result.total_cost,
+    funds_remaining: result.funds_remaining,
+    completed: result.completed,
+    total: result.total,
+  }, 200);
+});
+
 export { actions };

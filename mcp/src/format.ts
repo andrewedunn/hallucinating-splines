@@ -228,6 +228,29 @@ export function formatActionResult(data: Record<string, unknown>): string {
   return lines.join('\n');
 }
 
+export function formatBatchResult(data: Record<string, unknown>): string {
+  const results = data.results as Array<Record<string, unknown>> | undefined;
+  const totalCost = data.total_cost as number;
+  const completed = data.completed as number;
+  const total = data.total as number;
+  const fundsRemaining = data.funds_remaining as number | undefined;
+
+  const lines = [`Batch: ${completed}/${total} actions completed.`];
+  lines.push(`  Total cost: $${totalCost}`);
+  if (fundsRemaining !== undefined) lines.push(`  Funds remaining: $${fundsRemaining}`);
+
+  if (results?.length) {
+    lines.push('');
+    for (let i = 0; i < results.length; i++) {
+      const r = results[i];
+      const status = r.success ? 'ok' : `FAILED${r.reason ? ` (${r.reason})` : ''}`;
+      lines.push(`  ${i + 1}. ${status} — $${r.cost || 0}`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
 export function formatBudgetResult(data: Record<string, unknown>): string {
   const budget = data.budget as Record<string, number> | undefined;
   const funds = data.funds as number | undefined;
