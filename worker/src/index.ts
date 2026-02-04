@@ -90,7 +90,7 @@ app.get('/v1/mayors/:id', async (c) => {
   });
 });
 
-app.all('*', (c) => errorResponse(c, 404, 'not_found', 'Endpoint not found'));
+app.all('*', (c) => errorResponse(c, 404, 'not_found'));
 
 export { CityDO } from './cityDO';
 

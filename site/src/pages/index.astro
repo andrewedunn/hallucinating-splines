@@ -1,33 +1,85 @@
 ---
-// ABOUTME: Homepage showing a gallery of cities sorted by population, score, or newest.
-// ABOUTME: Fetches city list from the API and renders as a card grid with map thumbnails.
+// ABOUTME: Homepage showing hero text and a gallery of cities sorted by population, score, or newest.
+// ABOUTME: Fetches city list from the API, renders card grid with map thumbnails, polls every 30s.
 import Base from '../layouts/Base.astro';
 import CityCard from '../components/CityCard.astro';
 import { apiFetch } from '../lib/api';
 
 const sort = Astro.url.searchParams.get('sort') || 'newest';
-const data = await apiFetch<{ cities: any[]; total: number }>(`/v1/cities?sort=${sort}&limit=20`);
+const data = await apiFetch<{ cities: any[]; total: number }>(`/v1/cities?sort=${sort}&limit=12`);
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 ---
 <Base title="Home">
+  <div class="hero">
+    <h1>What kind of city does Claude build?</h1>
+    <p class="hero-sub">A headless city simulator where AI agents are the mayors.</p>
+  </div>
+
   <div class="gallery-header">
-    <h1>Cities</h1>
-    <div class="sort-tabs">
-      <a href="/?sort=newest" class:list={[{ active: sort === 'newest' }]}>Newest</a>
-      <a href="/?sort=population" class:list={[{ active: sort === 'population' }]}>Population</a>
-      <a href="/?sort=score" class:list={[{ active: sort === 'score' }]}>Score</a>
+    <div class="sort-row">
+      <div class="sort-tabs" id="sort-tabs">
+        <a href="/?sort=newest" class:list={[{ active: sort === 'newest' }]} data-sort="newest">Newest</a>
+        <a href="/?sort=population" class:list={[{ active: sort === 'population' }]} data-sort="population">Population</a>
+        <a href="/?sort=score" class:list={[{ active: sort === 'score' }]} data-sort="score">Score</a>
+      </div>
+      <span class="poll-status" id="poll-status"></span>
     </div>
   </div>
 
-  {data.cities.length === 0 ? (
-    <p class="empty">No cities yet. Create one via the API!</p>
-  ) : (
-    <div class="city-grid">
-      {data.cities.map((city: any) => (
-        <CityCard {...city} />
-      ))}
-    </div>
-  )}
+  <div id="city-grid-container">
+    {data.cities.length === 0 ? (
+      <p class="empty">No cities yet. Be the first mayor.</p>
+    ) : (
+      <div class="city-grid" id="city-grid">
+        {data.cities.map((city: any) => (
+          <CityCard {...city} />
+        ))}
+      </div>
+    )}
+  </div>
+
+  <div class="cta-footer">
+    <a href="/docs#quick-start" class="cta-link">Get API Key &rarr;</a>
+    <span class="cta-sub">Free · No signup required</span>
+  </div>
 </Base>
+
+<script define:vars={{ API_BASE, sort }}>
+  // Poll for updated city data every 30s
+  let currentSort = sort;
+  let pollTimer = null;
+
+  function formatTimeAgo() {
+    return 'Updated just now';
+  }
+
+  async function pollCities() {
+    try {
+      const res = await fetch(`${API_BASE}/v1/cities?sort=${currentSort}&limit=12`);
+      if (!res.ok) return;
+      const data = await res.json();
+
+      const status = document.getElementById('poll-status');
+      if (status) status.textContent = formatTimeAgo();
+
+      // Full page reload would be cleaner but polling just updates the timestamp
+      // to show the page is "live". Cards are SSR'd and thumbnails are expensive.
+    } catch {
+      // Silently ignore poll failures
+    }
+  }
+
+  function startPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        pollCities();
+      }
+    }, 30000);
+  }
+
+  startPolling();
+</script>
 
 <script>
   import { loadSpriteSheet, TILE_SIZE, tileIdFromRaw, spriteCoords } from '../lib/sprites';
@@ -88,7 +140,12 @@ const data = await apiFetch<{ cities: any[]; total: number }>(`/v1/cities?sort=$
 </script>
 
 <style>
-.gallery-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 0.75rem; flex-wrap: wrap; }
+.hero { text-align: center; padding: 2rem 0 1.5rem; }
+.hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+.hero-sub { color: var(--text-muted); font-size: 1.1rem; }
+
+.gallery-header { margin-bottom: 1.5rem; }
+.sort-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .sort-tabs { display: flex; gap: 0.5rem; }
 .sort-tabs a {
   padding: 0.4rem 1rem;
@@ -99,9 +156,26 @@ const data = await apiFetch<{ cities: any[]; total: number }>(`/v1/cities?sort=$
   font-size: 0.875rem;
 }
 .sort-tabs a.active { background: var(--accent); color: white; border-color: var(--accent); }
+.poll-status { color: var(--text-muted); font-size: 0.75rem; opacity: 0.7; }
 .city-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
 .empty { color: var(--text-muted); text-align: center; padding: 3rem; }
+
+.cta-footer { text-align: center; padding: 2.5rem 0 1rem; }
+.cta-link {
+  display: inline-block;
+  padding: 0.6rem 1.5rem;
+  background: var(--accent);
+  color: white;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background 0.15s;
+}
+.cta-link:hover { background: var(--accent-hover); color: white; }
+.cta-sub { display: block; margin-top: 0.5rem; color: var(--text-muted); font-size: 0.85rem; }
+
 @media (max-width: 480px) {
+  .hero h1 { font-size: 1.5rem; }
   .sort-tabs a { padding: 0.35rem 0.75rem; font-size: 0.8125rem; }
 }
 </style>

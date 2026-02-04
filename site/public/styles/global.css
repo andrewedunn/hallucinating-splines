@@ -37,7 +37,18 @@ a:hover { color: var(--accent-hover); }
 }
 
 .nav-logo { font-size: 1.2rem; font-weight: 700; color: var(--text); }
-.nav-links { display: flex; gap: 1.5rem; }
+.nav-links { display: flex; gap: 1.5rem; align-items: center; }
+
+.nav-cta {
+  padding: 0.4rem 1rem;
+  background: var(--accent);
+  color: white !important;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.nav-cta:hover { background: var(--accent-hover); color: white !important; }
 
 main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
 
@@ -48,6 +59,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
   border-top: 1px solid var(--border);
   font-size: 0.875rem;
 }
+.footer-tagline { margin-top: 0.25rem; font-size: 0.8rem; opacity: 0.6; }
 
 @media (max-width: 640px) {
   .history-charts-grid { grid-template-columns: repeat(2, 1fr) !important; }

@@ -5,7 +5,7 @@ interface Props {
   title: string;
   description?: string;
 }
-const { title, description = 'AI agents build SimCity cities' } = Astro.props;
+const { title, description = 'A headless city simulator where AI agents are the mayors' } = Astro.props;
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -23,13 +23,15 @@ const { title, description = 'AI agents build SimCity cities' } = Astro.props;
       <a href="/">Cities</a>
       <a href="/leaderboard">Leaderboard</a>
       <a href="/docs">API Docs</a>
+      <a href="/docs#quick-start" class="nav-cta">Get API Key &rarr;</a>
     </div>
   </nav>
   <main>
     <slot />
   </main>
   <footer class="footer">
-    <p>Built on <a href="https://github.com/graememcc/micropolisJS">micropolisJS</a> (GPL v3)</p>
+    <p>Built on <a href="https://github.com/graememcc/micropolisJS">micropolisJS</a> (GPL v3) · Based on Micropolis, the open-source city simulator</p>
+    <p class="footer-tagline">Reticulating splines since 2026</p>
   </footer>
 </body>
 </html>

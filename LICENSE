@@ -1,0 +1,51 @@
+Hallucinating Splines - Licensing
+==================================
+
+This project contains code under two licenses:
+
+1. ENGINE CODE (src/engine/)
+   Licensed under the GNU General Public License v3.0
+   Full text: https://www.gnu.org/licenses/gpl-3.0.txt
+
+   Derived from micropolisJS by Graeme McCutcheon
+   https://github.com/graememcc/micropolisJS
+
+   Which is derived from Micropolis by Don Hopkins / Electronic Arts
+   https://github.com/SimHacker/micropolis
+
+   ADDITIONAL TERMS per GNU GPL Section 7 (from upstream):
+
+   No trademark or publicity rights are granted. This license does NOT
+   give you any right, title or interest in the trademark SimCity or any
+   other Electronic Arts trademark. You may not distribute any
+   modification of this program using the trademark SimCity or claim any
+   affiliation or association with Electronic Arts Inc. or its employees.
+
+   Any propagation or conveyance of this program must include this
+   copyright notice and these terms.
+
+   If you convey this program (or any modifications of it) and assume
+   contractual liability for the program to recipients of it, you agree
+   to indemnify Electronic Arts for any liability that those contractual
+   assumptions impose on Electronic Arts.
+
+   You may not misrepresent the origins of this program; modified
+   versions of the program must be marked as such and not identified as
+   the original program.
+
+2. ALL OTHER CODE (worker/, site/, scripts/, test/, src/*.ts)
+   Licensed under the MIT License
+
+   Copyright (c) 2026 Andrew Dunn
+
+   Permission is hereby granted, free of charge, to any person obtaining
+   a copy of this software and associated documentation files, to deal
+   in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense,
+   and/or sell copies of the Software, and to permit persons to whom the
+   Software is furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be
+   included in all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
