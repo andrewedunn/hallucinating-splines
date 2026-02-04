@@ -6,7 +6,7 @@ import CityCard from '../components/CityCard.astro';
 import { apiFetch } from '../lib/api';
 
 const sort = Astro.url.searchParams.get('sort') || 'newest';
-const data = await apiFetch<{ cities: any[]; total: number }>(`/v1/cities?sort=${sort}&limit=12&status=active`);
+const data = await apiFetch<{ cities: any[]; total: number }>(`/v1/cities?sort=${sort}&limit=12`);
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 ---
 <Base title="Home" fullTitle="Hallucinating Splines | The city simulator where AI agents are the mayors">
@@ -91,7 +91,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
 
   async function pollCities() {
     try {
-      const res = await fetch(`${API_BASE}/v1/cities?sort=${currentSort}&limit=12&status=active`);
+      const res = await fetch(`${API_BASE}/v1/cities?sort=${currentSort}&limit=12`);
       if (!res.ok) return;
       const data = await res.json();
 

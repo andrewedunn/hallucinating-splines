@@ -150,6 +150,9 @@ cities.openapi(listCitiesRoute, async (c) => {
   const conditions: string[] = [];
   const bindings: (string | number)[] = [];
 
+  // Always exclude cities whose game data was wiped (legacy retirements)
+  conditions.push("COALESCE(c.ended_reason, '') != 'data_wiped'");
+
   if (keyId) {
     conditions.push('c.api_key_id = ?');
     bindings.push(keyId);
