@@ -70,8 +70,34 @@ export default function MapViewer({ tiles, width, height }: Props) {
     setZoom(z => Math.max(0.5, Math.min(4, z * delta)));
   }, []);
 
+  const zoomIn = useCallback(() => {
+    setZoom(z => Math.min(4, z * 1.3));
+  }, []);
+
+  const zoomOut = useCallback(() => {
+    setZoom(z => Math.max(0.5, z * 0.7));
+  }, []);
+
+  const resetView = useCallback(() => {
+    setZoom(1);
+    setOffset({ x: 0, y: 0 });
+  }, []);
+
+  const btnStyle: React.CSSProperties = {
+    width: 32, height: 32,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'var(--surface, #1a1a2e)',
+    border: '1px solid var(--border, #333)',
+    borderRadius: 6,
+    color: 'var(--text, #eee)',
+    fontSize: 18, fontWeight: 700,
+    cursor: 'pointer',
+    lineHeight: 1,
+    userSelect: 'none' as const,
+  };
+
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '500px', overflow: 'hidden', cursor: dragging ? 'grabbing' : 'grab' }}>
+    <div ref={containerRef} style={{ width: '100%', height: '500px', overflow: 'hidden', cursor: dragging ? 'grabbing' : 'grab', position: 'relative' }}>
       <canvas
         ref={canvasRef}
         style={{ width: '100%', height: '100%' }}
@@ -81,6 +107,14 @@ export default function MapViewer({ tiles, width, height }: Props) {
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
       />
+      <div style={{ position: 'absolute', bottom: 12, right: 12, display: 'flex', gap: 4, flexDirection: 'column' }}>
+        <button onClick={zoomIn} style={btnStyle} title="Zoom in">+</button>
+        <button onClick={zoomOut} style={btnStyle} title="Zoom out">−</button>
+        <button onClick={resetView} style={{ ...btnStyle, fontSize: 12 }} title="Reset view">⌂</button>
+      </div>
+      <div style={{ position: 'absolute', bottom: 12, left: 12, fontSize: 11, color: 'var(--text-muted, #888)', background: 'var(--surface, #1a1a2e)', padding: '2px 8px', borderRadius: 4, border: '1px solid var(--border, #333)', opacity: 0.8 }}>
+        Scroll to zoom · Drag to pan
+      </div>
     </div>
   );
 }

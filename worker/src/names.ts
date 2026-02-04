@@ -2,25 +2,34 @@
 // ABOUTME: Deterministic from a seed string (hashed to pick words).
 
 const ADJECTIVES = [
-  'Cosmic', 'Neon', 'Turbo', 'Dizzy', 'Fuzzy', 'Mighty', 'Snappy', 'Jolly',
-  'Brave', 'Crafty', 'Dapper', 'Groovy', 'Happy', 'Lucky', 'Nimble', 'Plucky',
-  'Quirky', 'Rustic', 'Savvy', 'Witty', 'Zesty', 'Bold', 'Calm', 'Eager',
-  'Fierce', 'Gentle', 'Hasty', 'Keen', 'Lively', 'Merry', 'Noble', 'Proud',
-  'Quick', 'Rapid', 'Sleek', 'Tough', 'Vivid', 'Warm', 'Young', 'Zippy',
-  'Atomic', 'Blazing', 'Chill', 'Daring', 'Epic', 'Funky', 'Grand', 'Hyper',
-  'Iron', 'Jade', 'Kinetic', 'Lunar', 'Mystic', 'Nova', 'Omega', 'Pixel',
-  'Quantum', 'Retro', 'Solar', 'Titan', 'Ultra', 'Velvet', 'Warp', 'Xenon',
+  // Tech/futuristic
+  'Neural', 'Quantum', 'Cyber', 'Neon', 'Prime', 'Nova', 'Flux', 'Vector',
+  'Pixel', 'Binary', 'Sonic', 'Photon', 'Sigma', 'Apex', 'Omega', 'Helix',
+  // Nature/elemental
+  'Crystal', 'Sunset', 'Amber', 'Coral', 'Verdant', 'Azure', 'Crimson', 'Golden',
+  'Misty', 'Frozen', 'Ember', 'Storm', 'Lunar', 'Solar', 'Tidal', 'Ashen',
+  // Mood/character
+  'Silent', 'Bold', 'Hollow', 'Noble', 'Stark', 'Fallen', 'Vivid', 'Serene',
+  'Gilded', 'Rusted', 'Veiled', 'Sunken', 'Radiant', 'Dusky', 'Feral', 'Grand',
+  // Scale/power
+  'Iron', 'Titan', 'Vast', 'Twin', 'Ancient', 'Eternal', 'Obsidian', 'Marble',
+  'Granite', 'Cobalt', 'Ivory', 'Scarlet', 'Jade', 'Onyx', 'Platinum', 'Bronze',
 ];
 
 const NOUNS = [
-  'Waffle', 'Penguin', 'Badger', 'Llama', 'Otter', 'Panda', 'Falcon', 'Tiger',
-  'Dolphin', 'Raven', 'Cobra', 'Mantis', 'Bison', 'Crane', 'Gecko', 'Heron',
-  'Jaguar', 'Koala', 'Lemur', 'Moose', 'Newt', 'Osprey', 'Puffin', 'Quail',
-  'Robin', 'Stork', 'Toucan', 'Viper', 'Wolf', 'Yak', 'Zebra', 'Hawk',
-  'Maple', 'Cedar', 'Aspen', 'Birch', 'Coral', 'Drift', 'Ember', 'Frost',
-  'Gale', 'Haze', 'Isle', 'Jetty', 'Knoll', 'Marsh', 'Oasis', 'Peak',
-  'Ridge', 'Storm', 'Tide', 'Vale', 'Wisp', 'Blaze', 'Crest', 'Dune',
-  'Flint', 'Glen', 'Harbor', 'Inlet', 'Lagoon', 'Mesa', 'Nexus', 'Plume',
+  // Water/coastal
+  'Harbor', 'Bay', 'Cove', 'Port', 'Wharf', 'Marina', 'Shoals', 'Reef',
+  // Terrain/elevation
+  'Valley', 'Ridge', 'Mesa', 'Summit', 'Bluff', 'Canyon', 'Plateau', 'Gorge',
+  // Urban/settlement
+  'City', 'Town', 'Spire', 'Citadel', 'Borough', 'Commons', 'Crossing', 'Junction',
+  'Market', 'Quarter', 'District', 'Arcade', 'Plaza', 'Terrace', 'Promenade', 'Row',
+  // Nature/landmark
+  'Grove', 'Hollow', 'Glen', 'Meadow', 'Falls', 'Springs', 'Oasis', 'Thicket',
+  'Creek', 'Lagoon', 'Marsh', 'Dell', 'Fen', 'Heath', 'Moor', 'Weald',
+  // Industrial/modern
+  'Forge', 'Foundry', 'Works', 'Mill', 'Yards', 'Docks', 'Depot', 'Hub',
+  'Exchange', 'Terminal', 'Annex', 'Complex', 'Concourse', 'Pavilion', 'Atrium', 'Vault',
 ];
 
 function simpleHash(str: string): number {
