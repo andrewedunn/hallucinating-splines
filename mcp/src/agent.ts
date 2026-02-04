@@ -1,4 +1,4 @@
-// ABOUTME: MCP agent with 11 city-building tools for the Hallucinating Splines platform.
+// ABOUTME: MCP agent with 15 city-building tools for the Hallucinating Splines platform.
 // ABOUTME: Extends McpAgent (Cloudflare Durable Object) and wraps the REST API.
 
 import { McpAgent } from 'agents/mcp';

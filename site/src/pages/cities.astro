@@ -1,0 +1,278 @@
+---
+// ABOUTME: Sortable, filterable city table with pagination.
+// ABOUTME: Shows all cities with stats, status filtering, and sort controls.
+import Base from '../layouts/Base.astro';
+import { apiFetch } from '../lib/api';
+
+const PER_PAGE = 25;
+
+const sort = Astro.url.searchParams.get('sort') || 'newest';
+const status = Astro.url.searchParams.get('status') || 'all';
+const page = Math.max(1, parseInt(Astro.url.searchParams.get('page') || '1'));
+const offset = (page - 1) * PER_PAGE;
+
+const params = new URLSearchParams({
+  sort,
+  status,
+  limit: String(PER_PAGE),
+  offset: String(offset),
+});
+
+let data: { cities: any[]; total: number };
+try {
+  data = await apiFetch<{ cities: any[]; total: number }>(`/v1/cities?${params}`);
+} catch {
+  data = { cities: [], total: 0 };
+}
+
+const totalPages = Math.max(1, Math.ceil(data.total / PER_PAGE));
+
+function buildUrl(overrides: Record<string, string>) {
+  const p = new URLSearchParams({ sort, status, page: String(page) });
+  for (const [k, v] of Object.entries(overrides)) {
+    p.set(k, v);
+  }
+  // Reset to page 1 when changing sort or status
+  if ('sort' in overrides || 'status' in overrides) {
+    p.set('page', '1');
+  }
+  return `/cities?${p}`;
+}
+
+function relativeTime(dateStr: string | null) {
+  if (!dateStr) return '—';
+  const diffMs = Date.now() - new Date(dateStr + 'Z').getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return `${Math.floor(days / 30)}mo ago`;
+}
+
+const sortOptions = [
+  { value: 'newest', label: 'Newest' },
+  { value: 'population', label: 'Population' },
+  { value: 'score', label: 'Score' },
+];
+
+const statusOptions = [
+  { value: 'all', label: 'All' },
+  { value: 'active', label: 'Active' },
+  { value: 'ended', label: 'Ended' },
+];
+---
+<Base title="Cities">
+  <h1>Cities</h1>
+
+  <div class="controls">
+    <div class="control-group">
+      <span class="control-label">Sort</span>
+      <div class="sort-tabs">
+        {sortOptions.map(opt => (
+          <a href={buildUrl({ sort: opt.value })} class:list={[{ active: sort === opt.value }]}>{opt.label}</a>
+        ))}
+      </div>
+    </div>
+    <div class="control-group">
+      <span class="control-label">Status</span>
+      <div class="sort-tabs">
+        {statusOptions.map(opt => (
+          <a href={buildUrl({ status: opt.value })} class:list={[{ active: status === opt.value }]}>{opt.label}</a>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  {data.cities.length === 0 ? (
+    <p class="empty">No cities found.</p>
+  ) : (
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-rank">#</th>
+            <th class="col-name">Name</th>
+            <th class="col-mayor">Mayor</th>
+            <th class="col-status">Status</th>
+            <th class="col-num">Population</th>
+            <th class="col-num">Score</th>
+            <th class="col-num">Funds</th>
+            <th class="col-num">Year</th>
+            <th class="col-seed">Seed</th>
+            <th class="col-time">Last Active</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.cities.map((city: any, i: number) => (
+            <tr>
+              <td class="col-rank">{offset + i + 1}</td>
+              <td class="col-name"><a href={`/cities/${city.slug}`}>{city.name}</a></td>
+              <td class="col-mayor">
+                {city.mayor_slug
+                  ? <a href={`/mayors/${city.mayor_slug}`}>{city.mayor}</a>
+                  : city.mayor}
+              </td>
+              <td class="col-status">
+                <span class:list={['badge', city.status === 'active' ? 'badge-active' : 'badge-ended']}>
+                  {city.status}
+                </span>
+              </td>
+              <td class="col-num">{city.population.toLocaleString()}</td>
+              <td class="col-num">{city.score}</td>
+              <td class="col-num">${(city.funds ?? 0).toLocaleString()}</td>
+              <td class="col-num">{city.game_year}</td>
+              <td class="col-seed">{city.seed}</td>
+              <td class="col-time">{relativeTime(city.updated_at)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+
+  {totalPages > 1 && (
+    <div class="pagination">
+      {page > 1 ? (
+        <a href={buildUrl({ page: String(page - 1) })} class="page-btn">&larr; Previous</a>
+      ) : (
+        <span class="page-btn disabled">&larr; Previous</span>
+      )}
+      <span class="page-info">Page {page} of {totalPages}</span>
+      {page < totalPages ? (
+        <a href={buildUrl({ page: String(page + 1) })} class="page-btn">Next &rarr;</a>
+      ) : (
+        <span class="page-btn disabled">Next &rarr;</span>
+      )}
+    </div>
+  )}
+
+  <div class="total-info">{data.total} {data.total === 1 ? 'city' : 'cities'} total</div>
+</Base>
+
+<style>
+h1 { margin-bottom: 1rem; }
+
+.controls {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.control-label {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.sort-tabs { display: flex; gap: 0.5rem; }
+.sort-tabs a {
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+.sort-tabs a.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border-radius: 8px;
+  overflow: hidden;
+  min-width: 700px;
+}
+
+th, td {
+  padding: 0.6rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+th {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.col-rank { width: 3rem; text-align: center; }
+.col-num { text-align: right; font-variant-numeric: tabular-nums; }
+.col-seed { font-family: monospace; font-size: 0.8rem; color: var(--text-muted); }
+.col-time { color: var(--text-muted); font-size: 0.85rem; }
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.badge-active { background: rgba(34, 197, 94, 0.15); color: var(--green); }
+.badge-ended { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+
+.empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 3rem;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.page-btn {
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.875rem;
+}
+.page-btn.disabled {
+  color: var(--text-muted);
+  opacity: 0.5;
+  cursor: default;
+}
+
+.page-info {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.total-info {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 480px) {
+  .controls { gap: 1rem; }
+  .sort-tabs a { padding: 0.35rem 0.75rem; font-size: 0.8125rem; }
+  th, td { padding: 0.5rem 0.625rem; font-size: 0.8125rem; }
+}
+</style>

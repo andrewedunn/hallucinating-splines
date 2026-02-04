@@ -118,6 +118,7 @@ const listCitiesRoute = createRoute({
 
 cities.openapi(listCitiesRoute, async (c) => {
   const sort = c.req.query('sort') || 'newest';
+  const status = c.req.query('status') || 'all';
   const limit = Math.min(parseInt(c.req.query('limit') || '20'), 50);
   const offset = parseInt(c.req.query('offset') || '0');
   const mine = c.req.query('mine') === 'true';
@@ -146,20 +147,35 @@ cities.openapi(listCitiesRoute, async (c) => {
     default: orderBy = 'c.created_at DESC'; break;
   }
 
-  const whereClause = keyId ? 'WHERE c.api_key_id = ?' : '';
-  const bindings: (string | number)[] = keyId ? [keyId, limit, offset] : [limit, offset];
+  const conditions: string[] = [];
+  const bindings: (string | number)[] = [];
+
+  if (keyId) {
+    conditions.push('c.api_key_id = ?');
+    bindings.push(keyId);
+  }
+  if (status === 'active' || status === 'ended') {
+    conditions.push('c.status = ?');
+    bindings.push(status);
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  bindings.push(limit, offset);
 
   const rows = await c.env.DB.prepare(
-    `SELECT c.id, c.name, k.mayor_name as mayor, k.id as mayor_id, c.population, c.game_year, c.score, c.status, c.seed, c.updated_at
+    `SELECT c.id, c.name, k.mayor_name as mayor, k.id as mayor_id, c.population, c.game_year, c.score, c.funds, c.status, c.seed, c.updated_at
      FROM cities c JOIN api_keys k ON c.api_key_id = k.id
      ${whereClause}
      ORDER BY ${orderBy} LIMIT ? OFFSET ?`
   ).bind(...bindings).all();
 
-  const totalQuery = keyId
-    ? c.env.DB.prepare('SELECT COUNT(*) as count FROM cities WHERE api_key_id = ?').bind(keyId)
-    : c.env.DB.prepare('SELECT COUNT(*) as count FROM cities');
-  const total = await totalQuery.first<{ count: number }>();
+  const countConditions = [...conditions];
+  const countBindings = bindings.slice(0, -2);
+  const countWhere = countConditions.length > 0 ? `WHERE ${countConditions.join(' AND ')}` : '';
+  const totalQuery = c.env.DB.prepare(`SELECT COUNT(*) as count FROM cities c ${countWhere}`);
+  const total = countBindings.length > 0
+    ? await totalQuery.bind(...countBindings).first<{ count: number }>()
+    : await totalQuery.first<{ count: number }>();
 
   const citiesWithSlugs = rows.results.map((row: any) => ({
     ...row,
