@@ -221,8 +221,12 @@ cities.openapi(getCityStatsRoute, async (c) => {
 
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
-  const stats = await stub.getStats();
-  return c.json(stats, 200);
+  try {
+    const stats = await stub.getStats();
+    return c.json(stats, 200);
+  } catch {
+    return errorResponse(c, 404, 'no_game_state', 'City game state is no longer available');
+  }
 });
 
 // --- GET /v1/cities/:id/map ---
@@ -257,8 +261,12 @@ cities.openapi(getCityMapRoute, async (c) => {
 
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
-  const mapData = await stub.getMapData();
-  return c.json(mapData, 200);
+  try {
+    const mapData = await stub.getMapData();
+    return c.json(mapData, 200);
+  } catch {
+    return errorResponse(c, 404, 'no_game_state', 'City game state is no longer available');
+  }
 });
 
 // --- GET /v1/cities/:id/map/image ---
@@ -297,7 +305,12 @@ cities.openapi(getMapImageRoute, async (c) => {
 
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
-  const mapData = await stub.getMapData();
+  let mapData: any;
+  try {
+    mapData = await stub.getMapData();
+  } catch {
+    return errorResponse(c, 404, 'no_game_state', 'City game state is no longer available');
+  }
 
   const { generateMapImage } = await import('../mapImage');
   const png = await generateMapImage(mapData.tiles, mapData.width, mapData.height, scale);
@@ -340,8 +353,12 @@ cities.openapi(getMapSummaryRoute, async (c) => {
   if (!row) return errorResponse(c, 404, 'not_found', 'City not found');
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
-  const summary = await stub.getMapSummary();
-  return c.json(summary, 200);
+  try {
+    const summary = await stub.getMapSummary();
+    return c.json(summary, 200);
+  } catch {
+    return errorResponse(c, 404, 'no_game_state', 'City game state is no longer available');
+  }
 });
 
 // --- GET /v1/cities/:id/map/buildable ---
@@ -393,8 +410,12 @@ cities.openapi(getBuildableRoute, async (c) => {
 
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
-  const result = await stub.getBuildablePositions(toolName);
-  return c.json({ action, ...result }, 200);
+  try {
+    const result = await stub.getBuildablePositions(toolName);
+    return c.json({ action, ...result }, 200);
+  } catch {
+    return errorResponse(c, 404, 'no_game_state', 'City game state is no longer available');
+  }
 });
 
 // --- GET /v1/cities/:id/map/region ---
@@ -434,8 +455,12 @@ cities.openapi(getMapRegionRoute, async (c) => {
 
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
-  const region = await stub.getMapRegion(x, y, w, h);
-  return c.json(region, 200);
+  try {
+    const region = await stub.getMapRegion(x, y, w, h);
+    return c.json(region, 200);
+  } catch {
+    return errorResponse(c, 404, 'no_game_state', 'City game state is no longer available');
+  }
 });
 
 // --- GET /v1/cities/:id/demand ---
@@ -470,8 +495,12 @@ cities.openapi(getDemandRoute, async (c) => {
 
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
-  const demand = await stub.getDemandData();
-  return c.json(demand, 200);
+  try {
+    const demand = await stub.getDemandData();
+    return c.json(demand, 200);
+  } catch {
+    return errorResponse(c, 404, 'no_game_state', 'City game state is no longer available');
+  }
 });
 
 // --- GET /v1/cities/:id/snapshots ---
@@ -601,8 +630,12 @@ cities.openapi(getHistoryRoute, async (c) => {
 
   const doId = c.env.CITY.idFromName(cityId);
   const stub = c.env.CITY.get(doId);
-  const history = await stub.getCensusHistory();
-  return c.json(history, 200);
+  try {
+    const history = await stub.getCensusHistory();
+    return c.json(history, 200);
+  } catch {
+    return errorResponse(c, 404, 'no_game_state', 'City game state is no longer available');
+  }
 });
 
 // --- GET /v1/cities/:id/actions ---

@@ -19,14 +19,17 @@ export default function CityThumbnail({ cityId, apiBase }: Props) {
     let cancelled = false;
 
     async function render() {
-      const [spriteSheet, mapRes] = await Promise.all([
+      const [spriteSheet, mapResponse] = await Promise.all([
         cachedSpriteSheet
           ? Promise.resolve(cachedSpriteSheet)
           : loadSpriteSheet('/tiles.png').then(img => { cachedSpriteSheet = img; return img; }),
-        fetch(`${apiBase}/v1/cities/${cityId}/map`).then(r => r.json()),
+        fetch(`${apiBase}/v1/cities/${cityId}/map`),
       ]);
 
       if (cancelled || !canvasRef.current) return;
+      if (!mapResponse.ok) return; // City has no game state (e.g. retired)
+
+      const mapRes = await mapResponse.json();
 
       const canvas = canvasRef.current;
       const mapWidth = mapRes.width;

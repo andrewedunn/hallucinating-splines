@@ -439,8 +439,10 @@ export class CityDO extends DurableObject<Env> {
   }
 
   async deleteCity(): Promise<void> {
+    // Only clear in-memory state. Keep DO storage so map/stats remain
+    // readable for retired cities. The route layer prevents mutations
+    // on ended cities via status check.
     this.game = null;
-    await this.ctx.storage.deleteAll();
   }
 
   async getCensusHistory(): Promise<any> {
