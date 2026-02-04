@@ -245,6 +245,55 @@ cities.openapi(getCityMapRoute, async (c) => {
   return c.json(mapData, 200);
 });
 
+// --- GET /v1/cities/:id/map/image ---
+
+const getMapImageRoute = createRoute({
+  method: 'get',
+  path: '/{id}/map/image',
+  tags: ['Cities'],
+  summary: 'Get map as PNG image',
+  description: 'Returns the city map as a colored-pixel PNG. Each tile = 1 pixel, scaled up by scale factor.',
+  request: {
+    params: z.object({ id: CityIdParam }),
+    query: z.object({
+      scale: z.string().optional().default('1'),
+    }),
+  },
+  responses: {
+    200: {
+      content: { 'image/png': { schema: z.any() } },
+      description: 'PNG image',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'City not found',
+    },
+  },
+});
+
+cities.openapi(getMapImageRoute, async (c) => {
+  const cityId = c.req.param('id');
+  const scale = Math.min(Math.max(parseInt(c.req.query('scale') || '1'), 1), 8);
+
+  const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')
+    .bind(cityId).first();
+  if (!row) return errorResponse(c, 404, 'not_found', 'City not found');
+
+  const doId = c.env.CITY.idFromName(cityId);
+  const stub = c.env.CITY.get(doId);
+  const mapData = await stub.getMapData();
+
+  const { generateMapImage } = await import('../mapImage');
+  const png = await generateMapImage(mapData.tiles, mapData.width, mapData.height, scale);
+
+  return new Response(png, {
+    headers: {
+      'Content-Type': 'image/png',
+      'Cache-Control': 'public, max-age=60',
+    },
+  });
+});
+
 // --- GET /v1/cities/:id/map/summary ---
 
 const getMapSummaryRoute = createRoute({

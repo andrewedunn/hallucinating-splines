@@ -524,6 +524,26 @@ Use this to find your city IDs or check on multiple cities.`,
       },
     );
 
+    // 15. get_map_image
+    this.server.tool(
+      'get_map_image',
+      `Get a URL for the city map as a colored PNG image. Each tile = 1 pixel, scaled up by the scale factor (1-8).
+
+Colors: dirt=brown, water=blue, trees=green, roads=gray, power=yellow, residential=green, commercial=blue, industrial=amber, coal=gray, nuclear=purple, police=indigo, fire=red.
+
+Use this to get a visual overview of the city layout.`,
+      {
+        city_id: z.string().describe('City ID'),
+        scale: z.number().int().min(1).max(8).optional().describe('Pixel scale factor (default 1, max 8)'),
+      },
+      async ({ city_id, scale }) => {
+        const baseUrl = this.env.API_BASE || 'https://api.hallucinatingsplines.com';
+        const s = scale || 4;
+        const url = `${baseUrl}/v1/cities/${city_id}/map/image?scale=${s}`;
+        return text(`Map image URL: ${url}\n\nOpen this URL to view the city map as a colored PNG.`);
+      },
+    );
+
     // Resource: Agent Playbook
     this.server.registerResource(
       'Agent Playbook',
