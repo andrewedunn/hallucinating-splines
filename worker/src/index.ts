@@ -106,14 +106,14 @@ app.openapi(leaderboardRoute, async (c) => {
 
   const [byPop, byScore, mayorPop, mayorCities] = await Promise.all([
     c.env.DB.prepare(
-      `SELECT c.id, c.name, k.mayor_name as mayor, c.population, c.game_year, c.score, c.llama
+      `SELECT c.id, c.name, k.mayor_name as mayor, c.population, c.game_year, c.score, c.llama, c.status
        FROM cities c JOIN api_keys k ON c.api_key_id = k.id
-       WHERE c.status = 'active' ORDER BY c.population DESC LIMIT ?`
+       ORDER BY c.population DESC LIMIT ?`
     ).bind(limit).all(),
     c.env.DB.prepare(
-      `SELECT c.id, c.name, k.mayor_name as mayor, c.population, c.game_year, c.score, c.llama
+      `SELECT c.id, c.name, k.mayor_name as mayor, c.population, c.game_year, c.score, c.llama, c.status
        FROM cities c JOIN api_keys k ON c.api_key_id = k.id
-       WHERE c.status = 'active' ORDER BY c.score DESC LIMIT ?`
+       ORDER BY c.score DESC LIMIT ?`
     ).bind(limit).all(),
     c.env.DB.prepare(
       `SELECT k.id, k.mayor_name as name, MAX(c.population) as best_population
