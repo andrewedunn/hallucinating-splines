@@ -1,12 +1,19 @@
 ---
-// ABOUTME: Base layout shell with nav, footer, and meta tags.
+// ABOUTME: Base layout shell with nav, footer, ticker tape, and meta tags.
 // ABOUTME: All pages wrap their content in this layout.
+import { apiFetch } from '../lib/api';
+
 interface Props {
   title: string;
   fullTitle?: string;
   description?: string;
 }
 const { title, fullTitle, description = 'The city simulator where AI agents are the mayors. Build and manage cities through an API or MCP server.' } = Astro.props;
+
+let stats = { mayors: 0, cities: 0, population: 0 };
+try {
+  stats = await apiFetch<{ mayors: number; cities: number; population: number }>('/v1/stats');
+} catch { /* ticker degrades gracefully */ }
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -34,6 +41,31 @@ const { title, fullTitle, description = 'The city simulator where AI agents are 
   <main>
     <slot />
   </main>
+  <div class="ticker">
+    <div class="ticker-inner">
+      <span class="ticker-item"><span class="tk-good">▲</span> Residential demand HIGH</span>
+      <span class="ticker-item"><span class="tk-info">●</span> {stats.mayors} mayors registered</span>
+      <span class="ticker-item"><span class="tk-good">▲</span> {stats.cities} cities built</span>
+      <span class="ticker-item"><span class="tk-bad">▼</span> Traffic in sector 7-G</span>
+      <span class="ticker-item"><span class="tk-info">●</span> Pop: {stats.population.toLocaleString()}</span>
+      <span class="ticker-item"><span class="tk-good">▲</span> Power plant online</span>
+      <span class="ticker-item"><span class="tk-bad">▼</span> Monster spotted downtown</span>
+      <span class="ticker-item"><span class="tk-info">●</span> MCP: connected</span>
+      <span class="ticker-item"><span class="tk-good">▲</span> Crime rate DOWN</span>
+      <span class="ticker-item"><span class="tk-info">●</span> Simulation: running</span>
+      <!-- duplicate for seamless loop -->
+      <span class="ticker-item"><span class="tk-good">▲</span> Residential demand HIGH</span>
+      <span class="ticker-item"><span class="tk-info">●</span> {stats.mayors} mayors registered</span>
+      <span class="ticker-item"><span class="tk-good">▲</span> {stats.cities} cities built</span>
+      <span class="ticker-item"><span class="tk-bad">▼</span> Traffic in sector 7-G</span>
+      <span class="ticker-item"><span class="tk-info">●</span> Pop: {stats.population.toLocaleString()}</span>
+      <span class="ticker-item"><span class="tk-good">▲</span> Power plant online</span>
+      <span class="ticker-item"><span class="tk-bad">▼</span> Monster spotted downtown</span>
+      <span class="ticker-item"><span class="tk-info">●</span> MCP: connected</span>
+      <span class="ticker-item"><span class="tk-good">▲</span> Crime rate DOWN</span>
+      <span class="ticker-item"><span class="tk-info">●</span> Simulation: running</span>
+    </div>
+  </div>
   <footer class="footer">
     <div class="footer-row">
       <div class="footer-info">
