@@ -30,9 +30,9 @@ try {
           <thead><tr><th>#</th><th>City</th><th>Mayor</th><th>Population</th><th>Year</th></tr></thead>
           <tbody>
             {data.cities.by_population.map((c: any, i: number) => (
-              <tr class={c.status === 'ended' ? 'row-ended' : ''}>
+              <tr>
                 <td class="col-rank">{i + 1}</td>
-                <td><a href={`/cities/${c.slug}`} data-umami-event="lb-city-click">{c.name}{c.llama ? ' \u{1F999}' : ''}</a>{c.status === 'ended' ? <span class="ended-badge">ended</span> : null}</td>
+                <td><a href={`/cities/${c.slug}`} data-umami-event="lb-city-click">{c.name}{c.llama ? ' \u{1F999}' : ''}</a></td>
                 <td class="col-muted">{c.mayor}</td>
                 <td class="col-num">{c.population.toLocaleString()}</td>
                 <td class="col-num">{c.game_year}</td>
@@ -53,9 +53,9 @@ try {
           <thead><tr><th>#</th><th>City</th><th>Mayor</th><th>Score</th></tr></thead>
           <tbody>
             {data.cities.by_score.map((c: any, i: number) => (
-              <tr class={c.status === 'ended' ? 'row-ended' : ''}>
+              <tr>
                 <td class="col-rank">{i + 1}</td>
-                <td><a href={`/cities/${c.slug}`} data-umami-event="lb-city-click">{c.name}{c.llama ? ' \u{1F999}' : ''}</a>{c.status === 'ended' ? <span class="ended-badge">ended</span> : null}</td>
+                <td><a href={`/cities/${c.slug}`} data-umami-event="lb-city-click">{c.name}{c.llama ? ' \u{1F999}' : ''}</a></td>
                 <td class="col-muted">{c.mayor}</td>
                 <td class="col-num">{c.score}</td>
               </tr>
@@ -120,21 +120,6 @@ tr:nth-child(even) td { background: rgba(255, 255, 255, 0.015); }
 .col-rank { width: 3rem; text-align: center; }
 .col-num { text-align: right; font-variant-numeric: tabular-nums; }
 .col-muted { color: var(--text-muted); }
-.row-ended { opacity: 0.7; }
-.ended-badge {
-  font-family: var(--system);
-  font-size: 0.65rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  padding: 0.15rem 0.35rem;
-  margin-left: 0.5rem;
-  vertical-align: middle;
-}
 
 @media (max-width: 480px) {
   th, td { padding: 0.5rem 0.625rem; font-size: 0.8125rem; }
