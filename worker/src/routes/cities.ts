@@ -674,7 +674,7 @@ const listActionsRoute = createRoute({
 
 cities.openapi(listActionsRoute, async (c) => {
   const cityId = c.req.param('id');
-  const limit = Math.min(parseInt(c.req.query('limit') || '50'), 100);
+  const limit = Math.min(parseInt(c.req.query('limit') || '50'), 500);
   const offset = parseInt(c.req.query('offset') || '0');
 
   const row = await c.env.DB.prepare('SELECT id FROM cities WHERE id = ?')

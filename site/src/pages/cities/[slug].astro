@@ -20,7 +20,7 @@ async function tryFetch<T>(path: string): Promise<T | null> {
 const [stats, mapData, actionsData] = await Promise.all([
   tryFetch<any>(`/v1/cities/${cityId}/stats`),
   tryFetch<any>(`/v1/cities/${cityId}/map`),
-  tryFetch<any>(`/v1/cities/${cityId}/actions?limit=50`),
+  tryFetch<any>(`/v1/cities/${cityId}/actions?limit=500`),
 ]);
 
 const hasGameState = !!(stats && mapData);
@@ -361,7 +361,7 @@ const hasGameState = !!(stats && mapData);
         const [historyRes, snapshotsRes, actionsRes] = await Promise.all([
           fetch(`${apiBase}/v1/cities/${cityId}/history`).then((r) => r.ok ? r.json() : null),
           fetch(`${apiBase}/v1/cities/${cityId}/snapshots?limit=500`).then((r) => r.ok ? r.json() : null),
-          fetch(`${apiBase}/v1/cities/${cityId}/actions?limit=50`).then((r) => r.ok ? r.json() : null),
+          fetch(`${apiBase}/v1/cities/${cityId}/actions?limit=500`).then((r) => r.ok ? r.json() : null),
         ]);
 
         if (historyRes || snapshotsRes) {
