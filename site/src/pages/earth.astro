@@ -27,6 +27,12 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
   </div>
 </Base>
 
+<script is:inline>
+  if (!window.$RefreshReg$) {
+    window.$RefreshReg$ = function() {};
+    window.$RefreshSig$ = function() { return function(type) { return type; }; };
+  }
+</script>
 <script>
   import { createElement } from 'react';
   import { createRoot } from 'react-dom/client';

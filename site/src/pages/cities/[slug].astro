@@ -65,6 +65,13 @@ const hasGameState = !!(stats && mapData);
   )}
 </Base>
 
+<script is:inline>
+  // Vite React refresh preamble shim — needed for manual React islands in dev mode
+  if (!window.$RefreshReg$) {
+    window.$RefreshReg$ = function() {};
+    window.$RefreshSig$ = function() { return function(type) { return type; }; };
+  }
+</script>
 <script>
   import { createElement } from 'react';
   import { createRoot } from 'react-dom/client';
