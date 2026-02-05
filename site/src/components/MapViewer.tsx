@@ -42,6 +42,20 @@ export default function MapViewer({ tiles, width, height }: Props) {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const fitScaleRef = useRef(1);
 
+  // Clamp offset so map edges stay within the viewport
+  const clampOffsetRaw = (ox: number, oy: number, z: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: ox, y: oy };
+    const cw = canvas.clientWidth;
+    const ch = canvas.clientHeight;
+    const mapW = width * TILE_SIZE * z;
+    const mapH = height * TILE_SIZE * z;
+    let x = ox, y = oy;
+    if (mapW <= cw) { x = (cw - mapW) / 2; } else { x = Math.min(0, Math.max(cw - mapW, x)); }
+    if (mapH <= ch) { y = (ch - mapH) / 2; } else { y = Math.min(0, Math.max(ch - mapH, y)); }
+    return { x, y };
+  };
+
   // Touch gesture refs (refs to avoid stale closures in event listeners)
   const touchStateRef = useRef({
     lastDist: 0,
@@ -128,7 +142,7 @@ export default function MapViewer({ tiles, width, height }: Props) {
         const newDist = getTouchDistance(e.touches);
         const newCenter = getTouchCenter(e.touches);
         const fit = fitScaleRef.current;
-        const newZoom = Math.max(fit * 0.5, Math.min(fit * 6, zoomRef.current * (newDist / ts.lastDist)));
+        const newZoom = Math.max(fit, Math.min(fit * 6, zoomRef.current * (newDist / ts.lastDist)));
 
         // Pan with pinch center movement
         const dx = newCenter.x - ts.lastCenter.x;
@@ -142,16 +156,17 @@ export default function MapViewer({ tiles, width, height }: Props) {
         const newOffY = cy - (cy - offsetRef.current.y) * ratio + dy;
 
         setZoom(newZoom);
-        setOffset({ x: newOffX, y: newOffY });
+        setOffset(clampOffsetRaw(newOffX, newOffY, newZoom));
 
         ts.lastDist = newDist;
         ts.lastCenter = newCenter;
       } else if (ts.isDragging && e.touches.length === 1) {
         e.preventDefault();
-        setOffset({
-          x: e.touches[0].clientX - ts.dragStart.x,
-          y: e.touches[0].clientY - ts.dragStart.y,
-        });
+        setOffset(clampOffsetRaw(
+          e.touches[0].clientX - ts.dragStart.x,
+          e.touches[0].clientY - ts.dragStart.y,
+          zoomRef.current,
+        ));
       }
     };
 
@@ -193,14 +208,14 @@ export default function MapViewer({ tiles, width, height }: Props) {
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!dragging) return;
-    setOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
-  }, [dragging, dragStart]);
+    setOffset(clampOffsetRaw(e.clientX - dragStart.x, e.clientY - dragStart.y, zoom));
+  }, [dragging, dragStart, zoom, width, height]);
 
   const handleMouseUp = useCallback(() => setDragging(false), []);
 
   const zoomMinMax = useCallback((z: number) => {
     const fit = fitScaleRef.current;
-    return Math.max(fit * 0.5, Math.min(fit * 6, z));
+    return Math.max(fit, Math.min(fit * 6, z));
   }, []);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -213,10 +228,11 @@ export default function MapViewer({ tiles, width, height }: Props) {
     setZoom(prevZoom => {
       const newZoom = zoomMinMax(prevZoom * delta);
       const ratio = newZoom / prevZoom;
-      setOffset(o => ({
-        x: cx - (cx - o.x) * ratio,
-        y: cy - (cy - o.y) * ratio,
-      }));
+      setOffset(o => clampOffsetRaw(
+        cx - (cx - o.x) * ratio,
+        cy - (cy - o.y) * ratio,
+        newZoom,
+      ));
       return newZoom;
     });
   }, [zoomMinMax]);
@@ -229,10 +245,11 @@ export default function MapViewer({ tiles, width, height }: Props) {
     setZoom(prevZoom => {
       const newZoom = zoomMinMax(prevZoom * factor);
       const ratio = newZoom / prevZoom;
-      setOffset(o => ({
-        x: cx - (cx - o.x) * ratio,
-        y: cy - (cy - o.y) * ratio,
-      }));
+      setOffset(o => clampOffsetRaw(
+        cx - (cx - o.x) * ratio,
+        cy - (cy - o.y) * ratio,
+        newZoom,
+      ));
       return newZoom;
     });
   }, [zoomMinMax]);

@@ -356,7 +356,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
     targetH: number,
   ) {
     try {
-      const res = await fetch(`${apiBase}/v1/cities/${cityId}/snapshots?limit=100`);
+      const res = await fetch(`${apiBase}/v1/cities/${cityId}/snapshots?limit=500`);
       if (!res.ok) return;
       const data = await res.json();
       const snaps: any[] = data.snapshots || [];

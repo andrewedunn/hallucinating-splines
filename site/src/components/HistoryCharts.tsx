@@ -209,7 +209,7 @@ export default function HistoryCharts({ cityId, apiBase, gameYear = 1900, histor
         if (!r.ok) throw new Error('fetch failed');
         return r.json();
       }),
-      fetch(`${apiBase}/v1/cities/${cityId}/snapshots?limit=100`).then((r) => {
+      fetch(`${apiBase}/v1/cities/${cityId}/snapshots?limit=500`).then((r) => {
         if (!r.ok) throw new Error('fetch failed');
         return r.json();
       }),

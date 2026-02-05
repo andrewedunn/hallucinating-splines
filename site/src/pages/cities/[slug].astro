@@ -360,7 +360,7 @@ const hasGameState = !!(stats && mapData);
         // Year changed — fetch history, snapshots, actions
         const [historyRes, snapshotsRes, actionsRes] = await Promise.all([
           fetch(`${apiBase}/v1/cities/${cityId}/history`).then((r) => r.ok ? r.json() : null),
-          fetch(`${apiBase}/v1/cities/${cityId}/snapshots?limit=100`).then((r) => r.ok ? r.json() : null),
+          fetch(`${apiBase}/v1/cities/${cityId}/snapshots?limit=500`).then((r) => r.ok ? r.json() : null),
           fetch(`${apiBase}/v1/cities/${cityId}/actions?limit=50`).then((r) => r.ok ? r.json() : null),
         ]);
 

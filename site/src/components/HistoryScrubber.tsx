@@ -27,7 +27,7 @@ export default function HistoryScrubber({ cityId, apiBase, onSnapshotLoad }: Pro
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch(`${apiBase}/v1/cities/${cityId}/snapshots?limit=100`)
+    fetch(`${apiBase}/v1/cities/${cityId}/snapshots?limit=500`)
       .then(r => r.json())
       .then((data: any) => {
         setSnapshots(data.snapshots || []);

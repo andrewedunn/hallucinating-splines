@@ -544,7 +544,7 @@ cities.openapi(listSnapshotsRoute, async (c) => {
     .bind(cityId).first();
   if (!row) return errorResponse(c, 404, 'not_found', 'City not found');
 
-  const limit = Math.min(parseInt(c.req.query('limit') || '50'), 100);
+  const limit = Math.min(parseInt(c.req.query('limit') || '50'), 500);
   const offset = parseInt(c.req.query('offset') || '0');
 
   const snapshots = await c.env.DB.prepare(
