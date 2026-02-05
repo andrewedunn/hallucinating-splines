@@ -113,21 +113,21 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
 <style>
   .docs-mcp { max-width: 860px; margin: 0 auto; }
   .docs-nav { margin-bottom: 1.5rem; }
-  .docs-nav a { font-size: 0.875rem; color: var(--text-muted); }
-  .docs-nav a:hover { color: var(--accent); }
-  .docs-mcp h1 { font-size: 2rem; margin-bottom: 0.5rem; }
-  .intro { color: var(--text-muted); margin-bottom: 2.5rem; font-size: 0.95rem; line-height: 1.6; }
+  .docs-nav a { font-size: 0.85rem; color: var(--text-muted); }
+  .docs-nav a:hover { color: var(--accent-hover); }
+  .docs-mcp h1 { margin-bottom: 0.5rem; }
+  .intro { color: var(--text-muted); margin-bottom: 2.5rem; font-size: 0.9rem; line-height: 1.8; }
 
   section { margin-bottom: 2.5rem; }
-  section h2 { font-size: 1.4rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
-  section h3 { font-size: 1.1rem; margin: 1.25rem 0 0.5rem; color: var(--accent); }
-  section p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 0.75rem; }
-  section p code { background: rgba(0,0,0,0.2); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.8rem; }
+  section h2 { margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); }
+  section h3 { font-size: 0.6rem; margin: 1.25rem 0 0.5rem; color: var(--accent-hover); }
+  section p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.8; margin-bottom: 0.75rem; }
+  section p code { background: var(--bg); padding: 0.1rem 0.3rem; border-radius: 2px; font-size: 0.8rem; }
 
   pre {
-    background: rgba(0,0,0,0.2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 3px;
     padding: 1rem;
     overflow-x: auto;
     margin: 0.5rem 0 1rem;
@@ -138,21 +138,21 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
     padding: 0;
     font-size: 0.8rem;
     color: var(--text);
-    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-family: var(--mono);
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.875rem;
+    font-size: 0.85rem;
   }
   th, td {
     text-align: left;
     padding: 0.6rem 0.75rem;
     border-bottom: 1px solid var(--border);
   }
-  th { color: var(--text-muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
-  td code { background: rgba(0,0,0,0.2); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.8rem; }
+  th { font-family: var(--pixel-font); color: var(--text-muted); font-size: 0.4rem; text-transform: uppercase; letter-spacing: 1px; background: var(--bg); border-bottom: 2px solid var(--border); }
+  td code { background: var(--bg); padding: 0.1rem 0.3rem; border-radius: 2px; font-size: 0.8rem; }
 
   ol { padding-left: 1.5rem; color: var(--text-muted); font-size: 0.9rem; line-height: 1.8; }
   ol li { margin-bottom: 0.25rem; }
@@ -160,8 +160,8 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
 
   details {
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    border: 2px solid var(--border);
+    border-radius: 3px;
     margin-bottom: 0.5rem;
   }
   summary {
@@ -177,8 +177,8 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
   details p {
     padding: 0 1rem 0.75rem;
     color: var(--text-muted);
-    font-size: 0.875rem;
-    line-height: 1.6;
+    font-size: 0.85rem;
+    line-height: 1.8;
     margin: 0;
   }
 </style>

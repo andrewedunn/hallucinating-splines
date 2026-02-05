@@ -176,8 +176,8 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
 
 <style>
   .docs-landing { max-width: 860px; margin: 0 auto; }
-  .docs-landing h1 { font-size: 2rem; margin-bottom: 0.5rem; }
-  .subtitle { color: var(--text-muted); margin-bottom: 2.5rem; font-size: 0.95rem; line-height: 1.6; }
+  .docs-landing h1 { margin-bottom: 0.5rem; }
+  .subtitle { color: var(--text-muted); margin-bottom: 2.5rem; font-size: 0.9rem; line-height: 1.8; }
 
   .api-status {
     display: inline-flex;
@@ -185,61 +185,63 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
     gap: 0.5rem;
     padding: 0.4rem 0.85rem;
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    font-size: 0.8rem;
+    border: 2px solid var(--border);
+    border-radius: 3px;
+    font-family: var(--pixel-font);
+    font-size: 0.45rem;
     color: var(--text-muted);
     margin-bottom: 2rem;
   }
   .status-dot {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     flex-shrink: 0;
   }
   .status-dot.checking { background: var(--text-muted); opacity: 0.4; animation: pulse 1.5s infinite; }
-  .status-dot.online { background: var(--green, #22c55e); box-shadow: 0 0 6px rgba(34,197,94,0.4); }
-  .status-dot.offline { background: var(--red, #ef4444); box-shadow: 0 0 6px rgba(239,68,68,0.4); }
+  .status-dot.online { background: var(--green); }
+  .status-dot.offline { background: var(--red); }
   @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
 
   .quickstart { margin-bottom: 3rem; }
-  .qs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
-  .qs-header h2 { font-size: 1.4rem; }
-  .qs-link { font-size: 0.875rem; }
+  .qs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); }
+  .qs-link { font-size: 0.85rem; }
 
-  .agent-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+  .agent-tabs { display: flex; gap: 0.375rem; margin-bottom: 1rem; }
   .agent-tab {
-    padding: 0.4rem 1rem;
-    border-radius: 6px;
+    font-family: var(--pixel-font);
+    font-size: 0.45rem;
+    padding: 0.5rem 1rem;
+    border-radius: 2px;
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 2px solid var(--border);
     color: var(--text-muted);
-    font-size: 0.875rem;
     cursor: pointer;
-    font-family: inherit;
   }
-  .agent-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .agent-tab:hover { border-color: var(--accent); color: var(--text); }
+  .agent-tab.active { background: var(--accent); color: var(--text); border-color: var(--accent-hover); }
 
-  .agent-panel { display: none; padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+  .agent-panel { display: none; padding: 1.5rem; background: var(--surface); border: 2px solid var(--border); border-radius: 3px; box-shadow: 3px 3px 0 var(--shadow); }
   .agent-panel.active { display: block; }
   .panel-intro { color: var(--text); font-weight: 500; font-size: 0.9rem; margin-bottom: 0.25rem; }
-  .panel-intro code { background: rgba(0,0,0,0.2); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.8rem; }
+  .panel-intro code { background: rgba(0,0,0,0.3); padding: 0.1rem 0.3rem; border-radius: 2px; font-size: 0.8rem; }
   .panel-hint { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.75rem; }
 
   .steps { display: flex; flex-direction: column; gap: 1rem; }
   .step {
     padding: 1rem 1.25rem;
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    border: 2px solid var(--border);
+    border-radius: 3px;
+    box-shadow: 3px 3px 0 var(--shadow);
   }
-  .step h3 { font-size: 1rem; margin-bottom: 0.5rem; color: var(--accent); }
-  .step p { color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem; }
+  .step h3 { font-size: 0.6rem; margin-bottom: 0.5rem; color: var(--accent-hover); }
+  .step p { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem; }
 
   pre {
-    background: rgba(0,0,0,0.2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 3px;
     padding: 1rem;
     overflow-x: auto;
     margin: 0.5rem 0 0;
@@ -250,15 +252,15 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
     padding: 0;
     font-size: 0.8rem;
     color: var(--text);
-    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-family: var(--mono);
   }
 
   .faq { margin-bottom: 3rem; }
-  .faq h2 { font-size: 1.4rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  .faq h2 { margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); }
   details {
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    border: 2px solid var(--border);
+    border-radius: 3px;
     margin-bottom: 0.5rem;
   }
   details + details { margin-top: 0; }
@@ -275,8 +277,8 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
   details p {
     padding: 0 1rem 0.75rem;
     color: var(--text-muted);
-    font-size: 0.875rem;
-    line-height: 1.6;
+    font-size: 0.85rem;
+    line-height: 1.8;
     margin: 0;
   }
 
