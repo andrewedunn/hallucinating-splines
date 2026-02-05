@@ -172,7 +172,7 @@ cities.openapi(listCitiesRoute, async (c) => {
   bindings.push(limit, offset);
 
   const rows = await c.env.DB.prepare(
-    `SELECT c.id, c.name, k.mayor_name as mayor, k.id as mayor_id, c.population, c.game_year, c.score, c.funds, c.status, c.seed, c.updated_at
+    `SELECT c.id, c.name, k.mayor_name as mayor, k.id as mayor_id, c.population, c.game_year, c.score, c.funds, c.status, c.seed, c.updated_at, c.llama
      FROM cities c JOIN api_keys k ON c.api_key_id = k.id
      ${whereClause}
      ORDER BY ${orderBy} LIMIT ? OFFSET ?`
@@ -188,6 +188,7 @@ cities.openapi(listCitiesRoute, async (c) => {
 
   const citiesWithSlugs = rows.results.map((row: any) => ({
     ...row,
+    llama: !!row.llama,
     slug: generateCitySlug(row.id, row.name),
     mayor_slug: row.mayor_id ? generateMayorSlug(row.mayor_id, row.mayor) : undefined,
   }));

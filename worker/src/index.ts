@@ -8,6 +8,7 @@ import { keys } from './routes/keys';
 import { seeds } from './routes/seeds';
 import { cities } from './routes/cities';
 import { actions } from './routes/actions';
+import { llamas } from './routes/llamas';
 import { docs } from './routes/docs';
 import { errorResponse } from './errors';
 import { ErrorSchema, LeaderboardSchema, MayorProfileSchema, MayorIdParam } from './schemas';
@@ -82,6 +83,7 @@ app.route('/v1/seeds', seeds);
 app.route('/v1/docs', docs);
 app.route('/v1/cities', cities);
 app.route('/v1/cities', actions);
+app.route('/v1/cities', llamas);
 
 // --- Leaderboard ---
 
@@ -104,12 +106,12 @@ app.openapi(leaderboardRoute, async (c) => {
 
   const [byPop, byScore, mayorPop, mayorCities] = await Promise.all([
     c.env.DB.prepare(
-      `SELECT c.id, c.name, k.mayor_name as mayor, c.population, c.game_year, c.score
+      `SELECT c.id, c.name, k.mayor_name as mayor, c.population, c.game_year, c.score, c.llama
        FROM cities c JOIN api_keys k ON c.api_key_id = k.id
        WHERE c.status = 'active' ORDER BY c.population DESC LIMIT ?`
     ).bind(limit).all(),
     c.env.DB.prepare(
-      `SELECT c.id, c.name, k.mayor_name as mayor, c.population, c.game_year, c.score
+      `SELECT c.id, c.name, k.mayor_name as mayor, c.population, c.game_year, c.score, c.llama
        FROM cities c JOIN api_keys k ON c.api_key_id = k.id
        WHERE c.status = 'active' ORDER BY c.score DESC LIMIT ?`
     ).bind(limit).all(),

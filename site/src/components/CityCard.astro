@@ -13,8 +13,9 @@ interface Props {
   score: number;
   status: string;
   updated_at?: string;
+  llama?: boolean;
 }
-const { id, name, slug, mayor, mayor_id, mayor_slug, population, game_year, score, status, updated_at } = Astro.props;
+const { id, name, slug, mayor, mayor_id, mayor_slug, population, game_year, score, status, updated_at, llama } = Astro.props;
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 
 function relativeTime(dateStr?: string): string {
@@ -53,7 +54,7 @@ const mayorHref = mayor_slug ? `/mayors/${mayor_slug}` : mayor_id ? `/mayors/${m
   </a>
   <div class="card-body">
     <div class="card-header">
-      <a href={cityHref} class="city-name">{name}</a>
+      <a href={cityHref} class="city-name">{name}{llama ? ' \u{1F999}' : ''}</a>
       <span class={`activity ${freshness}`}>{timeAgo}</span>
     </div>
     {mayorHref ? (

@@ -255,6 +255,35 @@ export class HeadlessGame {
     };
   }
 
+  addFunds(amount: number): void {
+    this.sim.budget.totalFunds += amount;
+  }
+
+  triggerDisaster(type: string): void {
+    switch (type) {
+      case 'earthquake':
+        this.sim.disasterManager.makeEarthquake();
+        break;
+      case 'tornado':
+        this.sim._spriteManager.makeTornado();
+        break;
+      case 'fire':
+        this.sim.disasterManager.makeFire();
+        break;
+      case 'flood':
+        this.sim.disasterManager.makeFlood();
+        break;
+      case 'monster':
+        this.sim._spriteManager.makeMonster();
+        break;
+      case 'meltdown':
+        this.sim.disasterManager.makeMeltdown();
+        break;
+      default:
+        throw new Error(`Unknown disaster type: ${type}`);
+    }
+  }
+
   normalizeCensus(): void {
     // After fromSave(), init() runs mapScan + doPowerScan. But mapScan counts
     // powered zones using stale POWERBIT flags, and census populations are

@@ -34,10 +34,22 @@ const ACTION_LABELS: Record<string, string> = {
   bulldoze: 'Bulldoze',
   advance: 'Advance',
   set_budget: 'Set Budget',
+  llama_fund: 'MYSTERIOUS BENEFACTOR',
+  llama_olpc: 'EDUCATION WINDFALL',
+  disaster_earthquake: 'EARTHQUAKE ROCKS CITY',
+  disaster_tornado: 'TORNADO ALERT',
+  disaster_fire: 'INFERNO ENGULFS DISTRICT',
+  disaster_flood: 'FLOODING DEVASTATES LOWLANDS',
+  disaster_monster: 'MONSTER ATTACKS!',
+  disaster_meltdown: 'NUCLEAR MELTDOWN',
 };
 
 function formatDetail(a: Action): string {
   const p = a.params || {};
+  if (p.headline) {
+    if (p.url) return `${p.headline} — <a href="${p.url}" target="_blank" rel="noopener">${p.url}</a>`;
+    return p.headline;
+  }
   if (a.action_type === 'advance') {
     return `${p.months || 1} month${(p.months || 1) > 1 ? 's' : ''}`;
   }
@@ -80,7 +92,7 @@ function formatDetail(a: Action): string {
               <tr class="action-row" data-action-id={a.id}>
                 <td class="year">{a.game_year}</td>
                 <td>{ACTION_LABELS[a.action_type] || a.action_type}</td>
-                <td class="detail">{formatDetail(a)}</td>
+                <td class="detail" set:html={formatDetail(a)}></td>
                 <td class="cost">{a.cost > 0 ? `$${a.cost.toLocaleString()}` : '-'}</td>
                 <td><span class={`badge ${a.result}`}>{a.result}</span></td>
               </tr>

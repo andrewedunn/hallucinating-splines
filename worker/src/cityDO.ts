@@ -438,6 +438,29 @@ export class CityDO extends DurableObject<Env> {
     };
   }
 
+  async llamaFund(): Promise<any> {
+    const game = await this.ensureGame();
+    game.addFunds(100000);
+    await this.persist();
+    return this.getStatsInternal();
+  }
+
+  async llamaOlpc(): Promise<any> {
+    const game = await this.ensureGame();
+    game.addFunds(1000000);
+    await this.persist();
+    return this.getStatsInternal();
+  }
+
+  async triggerDisaster(type: string): Promise<any> {
+    const game = await this.ensureGame();
+    game.triggerDisaster(type);
+    // Tick a few months to let disaster play out
+    game.tick(2);
+    await this.persist();
+    return this.getStatsInternal();
+  }
+
   async deleteCity(): Promise<void> {
     // Only clear in-memory state. Keep DO storage so map/stats remain
     // readable for retired cities. The route layer prevents mutations

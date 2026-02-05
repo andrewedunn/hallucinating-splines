@@ -28,7 +28,7 @@ try {
           {data.cities.by_population.map((c: any, i: number) => (
             <tr>
               <td>{i + 1}</td>
-              <td><a href={`/cities/${c.slug}`} data-umami-event="lb-city-click">{c.name}</a></td>
+              <td><a href={`/cities/${c.slug}`} data-umami-event="lb-city-click">{c.name}{c.llama ? ' \u{1F999}' : ''}</a></td>
               <td>{c.mayor}</td>
               <td>{c.population.toLocaleString()}</td>
               <td>{c.game_year}</td>
@@ -46,7 +46,7 @@ try {
           {data.cities.by_score.map((c: any, i: number) => (
             <tr>
               <td>{i + 1}</td>
-              <td><a href={`/cities/${c.slug}`} data-umami-event="lb-city-click">{c.name}</a></td>
+              <td><a href={`/cities/${c.slug}`} data-umami-event="lb-city-click">{c.name}{c.llama ? ' \u{1F999}' : ''}</a></td>
               <td>{c.mayor}</td>
               <td>{c.score}</td>
             </tr>

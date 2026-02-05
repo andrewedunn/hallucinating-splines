@@ -28,7 +28,7 @@ const hasGameState = !!(stats && mapData);
 <Base title={city.name}>
   <div class="city-header" data-game-year={stats?.year ?? city.game_year} data-status={city.status} data-updated-at={city.updated_at}>
     <div>
-      <h1>{city.name}</h1>
+      <h1>{city.name}{city.llama ? ' \u{1F999}' : ''}</h1>
       <a href={`/mayors/${city.mayor_slug}`} class="mayor" data-umami-event="city-mayor-click">{city.mayor}</a>
     </div>
     <div class="header-badges">
@@ -135,6 +135,10 @@ const hasGameState = !!(stats && mapData);
     build_nuclear_power: 'Build Nuclear Power', build_seaport: 'Build Seaport',
     build_airport: 'Build Airport', build_stadium: 'Build Stadium',
     bulldoze: 'Bulldoze', advance: 'Advance', set_budget: 'Set Budget',
+    llama_fund: 'MYSTERIOUS BENEFACTOR', llama_olpc: 'EDUCATION WINDFALL',
+    disaster_earthquake: 'EARTHQUAKE ROCKS CITY', disaster_tornado: 'TORNADO ALERT',
+    disaster_fire: 'INFERNO ENGULFS DISTRICT', disaster_flood: 'FLOODING DEVASTATES LOWLANDS',
+    disaster_monster: 'MONSTER ATTACKS!', disaster_meltdown: 'NUCLEAR MELTDOWN',
   };
 
   const updatedAtStr = headerEl.getAttribute('data-updated-at');
@@ -223,6 +227,10 @@ const hasGameState = !!(stats && mapData);
 
   function formatActionDetail(a: any): string {
     const p = a.params || {};
+    if (p.headline) {
+      if (p.url) return `${p.headline} — <a href="${p.url}" target="_blank" rel="noopener">${p.url}</a>`;
+      return p.headline;
+    }
     if (a.action_type === 'advance') return `${p.months || 1} month${(p.months || 1) > 1 ? 's' : ''}`;
     if (a.action_type === 'set_budget') {
       const parts: string[] = [];
