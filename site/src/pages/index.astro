@@ -519,24 +519,31 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
   border-radius: 2px;
 }
 .pstat-value {
-  font-size: 1.5rem;
+  font-family: var(--pixel-font);
+  font-size: 1rem;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.2;
 }
 .pstat-label {
-  font-family: var(--pixel-font);
+  font-family: var(--system);
   color: var(--text-muted);
-  font-size: 0.4rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.1em;
+  font-weight: 600;
   margin-top: 0.35rem;
+}
+#pstat-cta-label {
+  font-family: var(--pixel-font);
+  font-size: 0.4rem;
+  letter-spacing: 1px;
 }
 .pstat-cta {
   border-color: var(--accent);
   color: white;
   transition: background 0.15s;
 }
-.pstat-cta .pstat-value { color: var(--accent-hover); font-size: 2rem; }
+.pstat-cta .pstat-value { color: var(--accent-hover); font-size: 2rem; font-family: var(--system); }
 .llm-logos { display: flex; gap: 0.75rem; align-items: center; opacity: 0.6; }
 .pstat-cta:hover .llm-logos { opacity: 1; }
 .llm-logos svg { width: 28px; height: 28px; }
@@ -548,9 +555,10 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
 .sort-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .sort-tabs { display: flex; gap: 0.375rem; }
 .sort-tabs a {
-  font-family: var(--pixel-font);
-  font-size: 0.5rem;
-  padding: 0.5rem 1rem;
+  font-family: var(--system);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
   border-radius: 2px;
   background: var(--surface);
   border: 2px solid var(--border);
@@ -565,8 +573,8 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
 .cta-footer { text-align: center; padding: 2.5rem 0 1rem; }
 .cta-link {
   display: inline-block;
-  font-family: var(--pixel-font);
-  font-size: 0.6rem;
+  font-family: var(--system);
+  font-size: 0.95rem;
   padding: 0.75rem 1.5rem;
   background: var(--accent);
   color: var(--text);
@@ -597,14 +605,14 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
 @media (max-width: 600px) {
   .platform-stats { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-top: 1rem; padding: 0.75rem; }
   .pstat-card { padding: 0.5rem; }
-  .pstat-value { font-size: 1.25rem; }
+  .pstat-value { font-size: 0.85rem; }
   .llm-logos svg { width: 22px; height: 22px; }
   .llm-logos { gap: 0.5rem; }
   .gallery-header { margin-top: 1rem; margin-bottom: 1rem; }
   .cta-footer { padding: 1.5rem 0 0.5rem; }
 }
 @media (max-width: 480px) {
-  .sort-tabs a { padding: 0.4rem 0.75rem; font-size: 0.45rem; }
+  .sort-tabs a { padding: 0.4rem 0.75rem; font-size: 0.75rem; }
   .city-grid { gap: 0.75rem; }
 }
 </style>

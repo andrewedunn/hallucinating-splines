@@ -297,8 +297,9 @@ const API = 'https://api.hallucinatingsplines.com';
     box-shadow: 3px 3px 0 var(--shadow);
   }
   .toc a {
-    font-family: var(--pixel-font);
-    font-size: 0.4rem;
+    font-family: var(--system);
+    font-size: 0.75rem;
+    font-weight: 600;
     padding: 0.4rem 0.75rem;
     border-radius: 2px;
     color: var(--text-muted);
@@ -308,7 +309,7 @@ const API = 'https://api.hallucinatingsplines.com';
 
   section { margin-bottom: 3rem; }
   h2 { margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); }
-  h3 { font-size: 0.6rem; margin-bottom: 0.5rem; color: var(--accent-hover); }
+  h3 { font-size: 1rem; margin-bottom: 0.5rem; color: var(--accent-hover); }
 
   .step {
     margin-bottom: 1.5rem;
@@ -360,11 +361,12 @@ const API = 'https://api.hallucinatingsplines.com';
     padding: 0.6rem 0.75rem;
     background: var(--bg);
     border-bottom: 2px solid var(--border);
-    font-family: var(--pixel-font);
+    font-family: var(--system);
     color: var(--text-muted);
-    font-size: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.05em;
   }
   td {
     padding: 0.5rem 0.75rem;
@@ -376,12 +378,12 @@ const API = 'https://api.hallucinatingsplines.com';
 
   .method {
     display: inline-block;
-    font-family: var(--pixel-font);
+    font-family: var(--system);
     padding: 0.2rem 0.5rem;
     border-radius: 2px;
-    font-size: 0.4rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.03em;
   }
   .method.get { background: var(--green); color: #fff; }
   .method.post { background: var(--accent); color: #fff; }

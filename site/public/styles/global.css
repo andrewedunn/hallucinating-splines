@@ -29,12 +29,13 @@
 
   --pixel-font: 'Press Start 2P', monospace;
   --mono: 'Space Mono', monospace;
+  --system: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  font-family: var(--mono);
+  font-family: var(--system);
   background: var(--bg);
   color: var(--text);
   line-height: 1.7;
@@ -57,24 +58,27 @@ a:hover { color: #7dd4cc; }
 }
 
 .nav-logo {
-  font-size: 1.2rem;
+  font-family: var(--pixel-font);
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--text);
   display: flex;
   flex-direction: column;
-  line-height: 1.2;
+  line-height: 1.6;
 }
 .nav-tagline {
-  font-size: 0.65rem;
+  font-family: var(--system);
+  font-size: 0.75rem;
   font-weight: 400;
   color: var(--accent-hover);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.01em;
 }
 .nav-links { display: flex; gap: 1.5rem; align-items: center; }
-.nav-links a { color: var(--panel-light); font-size: 0.9rem; transition: color 0.15s; }
+.nav-links a { font-family: var(--system); color: var(--panel-light); font-size: 0.9rem; transition: color 0.15s; }
 .nav-links a:hover { color: var(--text); }
 
 .nav-cta {
+  font-family: var(--system);
   padding: 0.4rem 1rem;
   background: var(--accent);
   color: var(--text) !important;
@@ -92,12 +96,13 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
 
 /* ── Headings ── */
 h1, h2, h3 {
-  font-family: var(--pixel-font);
-  letter-spacing: 0.5px;
+  font-family: var(--system);
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
-h1 { font-size: 1rem; line-height: 2; }
-h2 { font-size: 0.75rem; line-height: 1.8; }
-h3 { font-size: 0.65rem; line-height: 1.6; }
+h1 { font-size: 1.5rem; line-height: 1.4; }
+h2 { font-size: 1.2rem; line-height: 1.4; }
+h3 { font-size: 1rem; line-height: 1.4; }
 
 /* ── Ticker tape ── */
 .ticker {

@@ -100,11 +100,12 @@ const mayorHref = mayor_slug ? `/mayors/${mayor_slug}` : mayor_id ? `/mayors/${m
 }
 .card-body { padding: 0.75rem 1rem; }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
-.city-name { font-family: var(--pixel-font); font-size: 0.55rem; font-weight: 600; color: var(--text); line-height: 1.6; }
+.city-name { font-family: var(--system); font-size: 0.95rem; font-weight: 700; color: var(--text); line-height: 1.4; }
 .city-name:hover { color: var(--accent-hover); }
 .activity {
-  font-family: var(--pixel-font);
-  font-size: 0.4rem;
+  font-family: var(--system);
+  font-size: 0.7rem;
+  font-weight: 600;
   padding: 0.15rem 0.5rem;
   border-radius: 2px;
   white-space: nowrap;
@@ -123,11 +124,12 @@ a.card-mayor:hover { color: var(--accent-hover); }
 }
 .stat { display: flex; flex-direction: column; }
 .stat-label {
-  font-family: var(--pixel-font);
-  font-size: 0.4rem;
+  font-family: var(--system);
+  font-size: 0.65rem;
+  font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.1em;
   margin-bottom: 0.15rem;
 }
 .stat-value { font-weight: 700; font-size: 0.95rem; transition: color 0.4s; }
@@ -135,6 +137,6 @@ a.card-mayor:hover { color: var(--accent-hover); }
 @media (max-width: 480px) {
   .card-body { padding: 0.625rem 0.75rem; }
   .card-mayor { margin-bottom: 0.375rem; }
-  .city-name { font-size: 0.5rem; }
+  .city-name { font-size: 0.85rem; }
 }
 </style>
