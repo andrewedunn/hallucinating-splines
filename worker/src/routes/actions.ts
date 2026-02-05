@@ -411,7 +411,7 @@ actions.openapi(advanceRoute, async (c) => {
   if (result.city_ended) {
     c.executionCtx.waitUntil(
       c.env.DB.prepare(
-        "UPDATE cities SET status = 'ended', ended_reason = 'bankruptcy', updated_at = datetime('now') WHERE id = ?"
+        "UPDATE cities SET status = 'ended', ended_reason = 'bankruptcy' WHERE id = ?"
       ).bind(cityId).run()
     );
   }

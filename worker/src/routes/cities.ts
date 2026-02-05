@@ -853,7 +853,7 @@ cities.openapi(deleteCityRoute, async (c) => {
   await stub.deleteCity();
 
   await c.env.DB.prepare(
-    "UPDATE cities SET status = 'ended', ended_reason = 'retired', updated_at = datetime('now') WHERE id = ?"
+    "UPDATE cities SET status = 'ended', ended_reason = 'retired' WHERE id = ?"
   ).bind(cityId).run();
 
   return c.json({ retired: true, message: 'City retired. History preserved.' }, 200);
