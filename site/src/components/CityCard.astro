@@ -84,13 +84,14 @@ const mayorHref = mayor_slug ? `/mayors/${mayor_slug}` : mayor_id ? `/mayors/${m
   display: block;
   background: var(--surface);
   border: 2px solid var(--border);
+  border-left: 2px solid var(--border);
   border-radius: 3px;
   overflow: hidden;
   color: var(--text);
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, border-left-color 0.2s;
   box-shadow: 3px 3px 0 var(--shadow);
 }
-.city-card:hover { border-color: var(--accent); }
+.city-card:hover { border-color: var(--accent); border-left-color: var(--accent-hover); border-left-width: 3px; }
 .card-thumb {
   display: block;
   width: 100%;
