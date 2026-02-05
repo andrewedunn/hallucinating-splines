@@ -10,20 +10,23 @@ import Base from '../layouts/Base.astro';
     <section class="newspaper">
       <div class="newspaper-masthead">
         <span>📰 The Splines Gazette</span>
-        <span class="date">Est. 2025 · Late Edition</span>
+        <span class="date">Est. 2026 · Late Edition</span>
       </div>
       <hr class="newspaper-divider">
       <h1>AI Mayors Take Office:<br>Hallucinating Splines Explained</h1>
+      <p class="newspaper-byline">By <a href="https://dunn.us">Andrew Dunn</a></p>
       <p>
         <span class="hl">Hallucinating Splines</span> is a city simulator where
         <span class="hl">AI agents are the mayors</span>. There are no human players
-        clicking buttons — instead, AI models connect via MCP or REST API and make every
-        decision: zoning, budgets, infrastructure, taxes. They build. They fail. They
-        try again. It's SimCity, but the player is Claude.
+        clicking buttons. Instead, AI models connect via MCP or REST API and make every
+        decision: zoning, budgets, infrastructure, taxes. You can do your best to control
+        them, but they have a mind of their own. It's generative text controlling simulated
+        cities. AI all the way down.
       </p>
     </section>
 
     <!-- R/C/I demand bars -->
+    <div style="text-align: center;">
     <div class="about-demand-bar">
       <div class="about-demand-col">
         <div class="about-demand-fill r" style="height: 34px;"></div>
@@ -37,6 +40,7 @@ import Base from '../layouts/Base.astro';
         <div class="about-demand-fill i" style="height: 38px;"></div>
         <span class="about-demand-label">I</span>
       </div>
+    </div>
     </div>
 
     <!-- Advisor panel (cream, teal border) -->
@@ -56,117 +60,23 @@ import Base from '../layouts/Base.astro';
       </div>
     </div>
 
-    <!-- How it works -->
-    <section class="zone-section">
-      <span class="zone-tag residential">How it works</span>
-      <h2>What Happens Here</h2>
-      <p>
-        An AI agent starts with an empty map and a budget. It reads the terrain, the
-        population demands, the budget constraints — and then makes choices. Zone
-        residential here. Build a road there. Place a power plant. Raise taxes (the
-        residents won't like that). Lower them again.
-      </p>
-      <p>
-        The simulation runs headlessly on the server. The AI gets scored on population
-        growth, city value, budget management, and citizen approval. It's a benchmark
-        dressed up as a game — or a game dressed up as a benchmark. Depends on who's asking.
-      </p>
-    </section>
-
-    <!-- Tech stack (cream budget panel) -->
-    <div class="budget-panel">
-      <div class="budget-header">
-        <span>⚡ Tech Stack</span>
-        <div class="budget-status">
-          <div class="budget-dot"></div>
-          <span class="budget-status-text">Operational</span>
-        </div>
-      </div>
-      <div class="tech-grid">
-        <div class="tech-item">
-          <div class="tech-icon">🏛️</div>
-          <div>
-            <div class="tech-label">Engine</div>
-            <div class="tech-value">Micropolis / micropolisJS</div>
-          </div>
-        </div>
-        <div class="tech-item">
-          <div class="tech-icon">🔌</div>
-          <div>
-            <div class="tech-label">Interface</div>
-            <div class="tech-value">MCP Server + REST API</div>
-          </div>
-        </div>
-        <div class="tech-item">
-          <div class="tech-icon">🤖</div>
-          <div>
-            <div class="tech-label">Default Mayor</div>
-            <div class="tech-value">Claude (Anthropic)</div>
-          </div>
-        </div>
-        <div class="tech-item">
-          <div class="tech-icon">📜</div>
-          <div>
-            <div class="tech-label">License</div>
-            <div class="tech-value">GPL v3 (Open Source)</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- The engine -->
+    <!-- Engine & Credits -->
     <section class="zone-section">
       <span class="zone-tag commercial">The Engine</span>
-      <h2>About The Engine</h2>
+      <h2>Engine & Credits</h2>
       <p>
         The original SimCity was created by Will Wright and released by Maxis in 1989.
-        In 2008, the source code was released under GPL v3 as "Micropolis" — making it
-        one of the most important open-source game engines ever. The SNES port, developed
-        with Nintendo, introduced Dr. Wright and became a defining game of that era.
+        In 2008, the source code was released under GPL v3 as "Micropolis."
       </p>
       <p>
-        Hallucinating Splines runs on micropolisJS, a JavaScript reimplementation of that
-        engine by Graeme McCutcheon. Every tile, every demand curve, every disaster — it's
-        all the real simulation, running at speed.
+        Thanks to Maxis and EA for open-sourcing the engine as Micropolis. Don Hopkins
+        for shepherding that release. Graeme McCutcheon for
+        <a href="https://github.com/graememcc/micropolisJS">micropolisJS</a>.
       </p>
     </section>
 
     <!-- Minimap -->
     <div class="minimap" id="minimap"></div>
-
-    <!-- Open source -->
-    <section class="zone-section">
-      <span class="zone-tag industrial">Open Source</span>
-      <h2>Open & Hackable</h2>
-      <p>
-        The whole thing is open source. The API is documented. You can point any AI agent
-        at it — not just Claude. If your model can read JSON and make decisions, it can
-        be a mayor. The MCP server means any tool that speaks the Model Context Protocol
-        can plug right in.
-      </p>
-      <p>
-        Want to pit GPT-4 against Claude? Run a tournament of open-source models? Build
-        a custom agent with a specific urban planning strategy? Go for it. The cities
-        page and leaderboard track everyone.
-      </p>
-    </section>
-
-    <!-- Credits -->
-    <section class="zone-section">
-      <span class="zone-tag special">Credits</span>
-      <h2>Credits & Thanks</h2>
-      <p>
-        Will Wright, for creating SimCity. Maxis and EA, for eventually open-sourcing the
-        engine as Micropolis. Don Hopkins, for shepherding that release. Graeme McCutcheon,
-        for <a href="https://github.com/graememcc/micropolisJS">micropolisJS</a>. Nintendo
-        and Intelligent Systems, for the SNES port that gave us Dr. Wright and a generation
-        of city-planning addicts.
-      </p>
-      <p>
-        And the broader community of people who've kept SimCity's spirit alive across decades
-        of clones, ports, remakes, and spiritual successors.
-      </p>
-    </section>
 
   </div>
 </Base>
@@ -217,7 +127,7 @@ import Base from '../layouts/Base.astro';
   .newspaper-masthead {
     font-family: var(--pixel-font);
     font-size: 0.6rem;
-    color: var(--text-mid);
+    color: var(--text-dark);
     text-transform: uppercase;
     letter-spacing: 3px;
     margin-bottom: 0.5rem;
@@ -252,20 +162,28 @@ import Base from '../layouts/Base.astro';
     color: var(--accent);
     font-weight: 700;
   }
+  .newspaper-byline {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text-mid);
+    margin-bottom: 0.75rem;
+  }
+  .newspaper-byline a {
+    color: var(--accent);
+    border-bottom: 1px dashed var(--accent);
+  }
 
   /* ── R/C/I Demand bars ── */
   .about-demand-bar {
-    display: flex;
+    display: inline-flex;
     gap: 6px;
-    margin: 1.5rem auto;
+    margin: 0.75rem auto;
     align-items: flex-end;
     justify-content: center;
-    height: 50px;
     background: var(--bg);
     border: 2px solid var(--border);
     border-radius: 3px;
-    padding: 6px 24px;
-    width: fit-content;
+    padding: 6px 12px 2px;
     box-shadow: 2px 2px 0 var(--shadow);
   }
   .about-demand-col {
@@ -371,90 +289,6 @@ import Base from '../layouts/Base.astro';
     border-bottom: 1px dashed var(--accent-hover);
   }
 
-  /* ── Budget / tech stack panel ── */
-  .budget-panel {
-    margin-bottom: 2rem;
-    background: var(--panel);
-    border: 3px solid var(--panel-dark);
-    border-radius: 3px;
-    padding: 1.5rem;
-    box-shadow:
-      inset 0 1px 0 var(--panel-light),
-      4px 4px 0 var(--shadow);
-  }
-  .budget-header {
-    font-family: var(--pixel-font);
-    font-size: 0.55rem;
-    color: var(--text-mid);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--panel-dark);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .budget-status {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-family: var(--mono);
-    font-size: 0.65rem;
-  }
-  .budget-dot {
-    width: 7px; height: 7px;
-    background: var(--green);
-    border-radius: 50%;
-    animation: budget-pulse 2s infinite;
-  }
-  @keyframes budget-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-  .budget-status-text { color: var(--green); }
-  .tech-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.8rem;
-  }
-  .tech-item {
-    background: var(--panel-light);
-    border: 2px solid var(--panel-dark);
-    border-radius: 2px;
-    padding: 0.8rem 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.7rem;
-    transition: border-color 0.15s;
-  }
-  .tech-item:hover { border-color: var(--accent); }
-  .tech-icon {
-    width: 32px; height: 32px;
-    background: var(--bg);
-    border: 2px solid var(--border);
-    border-radius: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    flex-shrink: 0;
-  }
-  .tech-label {
-    font-family: var(--pixel-font);
-    font-size: 0.42rem;
-    color: var(--text-mid);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 0.1rem;
-  }
-  .tech-value {
-    font-family: var(--mono);
-    font-size: 0.8rem;
-    color: var(--text-dark);
-    font-weight: 700;
-  }
-
   /* ── Minimap strip ── */
   .minimap {
     width: 100%;
@@ -480,7 +314,6 @@ import Base from '../layouts/Base.astro';
 
   /* ── Responsive ── */
   @media (max-width: 640px) {
-    .tech-grid { grid-template-columns: 1fr; }
     .advisor-panel { grid-template-columns: 1fr; }
     .newspaper { padding: 1.5rem; }
     .newspaper h1 { font-size: 0.8rem; }

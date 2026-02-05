@@ -74,17 +74,17 @@ a:hover { color: #7dd4cc; }
   letter-spacing: 0.01em;
 }
 .nav-links { display: flex; gap: 1.5rem; align-items: center; }
-.nav-links a { font-family: var(--system); color: var(--panel-light); font-size: 0.9rem; transition: color 0.15s; }
+.nav-links a { font-family: var(--pixel-font); color: var(--panel-light); font-size: 0.55rem; transition: color 0.15s; }
 .nav-links a:hover { color: var(--text); }
 
 .nav-cta {
-  font-family: var(--system);
+  font-family: var(--pixel-font);
   padding: 0.4rem 1rem;
   background: var(--accent);
   color: var(--text) !important;
   border: 2px solid var(--accent-hover);
   border-radius: 4px;
-  font-size: 0.85rem;
+  font-size: 0.5rem;
   font-weight: 600;
   transition: background 0.15s;
 }
