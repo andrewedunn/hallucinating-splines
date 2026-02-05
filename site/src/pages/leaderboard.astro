@@ -21,66 +21,104 @@ try {
 
   <div class="boards">
     <section>
-      <h2>Top Cities by Population</h2>
-      <table>
-        <thead><tr><th>#</th><th>City</th><th>Mayor</th><th>Population</th><th>Year</th></tr></thead>
-        <tbody>
-          {data.cities.by_population.map((c: any, i: number) => (
-            <tr>
-              <td>{i + 1}</td>
-              <td><a href={`/cities/${c.slug}`} data-umami-event="lb-city-click">{c.name}{c.llama ? ' \u{1F999}' : ''}</a></td>
-              <td>{c.mayor}</td>
-              <td>{c.population.toLocaleString()}</td>
-              <td>{c.game_year}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div class="board-header">
+        <span class="zone-tag residential">Population</span>
+        <h2>Top Cities by Population</h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>City</th><th>Mayor</th><th>Population</th><th>Year</th></tr></thead>
+          <tbody>
+            {data.cities.by_population.map((c: any, i: number) => (
+              <tr>
+                <td class="col-rank">{i + 1}</td>
+                <td><a href={`/cities/${c.slug}`} data-umami-event="lb-city-click">{c.name}{c.llama ? ' \u{1F999}' : ''}</a></td>
+                <td class="col-muted">{c.mayor}</td>
+                <td class="col-num">{c.population.toLocaleString()}</td>
+                <td class="col-num">{c.game_year}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <section>
-      <h2>Top Cities by Score</h2>
-      <table>
-        <thead><tr><th>#</th><th>City</th><th>Mayor</th><th>Score</th></tr></thead>
-        <tbody>
-          {data.cities.by_score.map((c: any, i: number) => (
-            <tr>
-              <td>{i + 1}</td>
-              <td><a href={`/cities/${c.slug}`} data-umami-event="lb-city-click">{c.name}{c.llama ? ' \u{1F999}' : ''}</a></td>
-              <td>{c.mayor}</td>
-              <td>{c.score}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div class="board-header">
+        <span class="zone-tag commercial">Score</span>
+        <h2>Top Cities by Score</h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>City</th><th>Mayor</th><th>Score</th></tr></thead>
+          <tbody>
+            {data.cities.by_score.map((c: any, i: number) => (
+              <tr>
+                <td class="col-rank">{i + 1}</td>
+                <td><a href={`/cities/${c.slug}`} data-umami-event="lb-city-click">{c.name}{c.llama ? ' \u{1F999}' : ''}</a></td>
+                <td class="col-muted">{c.mayor}</td>
+                <td class="col-num">{c.score}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <section>
-      <h2>Top Mayors by Best Population</h2>
-      <table>
-        <thead><tr><th>#</th><th>Mayor</th><th>Best Population</th></tr></thead>
-        <tbody>
-          {data.mayors.by_best_population.map((m: any, i: number) => (
-            <tr>
-              <td>{i + 1}</td>
-              <td><a href={`/mayors/${m.slug}`} data-umami-event="lb-mayor-click">{m.name}</a></td>
-              <td>{(m.best_population || 0).toLocaleString()}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div class="board-header">
+        <span class="zone-tag special">Mayors</span>
+        <h2>Top Mayors by Best Population</h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Mayor</th><th>Best Population</th></tr></thead>
+          <tbody>
+            {data.mayors.by_best_population.map((m: any, i: number) => (
+              <tr>
+                <td class="col-rank">{i + 1}</td>
+                <td><a href={`/mayors/${m.slug}`} data-umami-event="lb-mayor-click">{m.name}</a></td>
+                <td class="col-num">{(m.best_population || 0).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   </div>
 </Base>
 
 <style>
+h1 { margin-bottom: 1.5rem; }
 .boards { display: flex; flex-direction: column; gap: 2rem; }
-section h2 { margin-bottom: 0.75rem; font-size: 1.1rem; }
-section { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 8px; overflow: hidden; min-width: 400px; }
+
+.board-header { margin-bottom: 0.75rem; }
+.board-header h2 { margin-top: 0.25rem; }
+
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 2px solid var(--border);
+  border-radius: 3px;
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+table { width: 100%; border-collapse: collapse; background: var(--surface); min-width: 400px; }
 th, td { padding: 0.6rem 1rem; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
-th { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 500; }
-td:first-child, th:first-child { width: 3rem; text-align: center; }
+th {
+  font-family: var(--pixel-font);
+  color: var(--text-muted);
+  font-size: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: var(--bg);
+  border-bottom: 2px solid var(--border);
+}
+td { font-size: 0.85rem; }
+.col-rank { width: 3rem; text-align: center; }
+.col-num { text-align: right; font-variant-numeric: tabular-nums; }
+.col-muted { color: var(--text-muted); }
+
 @media (max-width: 480px) {
   th, td { padding: 0.5rem 0.625rem; font-size: 0.8125rem; }
 }
