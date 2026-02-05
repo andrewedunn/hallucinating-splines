@@ -265,7 +265,7 @@ export class HeadlessGame {
         this.sim.disasterManager.makeEarthquake();
         break;
       case 'tornado':
-        this.sim._spriteManager.makeTornado();
+        this.sim.spriteManager.makeTornado();
         break;
       case 'fire':
         this.sim.disasterManager.makeFire();
@@ -274,7 +274,7 @@ export class HeadlessGame {
         this.sim.disasterManager.makeFlood();
         break;
       case 'monster':
-        this.sim._spriteManager.makeMonster();
+        this.sim.spriteManager.makeMonster();
         break;
       case 'meltdown':
         this.sim.disasterManager.makeMeltdown();

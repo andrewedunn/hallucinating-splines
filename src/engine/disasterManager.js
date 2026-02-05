@@ -106,7 +106,6 @@ var vulnerable = function(tile) {
 // User initiated earthquake
 DisasterManager.prototype.makeEarthquake = function() {
   var strength = Random.getRandom(700) + 300;
-  this.doEarthquake(strength);
 
   this._emitEvent(Messages.EARTHQUAKE, {x: this._map.cityCenterX, y: this._map.cityCenterY});
 

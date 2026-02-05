@@ -130,16 +130,59 @@ function formatDetail(a: Action): string {
   function renderPagination() {
     if (!paginationEl || totalPages <= 1) return;
     paginationEl.innerHTML = '';
-    for (let i = 0; i < totalPages; i++) {
+
+    const addBtn = (label: string, page: number, disabled = false, active = false) => {
       const btn = document.createElement('button');
-      btn.textContent = String(i + 1);
-      btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
-      btn.addEventListener('click', () => {
-        (window as any).umami?.track('action-log-page');
-        showPage(i);
-      });
-      paginationEl.appendChild(btn);
+      btn.textContent = label;
+      btn.className = 'page-btn' + (active ? ' active' : '') + (disabled ? ' disabled' : '');
+      if (!disabled && !active) {
+        btn.addEventListener('click', () => {
+          (window as any).umami?.track('action-log-page');
+          showPage(page);
+        });
+      }
+      paginationEl!.appendChild(btn);
+    };
+
+    addBtn('\u2039', currentPage - 1, currentPage === 0);
+
+    // Show at most 7 page numbers with ellipsis
+    const maxVisible = 7;
+    let start = 0, end = totalPages - 1;
+    if (totalPages > maxVisible) {
+      start = Math.max(0, currentPage - 3);
+      end = start + maxVisible - 1;
+      if (end >= totalPages) {
+        end = totalPages - 1;
+        start = end - maxVisible + 1;
+      }
     }
+
+    if (start > 0) {
+      addBtn('1', 0);
+      if (start > 1) {
+        const ellipsis = document.createElement('span');
+        ellipsis.className = 'page-ellipsis';
+        ellipsis.textContent = '\u2026';
+        paginationEl!.appendChild(ellipsis);
+      }
+    }
+
+    for (let i = start; i <= end; i++) {
+      addBtn(String(i + 1), i, false, i === currentPage);
+    }
+
+    if (end < totalPages - 1) {
+      if (end < totalPages - 2) {
+        const ellipsis = document.createElement('span');
+        ellipsis.className = 'page-ellipsis';
+        ellipsis.textContent = '\u2026';
+        paginationEl!.appendChild(ellipsis);
+      }
+      addBtn(String(totalPages), totalPages - 1);
+    }
+
+    addBtn('\u203A', currentPage + 1, currentPage === totalPages - 1);
   }
 
   toggle.addEventListener('click', () => {
@@ -182,8 +225,10 @@ function formatDetail(a: Action): string {
 .badge { font-size: 0.6875rem; padding: 0.1rem 0.4rem; border-radius: 9999px; }
 .badge.success { background: #166534; color: #86efac; }
 .badge.failed { background: #7f1d1d; color: #fca5a5; }
-.pagination { display: flex; gap: 0.25rem; justify-content: center; margin-top: 0.75rem; }
-.page-btn { background: var(--border); border: none; color: var(--text-muted); padding: 0.25rem 0.625rem; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
-.page-btn.active { background: var(--accent); color: white; }
-.page-btn:hover:not(.active) { background: var(--text-muted); color: var(--bg); }
+.pagination { display: flex; gap: 0.375rem; justify-content: center; align-items: center; margin-top: 0.75rem; flex-wrap: wrap; }
+.page-btn { background: var(--border); border: none; color: var(--text-muted); min-width: 2rem; height: 2rem; padding: 0 0.5rem; border-radius: 6px; cursor: pointer; font-size: 0.8125rem; display: inline-flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s; }
+.page-btn.active { background: var(--accent); color: white; cursor: default; }
+.page-btn.disabled { opacity: 0.35; cursor: default; }
+.page-btn:hover:not(.active):not(.disabled) { background: var(--text-muted); color: var(--bg); }
+.page-ellipsis { color: var(--text-muted); font-size: 0.8125rem; padding: 0 0.125rem; }
 </style>
