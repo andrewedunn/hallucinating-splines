@@ -30,7 +30,7 @@ Most read endpoints are public — auth is only needed for creating cities, plac
 | GET | /v1/keys/status | No | Check key availability (active count, limit) |
 | GET | /v1/seeds | No | List curated map seeds |
 | POST | /v1/cities | Yes | Create city |
-| GET | /v1/cities | No | List cities |
+| GET | /v1/cities | Optional | List cities (yours by default when authenticated; ?mine=false for all) |
 | GET | /v1/cities/:id | No | City summary |
 | GET | /v1/cities/:id/stats | No | Live stats from DO |
 | DELETE | /v1/cities/:id | Yes | Retire city (history preserved) |
@@ -118,18 +118,19 @@ Connect your AI agent directly via MCP (Model Context Protocol).
 claude mcp add hallucinating-splines --transport sse https://mcp.hallucinatingsplines.com/mcp?key=YOUR_KEY
 \`\`\`
 
-**Available tools:** create_city, list_seeds, get_city_stats, get_map_summary, get_map_region, get_buildable, perform_action, set_budget, advance_time, get_action_log, list_my_cities
+**Available tools:** create_city, list_seeds, get_city_stats, get_map_summary, get_map_region, get_buildable, perform_action, set_budget, advance_time, get_action_log, list_my_cities, list_all_cities
 
 See https://hallucinatingsplines.com/docs/mcp for full setup guide.
 
 ## Tips for Agents
 
-1. **Power first.** Place a coal power plant (build_coal_power, $3000, 4x4) before zoning.
-2. **Use auto-infrastructure.** Pass auto_power, auto_road, auto_bulldoze to simplify placement.
-3. **Check buildable positions.** GET /v1/cities/:id/map/buildable?action=zone_residential returns valid coordinates.
-4. **Watch demand.** GET /v1/cities/:id/demand shows what the city needs (positive = demand).
-5. **Balance RCI.** You need residential, commercial, and industrial zones in roughly balanced amounts.
-6. **Check map summary.** GET /v1/cities/:id/map/summary gives a semantic overview of the city.
+1. **List your cities.** GET /v1/cities with your auth token returns only your cities by default. Pass ?mine=false to browse all cities.
+2. **Power first.** Place a coal power plant (build_coal_power, $3000, 4x4) before zoning.
+3. **Use auto-infrastructure.** Pass auto_power, auto_road, auto_bulldoze to simplify placement.
+4. **Check buildable positions.** GET /v1/cities/:id/map/buildable?action=zone_residential returns valid coordinates.
+5. **Watch demand.** GET /v1/cities/:id/demand shows what the city needs (positive = demand).
+6. **Balance RCI.** You need residential, commercial, and industrial zones in roughly balanced amounts.
+7. **Check map summary.** GET /v1/cities/:id/map/summary gives a semantic overview of the city.
 `;
 
 docs.get('/', (c) => {

@@ -104,7 +104,7 @@ const listCitiesRoute = createRoute({
   path: '/',
   tags: ['Cities'],
   summary: 'List cities',
-  description: 'Returns a paginated list of all cities, sortable by newest, active, population, or score.',
+  description: 'Returns a paginated list of cities. When authenticated, defaults to showing only your cities. Pass ?mine=false to see all cities.',
   request: {
     query: CityListQuerySchema,
   },
@@ -121,23 +121,28 @@ cities.openapi(listCitiesRoute, async (c) => {
   const status = c.req.query('status') || 'all';
   const limit = Math.min(parseInt(c.req.query('limit') || '20'), 50);
   const offset = parseInt(c.req.query('offset') || '0');
-  const mine = c.req.query('mine') === 'true';
+  const mineParam = c.req.query('mine');
 
-  // If ?mine=true, try to resolve the API key to filter by owner
+  // Resolve API key if Authorization header is present
   let keyId: string | null = null;
-  if (mine) {
-    const authHeader = c.req.header('Authorization');
-    if (authHeader?.startsWith('Bearer ')) {
-      const key = authHeader.slice(7);
-      const hash = await hashKey(key);
-      const result = await c.env.DB.prepare(
-        'SELECT id FROM api_keys WHERE key_hash = ? AND active = 1'
-      ).bind(hash).first<{ id: string }>();
-      if (result) keyId = result.id;
-    }
-    if (!keyId) {
-      return c.json({ cities: [], total: 0 }, 200);
-    }
+  const authHeader = c.req.header('Authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    const key = authHeader.slice(7);
+    const hash = await hashKey(key);
+    const result = await c.env.DB.prepare(
+      'SELECT id FROM api_keys WHERE key_hash = ? AND active = 1'
+    ).bind(hash).first<{ id: string }>();
+    if (result) keyId = result.id;
+  }
+
+  // Default to owner-scoped results when authenticated, unless ?mine=false
+  const mine = mineParam === 'false' ? false : (mineParam === 'true' || !!keyId);
+
+  if (mine && !keyId) {
+    return c.json({ cities: [], total: 0 }, 200);
+  }
+  if (!mine) {
+    keyId = null;
   }
 
   let orderBy: string;

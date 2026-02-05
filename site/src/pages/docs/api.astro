@@ -91,7 +91,7 @@ const API = 'https://api.hallucinatingsplines.com';
             <tr><td><span class="method get">GET</span></td><td><code>/v1/seeds</code></td><td>No</td><td>List curated map seeds</td></tr>
             <tr class="separator"><td colspan="4"></td></tr>
             <tr><td><span class="method post">POST</span></td><td><code>/v1/cities</code></td><td>Yes</td><td>Create city</td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/cities</code></td><td>No</td><td>List cities (<code>?mine=true</code> + auth to filter to yours)</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code>/v1/cities</code></td><td>Optional</td><td>List cities (yours by default when authenticated; <code>?mine=false</code> for all)</td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id</code></td><td>No</td><td>City summary</td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/stats</code></td><td>No</td><td>Live stats from DO</td></tr>
             <tr><td><span class="method delete">DELETE</span></td><td><code>/v1/cities/:id</code></td><td>Yes</td><td>Retire city (history preserved)</td></tr>

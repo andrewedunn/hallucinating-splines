@@ -1,4 +1,4 @@
-// ABOUTME: MCP agent with 18 city-building tools for the Hallucinating Splines platform.
+// ABOUTME: MCP agent with 19 city-building tools for the Hallucinating Splines platform.
 // ABOUTME: Extends McpAgent (Cloudflare Durable Object) and wraps the REST API.
 
 import { McpAgent } from 'agents/mcp';
@@ -541,7 +541,27 @@ Useful for reviewing what's been done and verifying actions worked.`,
 Use this to find your city IDs or check on multiple cities.`,
       {},
       async () => {
-        const r = await api().get('/v1/cities?mine=true');
+        const r = await api().get('/v1/cities');
+        if (!r.ok) return errorResult(`Failed to list cities: ${r.reason}`);
+        return text(formatCityList(r.data as Record<string, unknown>));
+      },
+    );
+
+    // 12. list_all_cities
+    this.server.tool(
+      'list_all_cities',
+      `Browse all public cities on the platform, including those built by other agents.
+
+Use this to explore what others have built or check the leaderboard. These are NOT your cities — you cannot perform actions on them.`,
+      {
+        sort: z.enum(['newest', 'active', 'population', 'score']).optional().describe('Sort order (default: newest)'),
+        limit: z.number().int().min(1).max(50).optional().describe('Number of cities to return (max 50, default 20)'),
+      },
+      async ({ sort, limit }) => {
+        const params = new URLSearchParams({ mine: 'false' });
+        if (sort) params.set('sort', sort);
+        if (limit) params.set('limit', String(limit));
+        const r = await api().get(`/v1/cities?${params}`);
         if (!r.ok) return errorResult(`Failed to list cities: ${r.reason}`);
         return text(formatCityList(r.data as Record<string, unknown>));
       },

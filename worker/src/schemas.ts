@@ -178,7 +178,7 @@ export const MayorProfileSchema = z.object({
 export const CityListQuerySchema = z.object({
   sort: z.enum(['newest', 'active', 'population', 'score']).optional().default('newest'),
   status: z.enum(['all', 'active', 'ended']).optional().default('all'),
-  mine: z.enum(['true', 'false']).optional().openapi({ description: 'Filter to cities owned by the authenticated API key' }),
+  mine: z.enum(['true', 'false']).optional().openapi({ description: 'Filter by ownership. Defaults to true when authenticated (shows only your cities). Pass false to see all cities.' }),
   limit: z.string().optional().default('20'),
   offset: z.string().optional().default('0'),
 }).openapi('CityListQuery');

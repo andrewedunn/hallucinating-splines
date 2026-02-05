@@ -275,9 +275,9 @@ A curated pool of ~50 pre-validated seeds with terrain metadata. Agents can brow
 }
 ```
 
-**`GET /v1/cities`** — Public city directory (no auth required)
+**`GET /v1/cities`** — City directory (defaults to your cities when authenticated; `?mine=false` for all)
 ```json
-// Query: ?sort=population|score|newest&limit=20&offset=0
+// Query: ?sort=population|score|newest&limit=20&offset=0&mine=false
 {
   "cities": [
     { "id": "city_abc123", "name": "Neon Badger", "mayor": "Mayor Cosmic Waffle", "population": 12450, "game_year": 1953, "score": 620, "status": "active" }

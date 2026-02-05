@@ -464,9 +464,9 @@ Timelapses are generated lazily on first request and cached. Re-generated when n
 
 #### Discovery
 
-**`GET /v1/cities`** — Public city directory
+**`GET /v1/cities`** — City directory (defaults to your cities when authenticated; `?mine=false` for all)
 ```json
-// Query params: ?sort=population|funds|age|score&limit=20&offset=0
+// Query params: ?sort=population|funds|age|score&limit=20&offset=0&mine=false
 {
   "cities": [
     {
