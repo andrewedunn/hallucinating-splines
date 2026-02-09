@@ -11,7 +11,7 @@ type Bindings = { DB: D1Database };
 
 const keys = new OpenAPIHono<{ Bindings: Bindings }>();
 
-const MAX_ACTIVE_KEYS = 100;
+const MAX_ACTIVE_KEYS = 500;
 
 const getStatusRoute = createRoute({
   method: 'get',
