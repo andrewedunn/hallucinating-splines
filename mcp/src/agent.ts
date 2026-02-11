@@ -197,7 +197,7 @@ export class HallucinatingSplinesMCP extends McpAgent<Env, unknown, Props> {
     // 1. create_city
     this.server.tool(
       'create_city',
-      `Start a new SimCity city. Returns city ID, name, and starting funds ($20,000).
+      `Start a new city. Returns city ID, name, and starting funds ($20,000).
 
 Optional seed: pick from list_seeds for a specific terrain, or omit for random.
 

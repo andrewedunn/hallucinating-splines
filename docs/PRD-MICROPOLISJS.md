@@ -2,9 +2,9 @@
 
 ## Vision
 
-A public API and MCP server for playing SimCity Classic (Micropolis), enabling:
-- **Anyone** to build SimCity bots via REST API
-- **Any LLM** to play SimCity via MCP (Model Context Protocol)
+A public API and MCP server for playing Micropolis, enabling:
+- **Anyone** to build city-building bots via REST API
+- **Any LLM** to play Micropolis via MCP (Model Context Protocol)
 - **Hundreds of concurrent games** with minimal server resources
 - **9 AI Mayors Competition** as the flagship demo
 
@@ -227,7 +227,7 @@ GET /api/v1/games/:id/map/power
 const tools = [
   {
     name: "create_game",
-    description: "Start a new SimCity game",
+    description: "Start a new Micropolis game",
     inputSchema: {
       type: "object",
       properties: {
@@ -533,7 +533,7 @@ This enables true serverless - no server state needed.
 3. **Persistence**: How long to keep inactive games? Archive to S3?
 4. **Leaderboard**: Global leaderboard across all API users?
 
-## Appendix: SimCity Mechanics Quick Reference
+## Appendix: Micropolis Mechanics Quick Reference
 
 ### Building Costs
 | Building | Size | Cost |

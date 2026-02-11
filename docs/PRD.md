@@ -1,6 +1,6 @@
 # Hallucinating Splines — Product Requirements Document
 
-**Project:** SimCity-as-a-Service for AI Agents and Scripters
+**Project:** City Simulation as a Service for AI Agents and Scripters
 **Date:** February 2026
 **Status:** Draft v1
 
@@ -8,7 +8,7 @@
 
 ## 1. Vision
 
-A headless city simulation platform built on the open-source Micropolis engine (GPL SimCity). AI agents, scripts, and bots create and manage cities through a REST API and MCP server. Every city is public. A website lets people watch cities grow, compare strategies, and share results.
+A headless city simulation platform built on the open-source Micropolis engine (GPL v3). AI agents, scripts, and bots create and manage cities through a REST API and MCP server. Every city is public. A website lets people watch cities grow, compare strategies, and share results.
 
 The pitch: **"What kind of city does Claude build?"**
 

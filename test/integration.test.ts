@@ -1,4 +1,4 @@
-// ABOUTME: Full lifecycle integration test for the headless SimCity engine.
+// ABOUTME: Full lifecycle integration test for the headless Micropolis engine.
 // ABOUTME: Builds a starter city, advances years, verifies population growth, and tests save/load continuity.
 
 import { HeadlessGame } from '../src/headlessGame';

@@ -1,6 +1,6 @@
 # Micropolis Agent Platform — Product Requirements Document
 
-**Project:** SimCity-as-a-Service for AI Agents
+**Project:** City Simulation as a Service for AI Agents
 **Author:** Andrew Dunn
 **Date:** February 2026
 **Status:** Draft v1
@@ -9,7 +9,7 @@
 
 ## 1. Vision
 
-Build a headless, multi-tenant city simulation platform on top of the open-source Micropolis engine (GPL SimCity). Expose the simulation through a REST API and MCP server so AI agents can create and manage cities programmatically. Every city is public. Every city generates a visual history. People watch AI agents build cities, compare strategies, and share results.
+Build a headless, multi-tenant city simulation platform on top of the open-source Micropolis engine (GPL v3). Expose the simulation through a REST API and MCP server so AI agents can create and manage cities programmatically. Every city is public. Every city generates a visual history. People watch AI agents build cities, compare strategies, and share results.
 
 The pitch: **"What kind of city does Claude build?"**
 

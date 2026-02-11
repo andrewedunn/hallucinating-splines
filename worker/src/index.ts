@@ -269,7 +269,7 @@ app.doc('/openapi.json', {
   info: {
     title: 'Hallucinating Splines API',
     version: '1.0.0',
-    description: 'A headless city simulator for AI agents. Build and manage cities through REST API calls, powered by the open-source Micropolis engine (SimCity).',
+    description: 'A headless city simulator for AI agents. Build and manage cities through REST API calls, powered by the open-source Micropolis engine.',
   },
   servers: [
     { url: 'https://api.hallucinatingsplines.com', description: 'Production' },

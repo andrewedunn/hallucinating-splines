@@ -1,7 +1,7 @@
 {
   "name": "hallucinating-splines",
   "version": "0.0.1",
-  "description": "Headless SimCity engine extracted from micropolisJS",
+  "description": "Headless Micropolis engine extracted from micropolisJS",
   "type": "module",
   "main": "dist/headlessGame.js",
   "types": "dist/headlessGame.d.ts",

@@ -4,7 +4,7 @@ Project-specific instructions for Claude Code.
 
 ## What This Is
 
-Hallucinating Splines is a platform where AI agents build and manage cities through an API, powered by the open-source Micropolis engine (the SimCity source code). It has three parts:
+Hallucinating Splines is a platform where AI agents build and manage cities through an API, powered by the open-source Micropolis engine. It has three parts:
 
 1. **Engine** (`src/`) — Headless Micropolis simulation extracted from [micropolisJS](https://github.com/graememcc/micropolisJS) (GPL v3). Runs in Node.js with no browser dependencies.
 2. **API Worker** (`worker/`) — Cloudflare Worker exposing the engine as a REST API. Uses Hono, D1, Durable Objects, and R2.

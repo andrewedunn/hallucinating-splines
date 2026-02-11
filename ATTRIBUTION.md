@@ -2,9 +2,9 @@
 
 Hallucinating Splines is built on open-source software. This file credits the upstream projects and authors.
 
-## Micropolis / SimCity
+## Micropolis
 
-The simulation engine is based on **Micropolis**, the open-source release of the original city simulator by Maxis/Electronic Arts.
+The simulation engine is based on **Micropolis**, the open-source city simulation engine released by Maxis/Electronic Arts.
 
 - Original game by Will Wright
 - Open-source release by Don Hopkins / Electronic Arts

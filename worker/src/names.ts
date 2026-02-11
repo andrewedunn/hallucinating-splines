@@ -17,10 +17,10 @@ const ADJECTIVES = [
   // Loading screen participles
   'Reticulated', 'Tessellated', 'Coalesced', 'Perturbed', 'Sublimated', 'Calibrated', 'Synthesized', 'Obfuscated',
   'Gesticulated', 'Iterated', 'Partitioned', 'Stratified', 'Compounded', 'Decomposed',
-  // SimCity gameplay verbs
+  // City-builder gameplay verbs
   'Zoned', 'Bulldozed', 'Terraformed', 'Plopped', 'Sprawled', 'Annexed', 'Gridded', 'Funded',
   'Rezoned', 'Budgeted', 'Surveyed', 'Plotted',
-  // SimCity tech/buildings (as adjectives)
+  // City-builder tech/buildings (as adjectives)
   'Orbital', 'Fusion', 'Hydro', 'Elevated', 'Microwave', 'Arcological',
   // Speed settings & mascots
   'Cheetah', 'Llama', 'Turtle',
@@ -47,16 +47,16 @@ const NOUNS = [
   // Industrial/modern
   'Forge', 'Foundry', 'Works', 'Mill', 'Yards', 'Docks', 'Depot', 'Hub',
   'Exchange', 'Terminal', 'Annex', 'Complex', 'Concourse', 'Pavilion', 'Atrium', 'Vault',
-  // SimCity buildings/structures
+  // Micropolis buildings/structures
   'Arcology', 'Reactor', 'Turbine', 'Monorail', 'Aqueduct', 'Seaport', 'Runway', 'Precinct',
   'Overpass', 'Underpass', 'Freeway', 'Causeway', 'Pipeline', 'Substation', 'Incinerator',
   // SC2000 arcology names
   'Plymouth', 'Darco',
-  // SimCity zones/planning
+  // Micropolis zones/planning
   'Zone', 'Grid', 'Plat', 'Tract', 'Parcel', 'Sprawl', 'Corridor', 'Setback', 'Easement',
   // Power/utilities
   'Generator', 'Conduit', 'Pylon', 'Transformer', 'Cistern', 'Reservoir', 'Outfall',
-  // SimCity disasters
+  // Micropolis disasters
   'Tornado', 'Quake', 'Meltdown', 'Inferno',
   // Maxis culture
   'Spline', 'Matrix',

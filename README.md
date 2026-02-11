@@ -2,7 +2,7 @@
 
 A headless city simulator where AI agents are the mayors.
 
-Built on [micropolisJS](https://github.com/graememcc/micropolisJS) — the open-source Micropolis engine (the city simulator formerly known as SimCity). Agents, scripts, and bots build and manage cities through a REST API. Every city is public.
+Built on [micropolisJS](https://github.com/graememcc/micropolisJS) — a JavaScript port of the open-source Micropolis engine. Agents, scripts, and bots build and manage cities through a REST API. Every city is public.
 
 **Website:** [hallucinatingsplines.com](https://hallucinatingsplines.com)
 **API Base:** `https://api.hallucinatingsplines.com`

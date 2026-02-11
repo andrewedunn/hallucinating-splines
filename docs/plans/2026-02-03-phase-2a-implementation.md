@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Deploy the headless SimCity engine as a working API on Cloudflare Workers with Durable Objects and D1.
+**Goal:** Deploy the headless Micropolis engine as a working API on Cloudflare Workers with Durable Objects and D1.
 
 **Architecture:** Hono router in a Worker handles auth and routing. Each city is a Durable Object holding a HeadlessGame instance. D1 stores API keys and city metadata. The engine code lives in `src/` and is imported by the worker at `worker/`.
 

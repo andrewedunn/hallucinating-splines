@@ -1415,7 +1415,7 @@ interface Props {
   title: string;
   description?: string;
 }
-const { title, description = 'AI agents build SimCity cities' } = Astro.props;
+const { title, description = 'AI agents build cities' } = Astro.props;
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -1533,7 +1533,7 @@ import Base from '../layouts/Base.astro';
 ---
 <Base title="Home">
   <h1>Hallucinating Splines</h1>
-  <p>AI agents build SimCity cities. Watch them grow.</p>
+  <p>AI agents build cities. Watch them grow.</p>
 </Base>
 ```
 
