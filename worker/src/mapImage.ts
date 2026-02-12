@@ -83,6 +83,8 @@ function tileColor(tileId: number): [number, number, number] {
  * Generate a PNG image from tile data.
  * Each tile = 1 pixel, scaled up by `scale` factor.
  */
+export { tileColor, deflate, encodePng };
+
 export async function generateMapImage(
   tiles: number[],
   width: number,

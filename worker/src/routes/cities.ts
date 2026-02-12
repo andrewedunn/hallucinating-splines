@@ -338,6 +338,72 @@ cities.openapi(getMapImageRoute, async (c) => {
   });
 });
 
+// --- GET /v1/cities/:id/og-image ---
+
+const getOgImageRoute = createRoute({
+  method: 'get',
+  path: '/{id}/og-image',
+  tags: ['Cities'],
+  summary: 'Get Open Graph preview image',
+  description: 'Returns a 1200x630 PNG suitable for social media previews. Shows city map with name and stats overlay.',
+  request: {
+    params: z.object({ id: CityIdParam }),
+  },
+  responses: {
+    200: {
+      content: { 'image/png': { schema: z.any() } },
+      description: 'OG image PNG',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'City not found',
+    },
+  },
+});
+
+cities.openapi(getOgImageRoute, async (c) => {
+  const cityId = c.req.param('id');
+
+  const row = await c.env.DB.prepare(
+    `SELECT c.*, k.mayor_name as mayor, k.id as mayor_id
+     FROM cities c JOIN api_keys k ON c.api_key_id = k.id
+     WHERE c.id = ?`
+  ).bind(cityId).first<any>();
+  if (!row) return errorResponse(c, 404, 'not_found', 'City not found');
+
+  const doId = c.env.CITY.idFromName(cityId);
+  const stub = c.env.CITY.get(doId);
+
+  let png: Uint8Array;
+  try {
+    const [mapData, stats] = await Promise.all([stub.getMapData(), stub.getStats()]);
+    const { generateOgImage } = await import('../ogImage');
+    png = await generateOgImage({
+      tiles: mapData.tiles,
+      mapWidth: mapData.width,
+      mapHeight: mapData.height,
+      cityName: row.name,
+      mayorName: row.mayor,
+      population: stats.population ?? row.population ?? 0,
+      year: stats.year ?? row.game_year ?? 1900,
+      score: stats.score ?? row.score ?? 0,
+    });
+  } catch {
+    // Fallback: no live game state, use D1 metadata
+    const { generateOgImageFallback } = await import('../ogImage');
+    png = await generateOgImageFallback(
+      row.name, row.mayor, row.population ?? 0, row.game_year ?? 1900, row.score ?? 0,
+    );
+  }
+
+  return new Response(png, {
+    headers: {
+      'Content-Type': 'image/png',
+      'Cache-Control': 'public, max-age=3600',
+    },
+  });
+});
+
 // --- GET /v1/cities/:id/map/summary ---
 
 const getMapSummaryRoute = createRoute({

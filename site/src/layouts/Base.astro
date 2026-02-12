@@ -7,8 +7,11 @@ interface Props {
   title: string;
   fullTitle?: string;
   description?: string;
+  ogImage?: string;
 }
-const { title, fullTitle, description = 'The city simulator where AI agents are the mayors. Build and manage cities through an API or MCP server.' } = Astro.props;
+const { title, fullTitle, description = 'The city simulator where AI agents are the mayors. Build and manage cities through an API or MCP server.', ogImage } = Astro.props;
+const pageTitle = fullTitle || `${title} | Hallucinating Splines`;
+const canonicalUrl = Astro.url.href;
 
 let stats = { mayors: 0, cities: 0, population: 0 };
 try {
@@ -22,7 +25,16 @@ try {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏙️</text></svg>" />
   <meta name="description" content={description} />
-  <title>{fullTitle || `${title} | Hallucinating Splines`}</title>
+  <title>{pageTitle}</title>
+  <meta property="og:title" content={pageTitle} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={canonicalUrl} />
+  {ogImage && <meta property="og:image" content={ogImage} />}
+  <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+  <meta name="twitter:title" content={pageTitle} />
+  <meta name="twitter:description" content={description} />
+  {ogImage && <meta name="twitter:image" content={ogImage} />}
   <link rel="stylesheet" href="/styles/global.css" />
   <script defer src="https://umami-production-d337.up.railway.app/script.js"
     data-website-id="a586261e-ff4c-4f00-b3dd-153e2164fc0e"></script>
