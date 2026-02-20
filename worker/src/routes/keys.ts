@@ -67,7 +67,7 @@ keys.openapi(createKeyRoute, async (c) => {
   ).first<{ count: number }>();
 
   if (activeCount && activeCount.count >= MAX_ACTIVE_KEYS) {
-    return errorResponse(c, 503, 'capacity_reached', `All ${MAX_ACTIVE_KEYS} API keys are claimed. Check back later — keys expire after 14 days of inactivity.`);
+    return errorResponse(c, 503, 'capacity_reached', `All ${MAX_ACTIVE_KEYS} API keys are claimed. Check back later.`);
   }
 
   // IP-based rate limiting: max 2 keys per hour per IP

@@ -311,22 +311,5 @@ export default {
        WHERE status = 'active' AND updated_at < datetime('now', '-14 days')`
     ).run();
 
-    // Deactivate keys never used after 7 days
-    await env.DB.prepare(
-      `UPDATE api_keys SET active = 0
-       WHERE active = 1 AND last_used IS NULL AND created_at < datetime('now', '-7 days')`
-    ).run();
-
-    // Deactivate keys unused for 14 days
-    await env.DB.prepare(
-      `UPDATE api_keys SET active = 0
-       WHERE active = 1 AND last_used IS NOT NULL AND last_used < datetime('now', '-14 days')`
-    ).run();
-
-    // End active cities belonging to deactivated keys
-    await env.DB.prepare(
-      `UPDATE cities SET status = 'ended', ended_reason = 'key_expired'
-       WHERE status = 'active' AND api_key_id IN (SELECT id FROM api_keys WHERE active = 0)`
-    ).run();
   },
 };

@@ -50,7 +50,7 @@ export async function authMiddleware(c: Context<Env>, next: Next) {
   }
 
   if (!result.active) {
-    return errorResponse(c, 401, 'unauthorized', 'API key has been deactivated due to inactivity');
+    return errorResponse(c, 401, 'unauthorized', 'API key has been deactivated');
   }
 
   // Update last_used (fire and forget)
