@@ -22,7 +22,7 @@
 - Engine tile flags: BIT_MASK=0x3FF (lower 10 bits = tile ID), POWERBIT=0x8000, ZONEBIT=0x0400
 - Sprite sheet: `_upstream_micropolisjs/images/tiles.png` — 512x512px, 32x32 grid of 16x16 tiles
 - HeadlessGame API: fromSeed, fromSave, tick, placeTool, getStats, getMap, getTile, getDemand, save, setTaxRate, setBudget
-- Live API: https://hallucinating-splines.andrew-987.workers.dev
+- Live API: https://api.hallucinatingsplines.com
 
 ---
 
@@ -1511,7 +1511,7 @@ Create `site/src/lib/api.ts`:
 // ABOUTME: Fetch wrapper for the Hallucinating Splines Workers API.
 // ABOUTME: Used by all pages to load city data, stats, maps, and leaderboards.
 
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://hallucinating-splines.andrew-987.workers.dev';
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 
 export async function apiFetch<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`);
@@ -2035,7 +2035,7 @@ import StatsPanel from '../../components/StatsPanel.astro';
 import { apiFetch } from '../../lib/api';
 
 const { id } = Astro.params;
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://hallucinating-splines.andrew-987.workers.dev';
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 
 const [city, stats, mapData] = await Promise.all([
   apiFetch<any>(`/v1/cities/${id}`),
@@ -2411,49 +2411,49 @@ git add -A && git commit -m "deploy: update API and deploy website to Cloudflare
 
 ```bash
 # Create API key
-curl -X POST https://hallucinating-splines.andrew-987.workers.dev/v1/keys
+curl -X POST https://api.hallucinatingsplines.com/v1/keys
 
 # Create a city
-curl -X POST https://hallucinating-splines.andrew-987.workers.dev/v1/cities \
+curl -X POST https://api.hallucinatingsplines.com/v1/cities \
   -H "Authorization: Bearer hs_YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"seed": 42}'
 
 # Place coal power with auto_road
-curl -X POST https://hallucinating-splines.andrew-987.workers.dev/v1/cities/CITY_ID/actions \
+curl -X POST https://api.hallucinatingsplines.com/v1/cities/CITY_ID/actions \
   -H "Authorization: Bearer hs_YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"action": "build_coal_power", "x": 10, "y": 10}'
 
 # Place residential with auto_power and auto_road
-curl -X POST https://hallucinating-splines.andrew-987.workers.dev/v1/cities/CITY_ID/actions \
+curl -X POST https://api.hallucinatingsplines.com/v1/cities/CITY_ID/actions \
   -H "Authorization: Bearer hs_YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"action": "zone_residential", "x": 19, "y": 10, "auto_power": true, "auto_road": true}'
 
 # Advance time
-curl -X POST https://hallucinating-splines.andrew-987.workers.dev/v1/cities/CITY_ID/advance \
+curl -X POST https://api.hallucinatingsplines.com/v1/cities/CITY_ID/advance \
   -H "Authorization: Bearer hs_YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"months": 12}'
 
 # Check snapshots
-curl https://hallucinating-splines.andrew-987.workers.dev/v1/cities/CITY_ID/snapshots
+curl https://api.hallucinatingsplines.com/v1/cities/CITY_ID/snapshots
 
 # Check map summary
-curl https://hallucinating-splines.andrew-987.workers.dev/v1/cities/CITY_ID/map/summary
+curl https://api.hallucinatingsplines.com/v1/cities/CITY_ID/map/summary
 
 # Check buildable positions
-curl "https://hallucinating-splines.andrew-987.workers.dev/v1/cities/CITY_ID/map/buildable?action=zone_residential"
+curl "https://api.hallucinatingsplines.com/v1/cities/CITY_ID/map/buildable?action=zone_residential"
 
 # Check action history
-curl https://hallucinating-splines.andrew-987.workers.dev/v1/cities/CITY_ID/actions
+curl https://api.hallucinatingsplines.com/v1/cities/CITY_ID/actions
 
 # Check leaderboard
-curl https://hallucinating-splines.andrew-987.workers.dev/v1/leaderboard
+curl https://api.hallucinatingsplines.com/v1/leaderboard
 
 # Check mayor profile
-curl https://hallucinating-splines.andrew-987.workers.dev/v1/mayors/KEY_ID
+curl https://api.hallucinatingsplines.com/v1/mayors/KEY_ID
 ```
 
 **Step 2: Verify website pages**

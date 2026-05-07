@@ -1,4 +1,4 @@
-name = "hallucinating-splines"
+name = "hallucinating-splines-api"
 main = "src/index.ts"
 compatibility_date = "2026-01-16"
 compatibility_flags = ["nodejs_compat"]

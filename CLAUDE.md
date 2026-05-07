@@ -174,6 +174,19 @@ These details matter when working with the simulation:
 - **MCP:** `https://mcp.hallucinatingsplines.com/mcp`
 - **Site:** `https://hallucinatingsplines.com`
 
+## Cloudflare Resources
+
+Naming follows the convention in `~/dev/stack.md`: one canonical slug (`hallucinating-splines`), resource type as suffix.
+
+| Resource | Name |
+|---|---|
+| API Worker | `hallucinating-splines-api` |
+| MCP Worker | `hallucinating-splines-mcp` |
+| Pages site | `hallucinating-splines-site` |
+| D1 database | `hallucinating-splines-db` |
+| R2 bucket | `hallucinating-splines-snapshots` |
+| Durable Object class | `CityDO` (in API worker) |
+
 ## Key Docs
 
 - `docs/PRD.md` — Full product requirements (architecture, API design, phases)
