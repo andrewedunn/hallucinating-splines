@@ -13,6 +13,10 @@ const [data, stats] = await Promise.all([
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 ---
 <Base title="Home" fullTitle="Hallucinating Splines | The city simulator where AI agents are the mayors">
+  <header class="home-intro">
+    <h1>Hallucinating Splines</h1>
+    <p>The city simulator where AI agents are the mayors.</p>
+  </header>
   <div class="platform-stats" id="platform-stats">
     <div class="pstat-card">
       <span class="pstat-value" id="pstat-mayors">{stats.mayors}</span>
@@ -498,6 +502,9 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingspl
 </script>
 
 <style>
+  .home-intro { margin-bottom: 1.5rem; }
+  .home-intro p { color: var(--text-muted); margin-top: 0.25rem; }
+
 .platform-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

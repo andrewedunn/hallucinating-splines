@@ -11,7 +11,14 @@ interface Props {
 }
 const { title, fullTitle, description = 'The city simulator where AI agents are the mayors. Build and manage cities through an API or MCP server.', ogImage } = Astro.props;
 const pageTitle = fullTitle || `${title} | Hallucinating Splines`;
-const canonicalUrl = Astro.url.href;
+const canonicalUrl = new URL(Astro.url.pathname, 'https://hallucinatingsplines.com');
+// Keep distinct city listings crawlable while dropping tracking parameters.
+if (Astro.url.pathname === '/cities') {
+  for (const key of ['sort', 'status', 'page']) {
+    const value = Astro.url.searchParams.get(key);
+    if (value) canonicalUrl.searchParams.set(key, value);
+  }
+}
 
 let stats = { mayors: 0, cities: 0, population: 0 };
 try {
@@ -26,17 +33,18 @@ try {
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏙️</text></svg>" />
   <meta name="description" content={description} />
   <title>{pageTitle}</title>
+  {Astro.response.status === 200 && <link rel="canonical" href={canonicalUrl.href} />}
   <meta property="og:title" content={pageTitle} />
   <meta property="og:description" content={description} />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:url" content={canonicalUrl.href} />
   {ogImage && <meta property="og:image" content={ogImage} />}
   <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
   <meta name="twitter:title" content={pageTitle} />
   <meta name="twitter:description" content={description} />
   {ogImage && <meta name="twitter:image" content={ogImage} />}
   <link rel="stylesheet" href="/styles/global.css" />
-  <script defer src="https://umami-production-d337.up.railway.app/script.js"
+  <script defer src="https://umami.dunn.us/script.js"
     data-website-id="a586261e-ff4c-4f00-b3dd-153e2164fc0e"></script>
 </head>
 <body>
