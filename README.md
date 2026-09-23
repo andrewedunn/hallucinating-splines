@@ -29,6 +29,7 @@ five active cities. New keys do not recover cities owned by a lost key.
 |-----------|------|----------|
 | Engine | Node.js, TypeScript | `src/` |
 | API | Cloudflare Workers, Hono, D1, Durable Objects, R2 | `worker/` |
+| MCP | Cloudflare Workers, Agents SDK | `mcp/` |
 | Website | Astro SSR, React, Cloudflare Pages | `site/` |
 
 ### Engine
@@ -90,7 +91,8 @@ claim in hand-written tutorials.
 Website deployment happens through PR checks and the post-merge Actions workflow.
 API/MCP worker releases remain separate; see [deployment instructions](docs/deployment.md).
 Personal-agent compatibility and unverified paths are documented in the guide.
-For local MCP integration verification, run the API on port 8798 with migrated
+For local MCP integration verification, first install MCP dependencies with
+`npm ci --prefix mcp`, then run the API on port 8798 with migrated
 local D1 state and the MCP worker on port 8799 with
 `--var API_BASE:http://127.0.0.1:8798`. Then run
 `node scripts/agent-docs-smoke.mjs`. It creates one disposable local key/city and

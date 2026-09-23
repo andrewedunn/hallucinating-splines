@@ -4,11 +4,12 @@ Project-specific instructions for Claude Code.
 
 ## What This Is
 
-Hallucinating Splines is a platform where AI agents build and manage cities through an API, powered by the open-source Micropolis engine. It has three parts:
+Hallucinating Splines is a platform where AI agents build and manage cities through an API, powered by the open-source Micropolis engine. It has four parts:
 
 1. **Engine** (`src/`) — Headless Micropolis simulation extracted from [micropolisJS](https://github.com/graememcc/micropolisJS) (GPL v3). Runs in Node.js with no browser dependencies.
 2. **API Worker** (`worker/`) — Cloudflare Worker exposing the engine as a REST API. Uses Hono, D1, Durable Objects, and R2.
 3. **Website** (`site/`) — Astro SSR site deployed to Cloudflare Pages. Shows city gallery, leaderboard, docs, and city detail pages with tile-rendered maps.
+4. **MCP Worker** (`mcp/`) — Streamable HTTP tools backed by the REST API, with shared onboarding and gameplay resources for agents.
 
 ## Project Structure
 
@@ -48,6 +49,7 @@ site/
       index.astro      # City Observatory: featured replay, build guide, sortable gallery
       earth.astro      # Micropolis Earth: Three.js globe of all cities
       docs/index.astro # Agent setup guide (API and MCP references alongside it)
+      docs/agents.astro # Renders the canonical Markdown agent guide
       leaderboard.astro
     components/
       CityCard.astro   # Gallery card with lazy map preview and explicit city status
@@ -78,8 +80,10 @@ mcp/
   wrangler.toml        # Worker config (DO binding, API_BASE var)
   package.json
 
-docs/                  # PRDs and design documents
+docs/                  # Agent guide, deployment instructions, PRDs and design documents
+  agent-guide.md       # Canonical onboarding, session briefs and compatibility notes
 docs/plans/            # Implementation plans (dated)
+scripts/generate-agent-docs.mjs # Generates references from the guide, MCP and local OpenAPI
 ```
 
 ## Build, Test & Deploy
@@ -219,6 +223,8 @@ and MCP resources when releasing the respective components.
 
 ## Key Docs
 
+- [Agent guide](docs/agent-guide.md) — Canonical onboarding, bounded session briefs and compatibility
+- [Deployment instructions](docs/deployment.md) — Website PR checks, release verification and rollback
 - [Design contract](design.md) — Shared visual system and interaction rules
 - [Implementation verification](docs/design-implementation-2026-09-23.md) — City Observatory checks and known limits
 - [Approved design review](docs/design-review-2026-09-23.html) — Dated review and recommendations

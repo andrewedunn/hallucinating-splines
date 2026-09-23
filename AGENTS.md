@@ -10,7 +10,7 @@ Follow the project conventions and architecture in `CLAUDE.md`.
 - Merge method: squash
 - Project type: website with separate API and MCP workers
 - Deploy trigger: push to `main`, after Website checks pass; manual workflow dispatch on `main` is also supported
-- Post-deploy health check: `scripts/site-smoke.py` verifies the exact commit, version, public pages, crawl files and versioned CSS
+- Post-deploy health check: `scripts/site-smoke.py` verifies the exact commit, version, public pages, agent documentation assets, crawl files and versioned CSS
 - Credentials: production environment secret `CLOUDFLARE_API_TOKEN`, variable `CLOUDFLARE_ACCOUNT_ID`; production allows only branch `main`
 
 This workflow deploys only `site/` to `hallucinating-splines-site`. API, MCP and D1
