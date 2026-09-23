@@ -3,6 +3,8 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { cors } from 'hono/cors';
+import { routePath } from 'hono/route';
+import { usageEvent } from './usageTelemetry';
 import { apiReference } from '@scalar/hono-api-reference';
 import { keys } from './routes/keys';
 import { seeds } from './routes/seeds';
@@ -22,6 +24,13 @@ type Bindings = {
 
 const app = new OpenAPIHono<{ Bindings: Bindings }>();
 
+app.use('*', async (c, next) => {
+  const started = Date.now();
+  await next();
+  console.info(JSON.stringify(usageEvent(
+    c.req.method, routePath(c), c.req.header('X-HS-Client'), c.res.status, Date.now() - started,
+  )));
+});
 app.use('*', cors());
 
 // --- Inline routes ---

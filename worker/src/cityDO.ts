@@ -8,6 +8,7 @@ import { autoBulldoze, autoPower, autoRoad } from './autoInfra';
 import type { AutoAction } from './autoInfra';
 import { analyzeMap } from './mapAnalysis';
 import type { BudgetOpts } from '../../src/types';
+import { batchOutcome } from './batchOutcome';
 
 interface CityState {
   seed: number;
@@ -109,7 +110,7 @@ export class CityDO extends DurableObject<Env> {
 
     // Tool size lookup for auto-bulldoze footprint
     const TOOL_SIZES: Record<string, number> = {
-      residential: 3, commercial: 3, industrial: 3,
+      residential: 3, commercial: 3, industrial: 3, fire: 3, police: 3,
       coal: 4, nuclear: 4, port: 4, stadium: 4,
       airport: 6,
     };
@@ -130,21 +131,18 @@ export class CityDO extends DurableObject<Env> {
       // Step 3: auto-road first (auto_power can then route wire through roads, creating powered road tiles)
       if (flags.auto_road) {
         const rdResult = autoRoad(game, x, y, toolSize);
-        if (!rdResult.failed) {
-          autoActions.push(rdResult);
-        }
+        autoActions.push(rdResult);
       }
 
       // Step 4: auto-power after road (routes wire through roads, creating powered road tiles)
       if (flags.auto_power) {
         const pwResult = autoPower(game, x, y, toolSize);
-        if (!pwResult.failed) {
-          autoActions.push(pwResult);
-        }
+        autoActions.push(pwResult);
       }
-
-      await this.persist();
     }
+
+    // Clearing can change the map even if the primary placement fails.
+    if (result.success || autoActions.some(a => a.cost > 0)) await this.persist();
 
     const autoCost = autoActions.reduce((sum, a) => sum + a.cost, 0);
 
@@ -170,7 +168,7 @@ export class CityDO extends DurableObject<Env> {
     for (const action of actions) {
       const { toolName, x, y, flags } = action;
       const TOOL_SIZES: Record<string, number> = {
-        residential: 3, commercial: 3, industrial: 3,
+        residential: 3, commercial: 3, industrial: 3, fire: 3, police: 3,
         coal: 4, nuclear: 4, port: 4, stadium: 4,
         airport: 6,
       };
@@ -190,17 +188,18 @@ export class CityDO extends DurableObject<Env> {
           anyChange = true;
           if (flags!.auto_road) {
             const rdResult = autoRoad(game, x, y, toolSize);
-            if (!rdResult.failed) autoActions.push(rdResult);
+            autoActions.push(rdResult);
           }
           if (flags!.auto_power) {
             const pwResult = autoPower(game, x, y, toolSize);
-            if (!pwResult.failed) autoActions.push(pwResult);
+            autoActions.push(pwResult);
           }
         }
 
         const autoCost = autoActions.reduce((sum, a) => sum + a.cost, 0);
         const cost = result.cost + autoCost;
         totalCost += cost;
+        if (autoCost > 0) anyChange = true;
         const entry: any = { success: result.success, cost };
         if (!result.success && result.reason) entry.reason = result.reason;
         if (autoActions.length > 0) entry.auto_actions = autoActions;
@@ -225,7 +224,8 @@ export class CityDO extends DurableObject<Env> {
       results,
       total_cost: totalCost,
       funds_remaining: stats?.funds,
-      completed: results.length,
+      completed: results.length, // Legacy field counts attempted actions, including a failure.
+      ...batchOutcome(results, actions.length),
       total: actions.length,
       stats,
     };
@@ -395,18 +395,19 @@ export class CityDO extends DurableObject<Env> {
     const { width, height, tiles } = mapData;
 
     const toolSizes: Record<string, number> = {
-      residential: 3, commercial: 3, industrial: 3,
-      coal: 4, nuclear: 4, fire: 3, police: 3,
+      residential: 3, commercial: 3, industrial: 3, fire: 3, police: 3,
+      coal: 4, nuclear: 4,
       port: 4, airport: 6, stadium: 4,
       road: 1, rail: 1, wire: 1, park: 1, bulldozer: 1,
     };
     const size = toolSizes[toolName] || 1;
-    const halfSize = Math.floor(size / 2);
+    const halfSize = size > 1 ? 1 : 0;
+    const farSide = size - halfSize - 1;
 
     const validPositions: number[][] = [];
 
-    for (let y = halfSize; y < height - halfSize; y++) {
-      for (let x = halfSize; x < width - halfSize; x++) {
+    for (let y = halfSize; y < height - farSide; y++) {
+      for (let x = halfSize; x < width - farSide; x++) {
         let allClear = true;
         for (let dy = -halfSize; dy < size - halfSize && allClear; dy++) {
           for (let dx = -halfSize; dx < size - halfSize && allClear; dx++) {

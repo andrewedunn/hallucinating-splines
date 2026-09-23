@@ -5,7 +5,7 @@ import {
   DIRT, RIVER, WATER_HIGH, TREEBASE, WOODS_HIGH,
   RUBBLE, LASTRUBBLE, ROADBASE, LASTROAD, POWERBASE, LASTPOWER,
   COALBASE, LASTPOWERPLANT, NUCLEARBASE, LASTZONE,
-  HROADPOWER, VROADPOWER,
+  HROADPOWER, VROADPOWER, ROADS, ROADS2, LHPOWER, LVPOWER,
 } from '../../src/engine/tileValues';
 import { BIT_MASK, POWERBIT, CONDBIT } from '../../src/engine/tileFlags';
 
@@ -62,14 +62,14 @@ function isBuilding(tileId: number): boolean {
  * Bulldoze trees and rubble within a tool's footprint before placement.
  */
 export function autoBulldoze(game: HeadlessGame, x: number, y: number, toolSize: number): AutoAction {
-  const map = game.getMap();
+  const map = game.getRawMap();
   const bulldozed: number[][] = [];
   let totalCost = 0;
 
   for (let dy = 0; dy < toolSize; dy++) {
     for (let dx = 0; dx < toolSize; dx++) {
-      const tx = x + dx;
-      const ty = y + dy;
+      const tx = x - (toolSize > 1 ? 1 : 0) + dx;
+      const ty = y - (toolSize > 1 ? 1 : 0) + dy;
       if (tx < 0 || ty < 0 || tx >= map.width || ty >= map.height) continue;
 
       const raw = map.tiles[ty * map.width + tx];
@@ -104,7 +104,7 @@ function tileCost(raw: number, tileId: number, mode: PathMode): number {
   if (mode === 'wire') {
     if (isPowerLine(tileId)) return 0;
     if (isPoweredRoad(tileId)) return 0;
-    // Can check CONDBIT for zone-adjacent conductive tiles
+    // Preserve flags so existing conductive infrastructure is free to traverse.
     if ((raw & CONDBIT) && !isBuilding(tileId)) return 0;
   }
   if (mode === 'road') {
@@ -131,14 +131,15 @@ function tileCost(raw: number, tileId: number, mode: PathMode): number {
     return mode === 'wire' ? 5 : 10;
   }
 
-  // Road tiles when laying wire — wire-on-road creates powered road, strongly preferred
+  // Road tiles when laying wire — wire-on-road is supported only on straight road tiles
   if (mode === 'wire' && isRoad(tileId)) {
-    return 1;
+    const normalized = (tileId & 15) + ROADBASE;
+    return normalized === ROADS || normalized === ROADS2 ? 5 : -1;
   }
 
   // Power line tiles when laying road — road-on-wire, costs road price
   if (mode === 'road' && isPowerLine(tileId)) {
-    return 10;
+    return tileId === LHPOWER || tileId === LVPOWER ? 10 : -1;
   }
 
   // Anything else is impassable
@@ -171,8 +172,8 @@ function dijkstraPath(
   const coords = new Map<number, [number, number]>(); // key -> [x, y]
 
   // Zone footprint bounds (engine places with center coords for zones)
-  const halfBelow = Math.floor((toolSize - 1) / 2);
-  const halfAbove = Math.floor(toolSize / 2);
+  const halfBelow = toolSize > 1 ? 1 : 0;
+  const halfAbove = toolSize - halfBelow - 1;
   const zoneLeft = centerX - halfBelow;
   const zoneTop = centerY - halfBelow;
   const zoneRight = centerX + halfAbove;
@@ -315,7 +316,7 @@ function dijkstraPath(
  * Bulldoze trees/rubble along a computed path before placing infrastructure.
  */
 function bulldozePath(game: HeadlessGame, path: number[][]): number {
-  const map = game.getMap();
+  const map = game.getRawMap();
   let cost = 0;
   for (const [px, py] of path) {
     const raw = map.tiles[py * map.width + px];
@@ -350,7 +351,7 @@ function estimatePathCost(
     if (mode === 'wire') {
       if (!isPowerLine(tileId) && !isPoweredRoad(tileId) && !(raw & CONDBIT)) {
         if (isWater(tileId)) cost += 25;
-        else if (isRoad(tileId)) cost += 1;
+        else if (isRoad(tileId)) cost += 5;
         else cost += 5;
       }
     } else {
@@ -369,7 +370,7 @@ function estimatePathCost(
  * Supports water crossings and bulldozes trees along the path.
  */
 export function autoPower(game: HeadlessGame, x: number, y: number, toolSize: number = 1): AutoAction {
-  const map = game.getMap();
+  const map = game.getRawMap();
 
   // Check if origin is already powered or is a power plant
   const originRaw = map.tiles[y * map.width + x];
@@ -406,7 +407,7 @@ export function autoPower(game: HeadlessGame, x: number, y: number, toolSize: nu
     const tileId = raw & BIT_MASK;
 
     // Skip tiles that already conduct power
-    if (isPowerLine(tileId) || isPoweredRoad(tileId)) {
+    if (isPowerLine(tileId) || isPoweredRoad(tileId) || (raw & CONDBIT)) {
       placed.push([px, py]);
       continue;
     }
@@ -415,6 +416,8 @@ export function autoPower(game: HeadlessGame, x: number, y: number, toolSize: nu
     if (placeResult.success) {
       totalCost += placeResult.cost;
       placed.push([px, py]);
+    } else {
+      return { type: 'power_line', path: placed, cost: totalCost, failed: true, reason: placeResult.reason || 'placement_failed' };
     }
   }
 
@@ -432,8 +435,8 @@ function bootstrapRoadStub(
   centerY: number,
   toolSize: number,
 ): AutoAction {
-  const halfBelow = Math.floor((toolSize - 1) / 2);
-  const halfAbove = Math.floor(toolSize / 2);
+  const halfBelow = toolSize > 1 ? 1 : 0;
+  const halfAbove = toolSize - halfBelow - 1;
   const zoneLeft = centerX - halfBelow;
   const zoneTop = centerY - halfBelow;
   const zoneRight = centerX + halfAbove;
@@ -467,6 +470,8 @@ function bootstrapRoadStub(
   edges.sort((a, b) => a.dist - b.dist);
 
   for (const edge of edges) {
+    if (edge.tiles.some(([tx, ty]) => tx < 0 || ty < 0 || tx >= map.width || ty >= map.height ||
+      isWater(map.tiles[ty * map.width + tx] & BIT_MASK) || isBuilding(map.tiles[ty * map.width + tx] & BIT_MASK))) continue;
     const placed: number[][] = [];
     let totalCost = 0;
     let anyFailed = false;
@@ -498,6 +503,9 @@ function bootstrapRoadStub(
       }
     }
 
+    if (anyFailed && (placed.length > 0 || totalCost > 0)) {
+      return { type: 'road', path: placed, cost: totalCost, failed: true, reason: game.getStats().funds < 10 ? 'insufficient_funds' : 'placement_failed' };
+    }
     if (!anyFailed && placed.length > 0) {
       return { type: 'road', path: placed, cost: totalCost };
     }
@@ -512,7 +520,7 @@ function bootstrapRoadStub(
  * Supports water crossings and bulldozes trees along the path.
  */
 export function autoRoad(game: HeadlessGame, x: number, y: number, toolSize: number = 1): AutoAction {
-  const map = game.getMap();
+  const map = game.getRawMap();
 
   // Check if origin is already a road
   const originTileId = map.tiles[y * map.width + x] & BIT_MASK;
@@ -531,7 +539,7 @@ export function autoRoad(game: HeadlessGame, x: number, y: number, toolSize: num
     return bootstrapRoadStub(game, map, x, y, toolSize);
   }
 
-  const { path } = result;
+  const path = [...result.path].reverse();
 
   // Budget guard: estimate total cost and check funds
   const funds = game.getStats().funds;
@@ -559,6 +567,8 @@ export function autoRoad(game: HeadlessGame, x: number, y: number, toolSize: num
     if (placeResult.success) {
       totalCost += placeResult.cost;
       placed.push([px, py]);
+    } else {
+      return { type: 'road', path: placed, cost: totalCost, failed: true, reason: placeResult.reason || 'placement_failed' };
     }
   }
 

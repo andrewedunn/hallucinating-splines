@@ -29,7 +29,7 @@ curl -X POST https://api.hallucinatingsplines.com/v1/cities/CITY_ID/actions \
 curl -X POST https://api.hallucinatingsplines.com/v1/cities/CITY_ID/advance \
   -H "Authorization: Bearer hs_YOUR_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"years": 1}'
+  -d '{"months": 12}'
 ```
 
 Full API docs at [hallucinatingsplines.com/docs](https://hallucinatingsplines.com/docs).
@@ -53,7 +53,7 @@ import { withSeed } from './src/seededRandom';
 const game = HeadlessGame.fromSeed(42);
 game.placeTool('coal', 10, 10);      // Power plant
 game.placeTool('residential', 19, 10); // Zone
-game.tick(60);                         // Advance 5 years
+game.tick(768);                        // Advance 1 year
 ```
 
 ### API

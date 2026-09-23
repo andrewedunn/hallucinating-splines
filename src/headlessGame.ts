@@ -106,13 +106,14 @@ export class HeadlessGame {
       return { success: false, cost: 0, result: -1, reason: 'unknown_tool' };
     }
 
+    const fundsBefore = this.sim.budget.totalFunds;
     tool.doTool(x, y, this.sim.blockMaps);
     const applied = tool.modifyIfEnoughFunding(this.sim.budget);
     const result = tool.result ?? (applied ? 0 : 1);
 
     return {
       success: applied,
-      cost: applied ? tool.toolCost : 0,
+      cost: applied ? fundsBefore - this.sim.budget.totalFunds : 0,
       result,
       reason: applied ? undefined : (RESULT_REASONS[result] || 'placement_failed'),
     };
