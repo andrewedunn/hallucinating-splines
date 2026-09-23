@@ -13,10 +13,16 @@ export default function FeaturedCity({ cityId, apiBase, name, active = false }: 
   useEffect(() => {
     const controller = new AbortController();
     setError(false);
-    const refresh = () => fetch(`${apiBase}/v1/cities/${cityId}/map`, { signal: controller.signal })
+    let refreshing = false;
+    const refresh = async () => {
+      if (refreshing) return;
+      refreshing = true;
+      await fetch(`${apiBase}/v1/cities/${cityId}/map`, { signal: controller.signal })
       .then(async r => { if (!r.ok) throw new Error(); return r.json(); })
-      .then(data => { if (!Array.isArray(data.tiles)) throw new Error(); current.current = data; if (!recorded.current) setMap(data); })
-      .catch(() => { if (!controller.signal.aborted) setError(true); });
+      .then(data => { if (!Array.isArray(data.tiles)) throw new Error(); if (controller.signal.aborted) return; setError(false); current.current = data; if (!recorded.current) setMap(data); })
+      .catch(() => { if (!controller.signal.aborted) setError(true); })
+      .finally(() => { refreshing = false; });
+    };
     void refresh();
     const timer = active ? setInterval(() => { if (!document.hidden) void refresh(); }, 15000) : null;
     return () => { controller.abort(); if (timer) clearInterval(timer); };
@@ -24,5 +30,6 @@ export default function FeaturedCity({ cityId, apiBase, name, active = false }: 
   return <div className="featured-viewer">
     {map ? <MapViewer tiles={map.tiles} width={map.width} height={map.height} label={`Map of ${name}`} /> : <div className="map-placeholder" role="status">{error ? <><p>The city map could not load.</p><button className="button button-quiet" onClick={() => setRetry(n => n + 1)}>Retry map</button></> : 'Loading the city map…'}</div>}
     {map && <HistoryScrubber cityId={cityId} apiBase={apiBase} onSnapshotLoad={tiles => { recorded.current = true; setMap(previous => previous ? { ...previous, tiles } : previous); }} onReturnToCurrent={() => { recorded.current = false; setMap(current.current); }} />}
+    {map && error && <p className="error-message" role="status">The current map could not refresh. Showing the last available view.</p>}
   </div>;
 }
