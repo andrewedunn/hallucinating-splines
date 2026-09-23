@@ -1,5 +1,9 @@
 # Changelog
 
+## Site 0.1.1 — 2026-09-23
+
+- Returning visitors receive current shared styles after a release, even when the previous stylesheet remains cached in their browser.
+
 ## Site 0.1.0 — 2026-09-23
 
 - Watch a featured city and connect your own agent from the new City Observatory homepage.
