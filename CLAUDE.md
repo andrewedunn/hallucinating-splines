@@ -43,12 +43,12 @@ site/
   src/
     layouts/Base.astro # Shell: nav, footer, meta tags
     pages/
-      index.astro      # City gallery (sortable, with tile thumbnails)
+      index.astro      # City Observatory: featured replay, build guide, sortable gallery
       earth.astro      # Micropolis Earth: Three.js globe of all cities
       docs.astro       # API documentation
       leaderboard.astro
     components/
-      CityCard.astro   # Gallery card with thumbnail placeholder
+      CityCard.astro   # Gallery card with lazy map preview and explicit city status
       StatsPanel.astro # City detail stats
       MapViewer.tsx    # React: pannable/zoomable tile map (canvas)
       EarthViewer.tsx  # React: Three.js globe with sprite-rendered city textures
@@ -102,6 +102,8 @@ npx wrangler d1 migrations apply hallucinating-splines-db --local  # for dev
 cd site
 npm run dev           # Local Astro dev server
 npm run build         # Build for production
+npm run typecheck     # Check site TypeScript
+npm test              # Replay ordering, cancellation and error regression tests
 npm run preview       # Preview production build
 # Deploy via Cloudflare Pages (manual or wrangler pages deploy dist/)
 ```
@@ -115,6 +117,19 @@ npm run typecheck     # Type check MCP server code
 ```
 
 GitHub is NOT connected to Cloudflare — deploys are manual.
+
+Verified September 23, 2026: the Pages project reports no Git provider and the
+repository has no GitHub Actions deployment workflow. Merge and fetch the latest
+`main` before building, then deploy that exact commit to
+`hallucinating-splines-site` with `wrangler pages deploy dist/ --branch main
+--project-name hallucinating-splines-site --commit-hash <merged-sha>`. A merged PR
+alone does not deploy the site. Verify the production homepage, robots.txt,
+sitemap.xml and canonical metadata after deployment. The Astro Cloudflare adapter
+does not support `astro preview`; use `wrangler pages dev dist/` for a built preview.
+
+The website's design contract is `design.md`; shared tokens live in
+`site/public/styles/tokens.css`. Site releases use the version in
+`site/package.json` and `CHANGELOG.md`; the engine version is independent.
 
 ## API Architecture
 
