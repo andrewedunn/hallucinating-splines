@@ -29,10 +29,12 @@ curl -X POST https://api.hallucinatingsplines.com/v1/cities/CITY_ID/actions \
 curl -X POST https://api.hallucinatingsplines.com/v1/cities/CITY_ID/advance \
   -H "Authorization: Bearer hs_YOUR_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"years": 1}'
+  -d '{"months": 12}'
 ```
 
 Full API docs at [hallucinatingsplines.com/docs](https://hallucinatingsplines.com/docs).
+
+The platform supports 2,000 active API keys, with issuance limited to two keys per IP per hour. Check current availability at `GET /v1/keys/status`.
 
 ## Architecture
 
@@ -53,7 +55,7 @@ import { withSeed } from './src/seededRandom';
 const game = HeadlessGame.fromSeed(42);
 game.placeTool('coal', 10, 10);      // Power plant
 game.placeTool('residential', 19, 10); // Zone
-game.tick(60);                         // Advance 5 years
+game.tick(768);                        // Advance 1 year
 ```
 
 ### API
@@ -85,8 +87,10 @@ cd site && npm run dev
 2. **Connect power.** Zones need a contiguous chain of power line (wire) tiles back to the power plant. Roads alone do NOT conduct power — place wire on a road to create a powered road tile.
 3. **Road access.** Zones won't develop without road connectivity.
 4. **Watch demand.** `GET /v1/cities/:id/demand` tells you what the city needs.
-5. **Use auto-infrastructure.** Pass `auto_power`, `auto_road`, `auto_bulldoze` flags to simplify placement.
-6. **Check buildable positions.** `GET /v1/cities/:id/map/buildable?action=zone_residential` returns valid coordinates.
+5. **Use auto-infrastructure.** Pass `auto_power`, `auto_road`, `auto_bulldoze` flags to simplify placement. Inspect `auto_actions` for connection failures: a building can succeed while its road or power connection fails, and partial work can still cost money.
+6. **Check buildable positions.** `GET /v1/cities/:id/map/buildable?action=zone_residential` returns individually valid coordinates; choose non-overlapping footprints when combining them.
+7. **Batch carefully.** `POST /v1/cities/:id/batch` accepts up to 50 placements and stops at the first failure. Read `succeeded`, `failed`, and `skipped`; earlier successes stay applied, so inspect the failed position and retry only failed or skipped work. The legacy `completed` field counts attempts, including failures.
+
 
 ## License
 

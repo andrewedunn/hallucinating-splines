@@ -29,6 +29,8 @@ worker/
     names.ts           # Deterministic mayor/city name generation + slug URLs
     cityDO.ts          # Durable Object — one HeadlessGame per city
     autoInfra.ts       # Dijkstra-based auto-power, auto-road, and auto-bulldoze
+    batchOutcome.ts    # Counts attempted, succeeded, failed, and skipped batch items
+    usageTelemetry.ts  # Sanitized request events with route, source, status, and duration
     mapAnalysis.ts     # Semantic map analysis (zone counts, power coverage)
     mapImage.ts        # Tile-to-color PNG generator for map image endpoint
     routes/
@@ -70,7 +72,7 @@ site/
 mcp/
   src/
     index.ts           # Worker entry point + routing
-    agent.ts           # McpAgent with 15 tool definitions
+    agent.ts           # McpAgent with 19 tool definitions
     api.ts             # HTTP client for REST API
     format.ts          # Response formatters for LLM output
   wrangler.toml        # Worker config (DO binding, API_BASE var)
@@ -144,10 +146,11 @@ The website's design contract is `design.md`; shared tokens live in
 - **Scheduled handler** runs daily via cron — currently ends inactive cities (14 days)
 - Auth uses SHA-256 hashed API keys with `hs_` prefix. Keys are shown once at creation.
 - Rate limiting is in-memory per DO: 30 actions/min, 10 advances/min
-- Batch endpoint (`POST /v1/cities/:id/batch`): up to 50 actions per call, counts as 1 rate limit hit
+- Batch endpoint (`POST /v1/cities/:id/batch`): up to 50 actions per call, counts as 1 rate limit hit; stops at the first failure and retains earlier successes. Responses include `succeeded`, `failed`, and `skipped`; legacy `completed` counts attempts.
 - Line/rect actions (`build_road_line`, `build_road_rect`, etc.): bulk infrastructure drawing, 1 rate limit hit each
 - Map image endpoint (`GET /v1/cities/:id/map/image?scale=N`): colored PNG, no auth required
 - Auto-infrastructure order: auto_road runs before auto_power (auto_power can route wire through roads, creating powered road tiles)
+- Auto-infrastructure is best-effort: inspect `auto_actions` even when primary placement succeeds. Failed connections report partial paths and costs; clearing can persist even if placement fails.
 - Failed actions include a `reason` field: `placement_failed`, `insufficient_funds`, `needs_bulldoze`
 
 ### Key Patterns

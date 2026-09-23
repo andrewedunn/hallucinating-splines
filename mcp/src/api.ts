@@ -16,7 +16,7 @@ export class ApiClient {
   ) {}
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<ApiResult<T>> {
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = { 'X-HS-Client': 'hallucinating-splines-mcp' };
     if (this.apiKey) {
       headers['Authorization'] = `Bearer ${this.apiKey}`;
     }

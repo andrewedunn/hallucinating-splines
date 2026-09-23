@@ -264,3 +264,72 @@ describe('autoInfra', () => {
     });
   });
 });
+
+// Regression cases from the usage audit. Build controlled terrain to isolate behavior.
+describe('autobuild regressions', () => {
+  function flatGame() {
+    const game = HeadlessGame.fromSeed(42);
+    const map = (game as any).map;
+    for (let y = 0; y < map.height; y++) {
+      for (let x = 0; x < map.width; x++) map.setTile(x, y, 0, 0);
+    }
+    return game;
+  }
+
+  test('recognizes power flags instead of building another connection', () => {
+    const game = flatGame();
+    game.placeTool('residential', 20, 20);
+    (game as any).map.addTileFlags(20, 20, POWERBIT);
+    expect(autoPower(game, 20, 20, 3)).toEqual({ type: 'power_line', path: [], cost: 0 });
+  });
+
+  test.each([3, 4, 6])('clears the engine footprint for a size %i building', size => {
+    const game = flatGame();
+    const map = (game as any).map;
+    // Tree at the top-left belongs to the building; bottom-right is outside it.
+    map.setTile(19, 19, 21, 0x1000);
+    map.setTile(20 + size - 1, 20 + size - 1, 21, 0x1000);
+    const result = autoBulldoze(game, 20, 20, size);
+    expect(result.tiles).toContainEqual([19, 19]);
+    expect(result.tiles).not.toContainEqual([20 + size - 1, 20 + size - 1]);
+  });
+
+  test('road bootstrap reports partial work and money spent when funds run out', () => {
+    const game = flatGame();
+    game.placeTool('residential', 20, 20);
+    (game as any).sim.budget.totalFunds = 15;
+    const result = autoRoad(game, 20, 20, 3);
+    expect(result.failed).toBe(true);
+    expect(result.cost).toBe(10);
+    expect(result.path).toHaveLength(1);
+    expect(game.getStats().funds).toBe(5);
+  });
+
+  test('reports a blocked wire path instead of claiming a connection', () => {
+    const game = flatGame();
+    game.placeTool('coal', 10, 20);
+    game.placeTool('residential', 20, 20);
+    // Simulate a tool rejection (e.g. an unsupported crossing) along the chosen path.
+    const original = game.placeTool.bind(game);
+    game.placeTool = (tool, x, y) => tool === 'wire'
+      ? { success: false, cost: 0, result: 1, reason: 'placement_failed' }
+      : original(tool, x, y);
+    const result = autoPower(game, 20, 20, 3);
+    expect(result.failed).toBe(true);
+    expect(result.reason).toBe('placement_failed');
+  });
+});
+
+// Tile tools can charge more than their base price for water crossings.
+test('placement and auto-infrastructure costs reconcile to actual funds', () => {
+  const game = HeadlessGame.fromSeed(42);
+  const map = (game as any).map;
+  map.setTile(20, 20, 0, 0);
+  map.setTile(21, 20, 2, 0);
+  game.placeTool('road', 20, 20);
+  const before = game.getStats().funds;
+  const result = game.placeTool('road', 21, 20);
+  expect(result.success).toBe(true);
+  expect(result.cost).toBe(50);
+  expect(result.cost).toBe(before - game.getStats().funds);
+});

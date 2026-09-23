@@ -3,6 +3,7 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../auth';
+import { batchOutcome } from '../batchOutcome';
 import { errorResponse } from '../errors';
 import {
   CityIdParam, ErrorSchema, PlaceActionBodySchema, PlaceActionResponseSchema,
@@ -189,7 +190,7 @@ actions.openapi(placeActionRoute, async (c) => {
   }
 
   // Sync stats to D1 (fire and forget)
-  if (result.success && result.stats) {
+  if (result.stats) {
     c.executionCtx.waitUntil(syncStats(c.env.DB, cityId, result.stats));
   }
 
@@ -202,7 +203,7 @@ actions.openapi(placeActionRoute, async (c) => {
       cityId,
       result.stats?.year || 0,
       action,
-      JSON.stringify({ x, y, auto_bulldoze, auto_power, auto_road }),
+      JSON.stringify({ x, y, auto_bulldoze, auto_power, auto_road, reason: result.reason, auto_actions: result.auto_actions }),
       result.success ? 'success' : 'failed',
       result.cost || 0
     ).run()
@@ -509,6 +510,9 @@ actions.openapi(batchRoute, async (c) => {
     c.executionCtx.waitUntil(syncStats(c.env.DB, cityId, result.stats));
   }
 
+  const outcome = batchOutcome(result.results, batchActions.length);
+
+  // Log per-item outcomes so failures and auto-infrastructure can be audited.
   // Log batch action to D1
   c.executionCtx.waitUntil(
     c.env.DB.prepare(
@@ -518,8 +522,17 @@ actions.openapi(batchRoute, async (c) => {
       cityId,
       result.stats?.year || 0,
       'batch',
-      JSON.stringify({ count: batchActions.length }),
-      result.completed === result.total ? 'success' : 'partial',
+      JSON.stringify({
+        count: batchActions.length,
+        actions: batchActions.map(a => ({
+          action: a.action, x: a.x, y: a.y,
+          auto_bulldoze: a.auto_bulldoze === true,
+          auto_power: a.auto_power === true,
+          auto_road: a.auto_road === true,
+        })),
+        ...outcome, results: result.results,
+      }),
+      outcome.outcome,
       result.total_cost || 0
     ).run()
   );
@@ -529,6 +542,9 @@ actions.openapi(batchRoute, async (c) => {
     total_cost: result.total_cost,
     funds_remaining: result.funds_remaining,
     completed: result.completed,
+    succeeded: outcome.succeeded,
+    failed: outcome.failed,
+    skipped: outcome.skipped,
     total: result.total,
   }, 200);
 });
