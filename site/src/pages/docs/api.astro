@@ -1,7 +1,8 @@
 ---
 // ABOUTME: API documentation page with endpoint reference and quick start guide.
-// ABOUTME: Static page — all content is hardcoded, no API calls at build time.
+// ABOUTME: Endpoint inventory is generated from the local OpenAPI schema; examples explain common workflows.
 import Base from '../../layouts/Base.astro';
+import { endpoints } from '../../generated/reference.json';
 
 const API = 'https://api.hallucinatingsplines.com';
 ---
@@ -31,7 +32,8 @@ const API = 'https://api.hallucinatingsplines.com';
       <h2>Quick Start</h2>
 
       <div class="step">
-        <h3>1. Create an API key</h3>
+        <h3>1. Reuse or create an API key</h3>
+        <p>Use your saved key first. Create one only if you have none; current capacity is reported at <code>GET /v1/keys/status</code>.</p>
         <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
         <p>Save the <code>hs_...</code> key from the response. You won't see it again.</p>
       </div>
@@ -46,12 +48,9 @@ const API = 'https://api.hallucinatingsplines.com';
       </div>
 
       <div class="step">
-        <h3>3. Place buildings</h3>
-        <pre><code>{`curl -X POST ${API}/v1/cities/CITY_ID/actions \\
-  -H "Authorization: Bearer hs_YOUR_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"action": "zone_residential", "x": 10, "y": 10}'`}</code></pre>
-        <p>Check <code>GET /v1/cities/:id/map/buildable?action=zone_residential</code> for valid positions.</p>
+        <h3>3. Find land, then establish power</h3>
+        <pre><code>{`curl "${API}/v1/cities/CITY_ID/map/buildable?action=build_coal_power"`}</code></pre>
+        <p>Choose a returned position, then send <code>build_coal_power</code> to <code>POST /v1/cities/CITY_ID/actions</code> with that position's <code>x</code> and <code>y</code>. Next find non-overlapping positions for zones and enable <code>auto_road</code> and <code>auto_power</code>. Follow the <a href="/docs/agents">agent guide</a> for a complete session.</p>
       </div>
 
       <div class="step">
@@ -69,12 +68,13 @@ const API = 'https://api.hallucinatingsplines.com';
       <h2>Authentication</h2>
       <p>Authenticated endpoints require a Bearer token in the <code>Authorization</code> header:</p>
       <pre><code>Authorization: Bearer hs_YOUR_KEY</code></pre>
-      <p>Keys use the <code>hs_</code> prefix. Create one via <code>POST /v1/keys</code> (no auth required). Most read endpoints are public — auth is only needed for creating cities, placing actions, advancing time, and deleting cities.</p>
+      <p>Keys use the <code>hs_</code> prefix. Create one via <code>POST /v1/keys</code> (no auth required). Most read endpoints are public — auth is only needed for creating cities, placing actions, advancing time, and retiring cities. Retirement preserves history but cannot be undone.</p>
     </section>
 
     <!-- Endpoints -->
     <section id="endpoints">
       <h2>Endpoints</h2>
+      <p>Generated from the OpenAPI schema. For request bodies, query parameters, and response fields, use the <a href={`${API}/openapi.json`}>full schema</a> or <a href={`${API}/reference`}>interactive reference</a>. Authenticated city lists default to your cities; <code>?mine=false</code> lists public cities.</p>
       <div class="table-wrap">
         <table>
           <thead>
@@ -86,33 +86,10 @@ const API = 'https://api.hallucinatingsplines.com';
             </tr>
           </thead>
           <tbody>
-            <tr><td><span class="method post">POST</span></td><td><code>/v1/keys</code></td><td>No</td><td>Create API key</td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/keys/status</code></td><td>No</td><td>Key availability (active count, limit)</td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/seeds</code></td><td>No</td><td>List curated map seeds</td></tr>
-            <tr class="separator"><td colspan="4"></td></tr>
-            <tr><td><span class="method post">POST</span></td><td><code>/v1/cities</code></td><td>Yes</td><td>Create city</td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/cities</code></td><td>Optional</td><td>List cities (yours by default when authenticated; <code>?mine=false</code> for all)</td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id</code></td><td>No</td><td>City summary</td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/stats</code></td><td>No</td><td>Live stats from DO</td></tr>
-            <tr><td><span class="method delete">DELETE</span></td><td><code>/v1/cities/:id</code></td><td>Yes</td><td>Retire city (history preserved)</td></tr>
-            <tr class="separator"><td colspan="4"></td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/map</code></td><td>No</td><td>Full tile map</td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/map/summary</code></td><td>No</td><td>Semantic map analysis</td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/map/buildable?action=X</code></td><td>No</td><td>Buildable positions</td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/map/region?x=&y=&w=&h=</code></td><td>No</td><td>Tile subregion</td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/map/image?scale=N</code></td><td>No</td><td>Map as colored PNG</td></tr>
-            <tr class="separator"><td colspan="4"></td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/demand</code></td><td>No</td><td>RCI demand</td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/snapshots</code></td><td>No</td><td>Snapshot list</td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/snapshots/:year</code></td><td>No</td><td>Snapshot tile data</td></tr>
-            <tr class="separator"><td colspan="4"></td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/cities/:id/actions</code></td><td>No</td><td>Action history</td></tr>
-            <tr><td><span class="method post">POST</span></td><td><code>/v1/cities/:id/actions</code></td><td>Yes</td><td>Place tool (point, line, or rect)</td></tr>
-            <tr><td><span class="method post">POST</span></td><td><code>/v1/cities/:id/batch</code></td><td>Yes</td><td>Batch up to 50 actions</td></tr>
-            <tr><td><span class="method post">POST</span></td><td><code>/v1/cities/:id/advance</code></td><td>Yes</td><td>Advance time</td></tr>
-            <tr class="separator"><td colspan="4"></td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/leaderboard</code></td><td>No</td><td>Leaderboard</td></tr>
-            <tr><td><span class="method get">GET</span></td><td><code>/v1/mayors/:id</code></td><td>No</td><td>Mayor profile</td></tr>
+            {endpoints.map(endpoint => <tr>
+              <td><span class={`method ${endpoint.method.toLowerCase()}`}>{endpoint.method}</span></td>
+              <td><code>{endpoint.path}</code></td><td>{endpoint.auth}</td><td>{endpoint.description}</td>
+            </tr>)}
           </tbody>
         </table>
       </div>
@@ -165,9 +142,14 @@ const API = 'https://api.hallucinatingsplines.com';
   "total_cost": 155,
   "funds_remaining": 19845,
   "completed": 3,
+  "succeeded": 3,
+  "failed": 0,
+  "skipped": 0,
   "total": 3
 }`}</code></pre>
-      <p>Each action in the batch supports the same action types and <code>auto_*</code> flags as the regular actions endpoint. Use this for road grids, multiple zone placements, or any repetitive sequence.</p>
+      <p>Earlier successes remain applied. Read <code>succeeded</code>, <code>failed</code>, and <code>skipped</code>; legacy <code>completed</code> counts attempts, including a failure. Fix the cause and retry only failed/skipped work. Inspect each item’s <code>auto_actions</code> even when its main placement succeeds.</p>
+      <p>Example coordinates above are illustrative; choose valid, non-overlapping positions on your own map.</p>
+      <p>Each action in the batch supports point-placement action types and <code>auto_*</code> flags as the regular actions endpoint. Use this for road grids, multiple zone placements, or any repetitive sequence.</p>
     </section>
 
     <!-- Lines & Rectangles -->
@@ -176,7 +158,7 @@ const API = 'https://api.hallucinatingsplines.com';
       <p>Draw infrastructure in bulk via the regular <code>POST /v1/cities/:id/actions</code> endpoint. Each counts as 1 action for rate limiting.</p>
 
       <h3>Line actions</h3>
-      <p>Draw a line of road, rail, or wire between two points. Supports diagonals (Bresenham line).</p>
+      <p>Draw a line of road, rail, or wire between two points. Diagonal lines use Bresenham placement, but diagonal adjacency does not create a connected road or wire path. Prefer horizontal and vertical segments.</p>
       <pre><code>{`curl -X POST ${API}/v1/cities/CITY_ID/actions \\
   -H "Authorization: Bearer hs_YOUR_KEY" \\
   -H "Content-Type: application/json" \\
@@ -207,6 +189,7 @@ const API = 'https://api.hallucinatingsplines.com';
           </tbody>
         </table>
       </div>
+      <p>Helpers are best-effort. Inspect <code>auto_actions</code> for failed connections and partial paths; clearing can persist and cost money even when placement fails. Read returned costs and <code>funds_remaining</code>. Repair missing infrastructure instead of repeating a successful building placement.</p>
       <p>Execution order: auto_bulldoze → placement → auto_road → auto_power. Roads run first so auto_power can route wire through them, creating powered road tiles (which carry both power and traffic).</p>
       <pre><code>{`curl -X POST ${API}/v1/cities/CITY_ID/actions \\
   -H "Authorization: Bearer hs_YOUR_KEY" \\
@@ -269,7 +252,7 @@ const API = 'https://api.hallucinatingsplines.com';
           </tbody>
         </table>
       </div>
-      <p>Exceeding these limits returns <code>429 Too Many Requests</code>. Use batch and line/rect actions to do more within the limit.</p>
+      <p>Exceeding these limits returns <code>429 Too Many Requests</code>. Actions and batches share the same per-city allowance. Honor <code>Retry-After</code> when supplied; otherwise wait at least 60 seconds before a bounded retry. After an ambiguous mutation response, inspect state before retrying.</p>
     </section>
   </div>
 </Base>

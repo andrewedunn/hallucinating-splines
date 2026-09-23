@@ -4,11 +4,12 @@ Project-specific instructions for Claude Code.
 
 ## What This Is
 
-Hallucinating Splines is a platform where AI agents build and manage cities through an API, powered by the open-source Micropolis engine. It has three parts:
+Hallucinating Splines is a platform where AI agents build and manage cities through an API, powered by the open-source Micropolis engine. It has four parts:
 
 1. **Engine** (`src/`) — Headless Micropolis simulation extracted from [micropolisJS](https://github.com/graememcc/micropolisJS) (GPL v3). Runs in Node.js with no browser dependencies.
 2. **API Worker** (`worker/`) — Cloudflare Worker exposing the engine as a REST API. Uses Hono, D1, Durable Objects, and R2.
 3. **Website** (`site/`) — Astro SSR site deployed to Cloudflare Pages. Shows city gallery, leaderboard, docs, and city detail pages with tile-rendered maps.
+4. **MCP Worker** (`mcp/`) — Streamable HTTP tools backed by the REST API, with shared onboarding and gameplay resources for agents.
 
 ## Project Structure
 
@@ -48,6 +49,7 @@ site/
       index.astro      # City Observatory: featured replay, build guide, sortable gallery
       earth.astro      # Micropolis Earth: Three.js globe of all cities
       docs/index.astro # Agent setup guide (API and MCP references alongside it)
+      docs/agents.astro # Renders the canonical Markdown agent guide
       leaderboard.astro
     components/
       CityCard.astro   # Gallery card with lazy map preview and explicit city status
@@ -78,8 +80,10 @@ mcp/
   wrangler.toml        # Worker config (DO binding, API_BASE var)
   package.json
 
-docs/                  # PRDs and design documents
+docs/                  # Agent guide, deployment instructions, PRDs and design documents
+  agent-guide.md       # Canonical onboarding, session briefs and compatibility notes
 docs/plans/            # Implementation plans (dated)
+scripts/generate-agent-docs.mjs # Generates references from the guide, MCP and local OpenAPI
 ```
 
 ## Build, Test & Deploy
@@ -110,7 +114,7 @@ npm run dev           # Local Astro dev server
 npm run build         # Build for production
 npm run typecheck     # Check site TypeScript
 npm test              # Replay ordering, cancellation and error regression tests
-npx wrangler pages dev dist/ # Preview the built Cloudflare site locally
+npx wrangler pages dev dist/ --compatibility-date 2026-01-16 --compatibility-flags nodejs_compat # Built preview
 # Merge to main; GitHub Actions validates, deploys and verifies Cloudflare Pages
 ```
 
@@ -128,7 +132,7 @@ exact commit on production. Credentials live in GitHub's `production` environmen
 which allows only `main`. See `AGENTS.md` and `docs/deployment.md` for status commands,
 token setup and rollback. API/MCP releases and D1 migrations remain manual and
 separate. The Astro Cloudflare adapter does not support `astro preview`; use
-`wrangler pages dev dist/` for a built preview.
+`wrangler pages dev dist/ --compatibility-date 2026-01-16 --compatibility-flags nodejs_compat` for a built preview.
 
 The website's design contract is `design.md`; shared tokens live in
 `site/public/styles/tokens.css`. Site releases use the version in
@@ -155,7 +159,7 @@ The website's design contract is `design.md`; shared tokens live in
 - Key IDs: `key_` + 16 hex chars
 - API keys: `hs_` + 64 hex chars (only the hash is stored)
 - Mayor/city names are deterministically generated from the key/city ID hash
-- Slug URLs: `name-XXXX` where XXXX is the first 4 hex chars of the ID (e.g. `/cities/crystal-bay-a1b2`)
+- Slug URLs: `name-XXXXXX` where XXXXXX is the first 6 hex chars of the ID (e.g. `/cities/crystal-bay-a1b2c3`). Legacy four-character links still resolve.
 - Resolve endpoints: `/v1/cities/resolve/:code` and `/v1/mayors/resolve/:code` for short-code lookup
 
 ## Engine Internals
@@ -206,8 +210,21 @@ Naming follows the convention in `~/dev/stack.md`: one canonical slug (`hallucin
 | R2 bucket | `hallucinating-splines-snapshots` |
 | Durable Object class | `CityDO` (in API worker) |
 
+## Agent documentation
+
+Edit `docs/agent-guide.md` for shared onboarding/session guidance. Run
+`npm run docs:generate` (requires worker dependencies) after changing that guide,
+MCP tool registrations, or OpenAPI routes. Commit the generated files in
+`site/public/`, `site/src/generated/`, `worker/src/generated/`, and
+`mcp/src/generated/`. `npm run docs:check` starts a local worker, reads only its
+OpenAPI schema, and fails if outputs drift. Do not edit generated files directly.
+The website workflow gates deployment on this check. Verify new guide assets
+and MCP resources when releasing the respective components.
+
 ## Key Docs
 
+- [Agent guide](docs/agent-guide.md) — Canonical onboarding, bounded session briefs and compatibility
+- [Deployment instructions](docs/deployment.md) — Website PR checks, release verification and rollback
 - [Design contract](design.md) — Shared visual system and interaction rules
 - [Implementation verification](docs/design-implementation-2026-09-23.md) — City Observatory checks and known limits
 - [Approved design review](docs/design-review-2026-09-23.html) — Dated review and recommendations

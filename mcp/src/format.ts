@@ -1,11 +1,18 @@
 // ABOUTME: Response formatters that convert JSON API responses into readable text for LLMs.
 // ABOUTME: Each function highlights what matters for gameplay decisions.
 
+function publicCityUrl(slug: unknown): string | undefined {
+  return typeof slug === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*-[0-9a-f]{4,6}$/.test(slug)
+    ? `https://hallucinatingsplines.com/cities/${slug}` : undefined;
+}
+
 export function formatCreateCity(data: Record<string, unknown>): string {
+  const url = publicCityUrl(data.slug);
   const lines = [
     `City created!`,
     `  ID: ${data.id}`,
     `  Name: ${data.name}`,
+    ...(url ? [`  Public city: ${url}`] : []),
     `  Seed: ${data.seed}`,
     `  Funds: $${data.funds}`,
     `  Population: ${data.population}`,
@@ -396,6 +403,8 @@ export function formatCityList(data: Record<string, unknown>): string {
   const lines = [`Cities (${total} total):`];
   for (const c of cities) {
     lines.push(`  ${c.name} (${c.id}) — pop: ${c.population}, year: ${c.game_year}, score: ${c.score}, status: ${c.status}`);
+    const url = publicCityUrl(c.slug);
+    if (url) lines.push(`    Public city: ${url}`);
   }
 
   return lines.join('\n');

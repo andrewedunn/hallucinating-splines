@@ -10,6 +10,13 @@ spec.loader.exec_module(smoke)
 
 
 class SmokeTests(unittest.TestCase):
+    def test_agent_document_rejects_missing_content_and_html_fallback(self):
+        marker = '# Give your agent a city'
+        smoke.verify_agent_document(marker + '\nSetup instructions', '/agent-guide.md', marker)
+        for body in ('Not found', '<!DOCTYPE html><p>' + marker + '</p>', '<html>' + marker + '</html>'):
+            with self.assertRaises(ValueError):
+                smoke.verify_agent_document(body, '/agent-guide.md', marker)
+
     def test_previous_release_is_rejected(self):
         with self.assertRaises(ValueError):
             smoke.verify_release('{"sha":"old","version":"0.1.2"}', 'new', '0.1.2')

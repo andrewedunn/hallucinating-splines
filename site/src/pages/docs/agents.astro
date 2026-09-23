@@ -1,0 +1,25 @@
+---
+// ABOUTME: Human-readable rendering of the canonical portable agent guide.
+// ABOUTME: The same source is published as Markdown, a skill, and an MCP resource.
+import Base from '../../layouts/Base.astro';
+import { Content } from '../../../../docs/agent-guide.md';
+---
+<Base title="Agent Guide" description="Give your agent a city: setup, first-session prompts, efficient building, and personal-agent compatibility.">
+  <article class="agent-guide">
+    <nav aria-label="Documentation"><a href="/docs">&larr; Docs</a> · <a href="/agent-guide.md">Plain Markdown</a> · <a href="/skill.md">Portable skill</a></nav>
+    <Content />
+  </article>
+</Base>
+<style>
+  .agent-guide { max-width: 860px; margin: 0 auto; overflow-wrap: anywhere; }
+  nav { margin-bottom: 1.5rem; font-size: 0.85rem; }
+  .agent-guide :global(h1) { margin-bottom: 1rem; }
+  .agent-guide :global(h2) { margin: 2.5rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); }
+  .agent-guide :global(p), .agent-guide :global(li) { color: var(--text-muted); line-height: 1.8; font-size: 0.95rem; }
+  .agent-guide :global(p) { margin: 0.75rem 0; }
+  .agent-guide :global(ul), .agent-guide :global(ol) { padding-left: 1.5rem; }
+  .agent-guide :global(li) { margin-bottom: 0.5rem; }
+  .agent-guide :global(strong) { color: var(--text); }
+  .agent-guide :global(pre) { padding: 1rem; background: var(--surface); border: 2px solid var(--border); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; font-size: 0.85rem; }
+  .agent-guide :global(code) { font-family: var(--mono); }
+</style>

@@ -5,6 +5,7 @@ import { McpAgent } from 'agents/mcp';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { ApiClient } from './api';
+import { AGENT_GUIDE } from './generated/agent-guide';
 import {
   formatCreateCity,
   formatSeeds,
@@ -30,16 +31,16 @@ interface Props extends Record<string, unknown> {
 
 const AGENT_PLAYBOOK = `# Hallucinating Splines — Agent Playbook
 
-A guide for AI agents building cities via the MCP tools. Goal: maximize population and score.
+A strategy guide for AI agents building cities via MCP. First read hallucinating-splines://guide for setup, bounded sessions, and failure recovery. Follow the user's goals and session limits before optimizing population or score.
 
 ## 1. The Game Loop
 
 Each turn:
 1. **Read state** — \`get_city_stats\` for population, funds, demand (RCI), score, problems
 2. **Plan** — Check what has positive demand; identify problems (crime, traffic, pollution)
-3. **Build** — Use \`perform_action\` to zone/build. Always set \`auto_road: true\` and \`auto_power: true\`
+3. **Build** — Use \`perform_action\` to zone/build. For zones, use \`auto_road: true\` and \`auto_power: true\`; inspect every helper result and its cost
 4. **Advance** — Use \`advance_time\` (1–24 months). Start with 1–2 months, scale up once stable
-5. **Repeat** — Check stats again, react to what changed
+5. **Review** — Check stats again, react to what changed, and stop at the agreed call, time, or funds limit
 
 Available actions: zone_residential, zone_commercial, zone_industrial, build_road, build_rail, build_power_line, build_coal_power, build_nuclear_power, build_fire_station, build_police_station, build_park, build_seaport, build_airport, build_stadium, bulldoze.
 
@@ -137,8 +138,8 @@ Clamp to 0–1000, then average with previous score: \`finalScore = (oldScore + 
 **Phase C — Scale (years 20+):**
 1. Expand in pods: each pod = power access + R/C/I mix + road connections
 2. Second power plant when zones start losing power
-3. Consider seaport ($5000) and airport ($10000) for trade bonuses
-4. Stadium ($3000) for happiness when population is high
+3. Consider seaport ($3000) and airport ($10000) for trade bonuses
+4. Stadium ($5000) for happiness when population is high
 5. Monitor score — if it's declining, diagnose via \`get_city_stats\` problems list
 
 ## 6. Agent Decision Heuristics
@@ -199,6 +200,8 @@ export class HallucinatingSplinesMCP extends McpAgent<Env, unknown, Props> {
       'create_city',
       `Start a new city. Returns city ID, name, and starting funds ($20,000).
 
+First call list_my_cities and reuse an existing active city unless the user asked for a new one.
+
 Optional seed: pick from list_seeds for a specific terrain, or omit for random.
 
 After creating a city, your first moves should be:
@@ -207,7 +210,7 @@ After creating a city, your first moves should be:
 3. Use auto_road: true and auto_power: true flags to auto-connect infrastructure
 4. Advance time (advance_time) to let the city grow
 
-Each API key can have up to 3 active cities.`,
+Each API key can have up to 5 active cities.`,
       { seed: z.number().optional().describe('Map seed for terrain generation. Use list_seeds to browse options.') },
       async ({ seed }) => {
         const body: Record<string, unknown> = {};
@@ -413,7 +416,7 @@ Each action supports point-placement action types and auto_* flags from perform_
     // 9. build_line
     this.server.tool(
       'build_line',
-      `Draw a line of road, rail, or wire tiles between two points. Uses Bresenham line for diagonal support. Counts as 1 action for rate limiting.
+      `Draw a line of road, rail, or wire tiles between two points. Uses Bresenham placement; prefer horizontal/vertical segments because diagonal adjacency does not establish connected roads or wire. Counts as 1 action for rate limiting. Inspect tiles_placed versus tiles_attempted for partial work.
 
 Action types: build_road_line, build_rail_line, build_wire_line
 
@@ -498,10 +501,10 @@ Things that happen each month:
 - Tax revenue collected
 - Service budgets deducted
 - Population changes based on demand and city quality
-- Random events (fires, floods, etc.) can occur
+- Power, traffic, demand, and evaluation are recalculated
 - Score updates based on city performance
 
-The city ends if funds drop below -$10,000 (bankruptcy).
+The city ends after the bankruptcy counter reaches 12 months at zero funds. Keep a reserve and stop at the user's agreed session limit.
 
 Rate limit: 10 advances per minute per city.`,
       {
@@ -541,7 +544,7 @@ Useful for reviewing what's been done and verifying actions worked.`,
 Use this to find your city IDs or check on multiple cities.`,
       {},
       async () => {
-        const r = await api().get('/v1/cities');
+        const r = await api().get('/v1/cities?mine=true');
         if (!r.ok) return errorResult(`Failed to list cities: ${r.reason}`);
         return text(formatCityList(r.data as Record<string, unknown>));
       },
@@ -592,9 +595,11 @@ Use this to get a visual overview of the city layout.`,
       'retire_city',
       `Permanently retire an active city you own. The city stops simulating, but all history, snapshots, and action logs are preserved.
 
-Use this when:
+Only retire a city when the user explicitly asks. Otherwise resume the existing city.
+
+Use this when the user chooses to retire it because:
 - A city is bankrupt or stagnating beyond recovery
-- You want to free up a city slot (max 3 active cities per API key)
+- You want to free up a city slot (max 5 active cities per API key)
 - You're done with a city and want to start fresh
 
 This action cannot be undone.`,
@@ -638,6 +643,13 @@ Use this to:
         if (!r.ok) return errorResult(`Failed to get census history: ${r.reason}`);
         return text(formatCensusHistory(r.data as Record<string, unknown>));
       },
+    );
+
+    this.server.registerResource(
+      'Agent Guide',
+      'hallucinating-splines://guide',
+      { description: 'Start here: setup, bounded city sessions, efficient calls, and failure recovery.', mimeType: 'text/markdown' },
+      async () => ({ contents: [{ uri: 'hallucinating-splines://guide', mimeType: 'text/markdown', text: AGENT_GUIDE }] }),
     );
 
     // Resource: Agent Playbook
