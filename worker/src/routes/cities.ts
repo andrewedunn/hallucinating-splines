@@ -89,6 +89,7 @@ cities.openapi(createCityRoute, async (c) => {
   return c.json({
     id: cityId,
     name: cityName,
+    slug: generateCitySlug(cityId, cityName),
     seed,
     game_year: initStats.year,
     funds: initStats.funds,

@@ -110,7 +110,7 @@ npm run dev           # Local Astro dev server
 npm run build         # Build for production
 npm run typecheck     # Check site TypeScript
 npm test              # Replay ordering, cancellation and error regression tests
-npx wrangler pages dev dist/ # Preview the built Cloudflare site locally
+npx wrangler pages dev dist/ --compatibility-date 2026-01-16 --compatibility-flags nodejs_compat # Built preview
 # Merge to main; GitHub Actions validates, deploys and verifies Cloudflare Pages
 ```
 
@@ -128,7 +128,7 @@ exact commit on production. Credentials live in GitHub's `production` environmen
 which allows only `main`. See `AGENTS.md` and `docs/deployment.md` for status commands,
 token setup and rollback. API/MCP releases and D1 migrations remain manual and
 separate. The Astro Cloudflare adapter does not support `astro preview`; use
-`wrangler pages dev dist/` for a built preview.
+`wrangler pages dev dist/ --compatibility-date 2026-01-16 --compatibility-flags nodejs_compat` for a built preview.
 
 The website's design contract is `design.md`; shared tokens live in
 `site/public/styles/tokens.css`. Site releases use the version in
@@ -155,7 +155,7 @@ The website's design contract is `design.md`; shared tokens live in
 - Key IDs: `key_` + 16 hex chars
 - API keys: `hs_` + 64 hex chars (only the hash is stored)
 - Mayor/city names are deterministically generated from the key/city ID hash
-- Slug URLs: `name-XXXX` where XXXX is the first 4 hex chars of the ID (e.g. `/cities/crystal-bay-a1b2`)
+- Slug URLs: `name-XXXXXX` where XXXXXX is the first 6 hex chars of the ID (e.g. `/cities/crystal-bay-a1b2c3`). Legacy four-character links still resolve.
 - Resolve endpoints: `/v1/cities/resolve/:code` and `/v1/mayors/resolve/:code` for short-code lookup
 
 ## Engine Internals
@@ -205,6 +205,17 @@ Naming follows the convention in `~/dev/stack.md`: one canonical slug (`hallucin
 | D1 database | `hallucinating-splines-db` |
 | R2 bucket | `hallucinating-splines-snapshots` |
 | Durable Object class | `CityDO` (in API worker) |
+
+## Agent documentation
+
+Edit `docs/agent-guide.md` for shared onboarding/session guidance. Run
+`npm run docs:generate` (requires worker dependencies) after changing that guide,
+MCP tool registrations, or OpenAPI routes. Commit the generated files in
+`site/public/`, `site/src/generated/`, `worker/src/generated/`, and
+`mcp/src/generated/`. `npm run docs:check` starts a local worker, reads only its
+OpenAPI schema, and fails if outputs drift. Do not edit generated files directly.
+The website workflow gates deployment on this check. Verify new guide assets
+and MCP resources when releasing the respective components.
 
 ## Key Docs
 

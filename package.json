@@ -8,7 +8,9 @@
   "scripts": {
     "build": "tsc",
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "docs:generate": "node scripts/generate-agent-docs.mjs",
+    "docs:check": "node scripts/generate-agent-docs.mjs --check"
   },
   "license": "GPL-3.0",
   "devDependencies": {

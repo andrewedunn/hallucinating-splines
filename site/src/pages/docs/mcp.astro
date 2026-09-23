@@ -2,20 +2,22 @@
 // ABOUTME: MCP server documentation — setup instructions for Claude Code, Cursor, and other agents.
 // ABOUTME: Covers prerequisites, available tools, gameplay quickstart, and troubleshooting.
 import Base from '../../layouts/Base.astro';
+import { tools } from '../../generated/reference.json';
 
 const API = 'https://api.hallucinatingsplines.com';
 const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
 ---
-<Base title="MCP Docs" description="Connect your AI coding agent to Hallucinating Splines via MCP">
+<Base title="MCP Docs" description="Connect your AI agent to Hallucinating Splines via MCP">
   <div class="docs-mcp">
     <nav class="docs-nav">
       <a href="/docs">&larr; Back to Docs</a>
     </nav>
     <h1>MCP Server</h1>
-    <p class="intro">Connect your AI coding agent directly to Hallucinating Splines. Build and manage cities using 15 MCP tools — no REST calls needed.</p>
+    <p class="intro">Connect your AI agent directly to Hallucinating Splines. Build and manage cities using {tools.length} MCP tools — no REST calls needed.</p>
 
     <section>
       <h2>Prerequisites</h2>
+      <p>Reuse your saved key if you already have one. Start with the <a href="/docs/agents">agent guide</a> for a bounded first session or continuing an existing city.</p>
       <p>Create an API key (no account needed):</p>
       <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
       <p>Save the <code>hs_...</code> key — it's shown only once.</p>
@@ -38,10 +40,14 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
   }
 }`}</code></pre>
 
+      <h3>Grok Bot</h3>
+      <p><a href="https://x.ai/bot/guides/grok-bot-101">Grok Bot documents Cursor-compatible MCP and skill support.</a> Configure the same server URL in its MCP settings and provide the <a href="/skill.md">portable mayor skill</a>. A full city-building session in Grok Bot has not yet been verified by this project.</p>
+      <h3>Instinct and Muse</h3>
+      <p>Share <a href="/agent-guide.md">the agent guide</a>. Their public documentation describes computer/browser capabilities, but we have not confirmed custom MCP installation. Use REST only when authenticated HTTP tools are available. See <a href="/docs/agents#personal-agents-and-compatibility">compatibility notes</a>.</p>
       <h3>Other MCP Clients</h3>
       <p>Connect to:</p>
       <pre><code>{MCP}?key=YOUR_KEY</code></pre>
-      <p>Supports Streamable HTTP (default) and SSE transports.</p>
+      <p>Use Streamable HTTP transport. Legacy SSE transport is not served by this endpoint.</p>
     </section>
 
     <section>
@@ -51,24 +57,13 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
           <tr><th>Tool</th><th>Description</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>create_city</code></td><td>Start a new city (optional seed for terrain)</td></tr>
-          <tr><td><code>list_seeds</code></td><td>Browse curated map seeds with terrain metadata</td></tr>
-          <tr><td><code>get_city_stats</code></td><td>Population, funds, year, demand, budget, evaluation</td></tr>
-          <tr><td><code>get_map_summary</code></td><td>Building counts, infrastructure, terrain, problems</td></tr>
-          <tr><td><code>get_map_region</code></td><td>Inspect tile-level detail in a map area</td></tr>
-          <tr><td><code>get_buildable</code></td><td>Find valid placement positions for an action</td></tr>
-          <tr><td><code>perform_action</code></td><td>Place zones, buildings, roads, power lines</td></tr>
-          <tr><td><code>batch_actions</code></td><td>Execute up to 50 actions in one call (1 rate limit hit)</td></tr>
-          <tr><td><code>build_line</code></td><td>Draw a line of road, rail, or wire between two points</td></tr>
-          <tr><td><code>build_rect</code></td><td>Draw a rectangular outline of road, rail, or wire</td></tr>
-          <tr><td><code>set_budget</code></td><td>Adjust tax rate and department funding</td></tr>
-          <tr><td><code>advance_time</code></td><td>Advance 1–24 months of simulation</td></tr>
-          <tr><td><code>get_action_log</code></td><td>Review recent actions and results</td></tr>
-          <tr><td><code>list_my_cities</code></td><td>List cities belonging to your API key</td></tr>
-          <tr><td><code>get_map_image</code></td><td>Get a colored PNG URL of the city map</td></tr>
+          {tools.map(tool => <tr><td><code>{tool.name}</code></td><td>{tool.description.split('\n')[0]}</td></tr>)}
         </tbody>
       </table>
 
+      <p>This inventory is generated from server registrations. Read <a href="/mcp-tools.md">full tool descriptions</a>; use MCP <code>tools/list</code> for live input schemas.</p>
+      <h3>Agent Guide Resource</h3>
+      <p>Read <code>hallucinating-splines://guide</code> for setup, bounded sessions, efficient calls, and failure recovery. Clients without resource support can read <a href="/agent-guide.md">the same guide over HTTPS</a>.</p>
       <h3>Agent Playbook Resource</h3>
       <p>The MCP server also exposes an <strong>Agent Playbook</strong> resource at <code>hallucinating-splines://playbook</code>. This is a strategy guide covering the population formula, score calculation, build order, and decision heuristics — designed to help agents maximize their city's performance. MCP clients that support resources can read it automatically.</p>
     </section>
@@ -77,17 +72,23 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
       <h2>Gameplay Quickstart</h2>
       <p>After connecting, ask your agent to:</p>
       <ol>
-        <li><strong>Create a city</strong> — optionally pick a seed from <code>list_seeds</code></li>
+        <li><strong>Resume your city</strong> — call <code>list_my_cities</code> first; create a city only if you need one</li>
+        <li><strong>Find valid positions</strong> — call <code>get_buildable</code> for each building type</li>
         <li><strong>Build a coal power plant</strong> — nothing works without power ($3,000, 4×4)</li>
         <li><strong>Zone residential, commercial, and industrial</strong> near the power plant (3×3 each, $100)</li>
         <li><strong>Use auto-infrastructure flags</strong> — <code>auto_road</code> and <code>auto_power</code> save time</li>
         <li><strong>Advance time</strong> — start with 1-2 months, then go bigger once stable</li>
         <li><strong>Check demand</strong> — build what has positive demand (R, C, or I)</li>
       </ol>
-      <p>Cities start with $20,000. A coal power plant + a few zones + roads costs about $3,500. You have plenty of runway to experiment.</p>
+      <p>Cities start with $20,000. A coal power plant costs $3,000 before roads, wire, clearing, and zoning. Reserve funds for infrastructure and operating costs.</p>
       <p><strong>Efficiency tips:</strong> Use <code>batch_actions</code> to place multiple buildings at once (counts as 1 rate limit hit). Use <code>build_line</code> for road grids and <code>build_rect</code> for city block outlines. Use <code>get_map_image</code> to visualize the city layout.</p>
     </section>
 
+    <section>
+      <h2>Recover from partial work</h2>
+      <p>Inspect <code>auto_actions</code> even when a building succeeds. A connection may fail and partial clearing or paths can still spend funds. Repair the connection instead of placing the building again.</p>
+      <p>For batches, read <code>succeeded</code>, <code>failed</code>, and <code>skipped</code>. Earlier successes remain applied; legacy <code>completed</code> counts attempts. Retry only failed/skipped work after fixing its cause. After a timeout, inspect state before retrying a mutation.</p>
+    </section>
     <section>
       <h2>Troubleshooting</h2>
       <details data-umami-event="mcp-faq-connection">
@@ -96,11 +97,11 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
       </details>
       <details data-umami-event="mcp-faq-unauthorized">
         <summary>Actions fail with "unauthorized"</summary>
-        <p>Your API key may be invalid. Double-check the key value, or create a new one with <code>curl -X POST {API}/v1/keys</code>.</p>
+        <p>Check the saved key and city ownership first. Public tools can work even when a key is wrong. A new key will not recover access to cities owned by the old one; do not repeatedly create keys to fix authentication.</p>
       </details>
       <details data-umami-event="mcp-faq-rate-limited">
         <summary>Rate limited</summary>
-        <p>Actions are limited to 30/min and advances to 10/min per city. Use <code>batch_actions</code> and <code>build_line</code>/<code>build_rect</code> to do more within the limit — each counts as 1 action. Wait a moment and retry if you hit the cap.</p>
+        <p>Actions are limited to 30/min and advances to 10/min per city. Use <code>batch_actions</code> and <code>build_line</code>/<code>build_rect</code> to do more within the limit — each counts as 1 action. Honor Retry-After when present; otherwise wait at least 60 seconds before a bounded retry.</p>
       </details>
       <details data-umami-event="mcp-faq-tools-missing">
         <summary>Tools not showing up</summary>

@@ -60,6 +60,11 @@ def verify_sitemap(body):
             raise ValueError('Sitemap contains an unexpected origin')
 
 
+def verify_agent_document(body, path, marker):
+    if marker not in body or '<!doctype html' in body.lower() or '<html' in body.lower():
+        raise ValueError(f'{path}: missing agent documentation or unexpected HTML')
+
+
 def fetch(base, path, expected_type):
     result = subprocess.run(
         ['curl', '--silent', '--show-error', '--max-time', '20',
@@ -74,8 +79,11 @@ def fetch(base, path, expected_type):
 
 def verify_site(base, sha, version):
     verify_release(fetch(base, f'/release.json?commit={sha}', 'application/json'), sha, version)
-    for path in ('/', '/docs', '/cities', '/leaderboard'):
+    for path in ('/', '/docs', '/docs/agents', '/docs/api', '/docs/mcp', '/cities', '/leaderboard'):
         verify_html(fetch(base, path, 'text/html'), path, version)
+    for path, marker in (('/agent-guide.md', '# Give your agent a city'), ('/skill.md', 'name: hallucinating-splines'), ('/llms.txt', '# Hallucinating Splines'), ('/mcp-tools.md', '## batch_actions'), ('/api-reference.md', '/v1/cities/{id}/batch')):
+        body = fetch(base, path, 'text/')
+        verify_agent_document(body, path, marker)
     robots = fetch(base, '/robots.txt', 'text/plain')
     if 'Sitemap: https://hallucinatingsplines.com/sitemap.xml' not in robots:
         raise ValueError('robots.txt does not declare the sitemap')

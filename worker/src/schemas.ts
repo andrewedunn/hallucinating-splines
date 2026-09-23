@@ -83,6 +83,7 @@ export const CreateCityBodySchema = z.object({
 export const CreateCityResponseSchema = z.object({
   id: z.string(),
   name: z.string(),
+  slug: z.string(),
   seed: z.number(),
   game_year: z.number(),
   funds: z.number(),

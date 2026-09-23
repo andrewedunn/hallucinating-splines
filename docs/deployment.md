@@ -8,7 +8,9 @@ needed. The production site is https://hallucinatingsplines.com.
 
 1. Open a PR. **Website checks** installs the locked site dependencies with Node
    22, runs TypeScript, replay tests, smoke-check regression tests and a production
-   build. PR jobs never receive Cloudflare credentials.
+   build. **Agent documentation checks** independently installs worker dependencies,
+   reads the local OpenAPI schema, and checks generated references against sources.
+   Both jobs must pass before deployment. PR jobs never receive Cloudflare credentials.
 2. Merge to `main`. The workflow repeats the checks and stores the built site as
    an artifact containing `release.json` with the exact commit and site version.
 3. The **Deploy website** job downloads that same artifact and deploys it with

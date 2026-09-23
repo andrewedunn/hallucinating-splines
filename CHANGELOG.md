@@ -1,5 +1,13 @@
 # Changelog
 
+## Site 0.1.2 and agent documentation — 2026-09-23
+
+- Add one agent guide with bounded first-city and continuing-care prompts, a portable mayor skill, and personal-agent compatibility notes.
+- Generate API endpoint and MCP tool references from local OpenAPI and tool registrations; block website deployment when generated documentation is stale.
+- Correct stale city limits, transport, bankruptcy, and gameplay instructions; explain partial costs and selective retries.
+- Return public city links in MCP creation/list responses and explicitly scope the own-city tool to the authenticated owner.
+- Verify agent guide, skill, tool reference, and docs pages after website deployment. API/MCP updates are released separately after merge.
+
 ## Deployment automation — 2026-09-23
 
 - Website pull requests run checks in GitHub Actions; successful main builds deploy to Cloudflare Pages and verify the exact release on production.

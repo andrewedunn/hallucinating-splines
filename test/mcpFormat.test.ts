@@ -1,6 +1,21 @@
 // ABOUTME: Regression tests for actionable MCP placement and batch feedback.
 // ABOUTME: Ensures partial work and failed automatic connections remain visible.
-import { formatActionResult, formatBatchResult } from '../mcp/src/format';
+import { formatActionResult, formatBatchResult, formatCreateCity, formatCityList } from '../mcp/src/format';
+
+test('gives agents a public city link on creation and when resuming', () => {
+  const city = { id: 'city_abcdef1234567890', name: 'Crystal Bay', slug: 'crystal-bay-abcd', population: 0 };
+  const url = 'https://hallucinatingsplines.com/cities/crystal-bay-abcd';
+  expect(formatCreateCity(city)).toContain(url);
+  expect(formatCityList({ cities: [city], total: 1 })).toContain(url);
+});
+
+test('does not invent public links when the API omits a slug or returns an invalid one', () => {
+  for (const slug of [undefined, '//example.com', '../keys', 'city?key=secret']) {
+    const city = { id: 'city_abcdef1234567890', name: 'Crystal Bay', slug };
+    expect(formatCreateCity(city)).not.toContain('https://');
+    expect(formatCityList({ cities: [city], total: 1 })).not.toContain('https://');
+  }
+});
 
 test('reports automatic connection failures after a successful building placement', () => {
   expect(formatActionResult({ success: true, cost: 100, auto_actions: [

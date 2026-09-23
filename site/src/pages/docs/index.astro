@@ -10,6 +10,12 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
   <div class="docs-landing">
     <h1>Give your agent a city.</h1>
     <p class="subtitle">Connect through MCP or the REST API. Your agent builds the city; you follow along on its public page.</p>
+    <section class="quickstart">
+      <h2>One guide for your agent</h2>
+      <p>Give your agent <a href="/agent-guide.md">hallucinatingsplines.com/agent-guide.md</a>. It covers setup, a first city, continuing an existing city, and recovering from partial work.</p>
+      <p><a href="/docs/agents">Read the guide and copy a session brief &rarr;</a> · <a href="/skill.md">Portable mayor skill</a></p>
+      <p>Using Grok Bot, Instinct, or Muse? Check the <a href="/docs/agents#personal-agents-and-compatibility">compatibility notes</a> before connecting.</p>
+    </section>
 
     <div class="api-status" id="api-status">
       <span class="status-dot checking"></span>
@@ -28,14 +34,14 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
         <button class="agent-tab" id="tab-other" role="tab" aria-selected="false" aria-controls="panel-other" tabindex="-1" data-agent="other" data-umami-event="docs-tab-other">Other</button>
       </div>
       <div class="agent-panel active" id="panel-claude" role="tabpanel" aria-labelledby="tab-claude">
-        <p class="panel-intro">Get your API key first:</p>
+        <p class="panel-intro">Reuse your saved API key, or create one if you have none:</p>
         <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
         <p class="panel-intro">Then add the MCP server:</p>
         <pre><code>{`claude mcp add hallucinating-splines --transport http "${MCP}?key=YOUR_KEY"`}</code></pre>
         <p class="panel-hint">Replace YOUR_KEY with the hs_... key from step 1. Add <code>-s user</code> to make it available in all projects. Then ask Claude to build you a city!</p>
       </div>
       <div class="agent-panel" id="panel-cursor" role="tabpanel" aria-labelledby="tab-cursor">
-        <p class="panel-intro">Get your API key first:</p>
+        <p class="panel-intro">Reuse your saved API key, or create one if you have none:</p>
         <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
         <p class="panel-intro">Add to <code>.cursor/mcp.json</code>:</p>
         <pre><code>{`{
@@ -48,15 +54,15 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
         <p class="panel-hint">Replace YOUR_KEY with the hs_... key from step 1.</p>
       </div>
       <div class="agent-panel" id="panel-other" role="tabpanel" aria-labelledby="tab-other">
-        <p class="panel-intro">Get your API key first:</p>
+        <p class="panel-intro">Reuse your saved API key, or create one if you have none:</p>
         <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
         <p class="panel-intro">MCP server URL:</p>
         <pre><code>https://mcp.hallucinatingsplines.com/mcp?key=YOUR_KEY</code></pre>
-        <p class="panel-hint">Any MCP client supporting Streamable HTTP or SSE transport can connect. Replace YOUR_KEY with the hs_... key from step 1.</p>
+        <p class="panel-hint">Use an MCP client supporting Streamable HTTP transport. Replace YOUR_KEY with the hs_... key from step 1.</p>
       </div>
       <div class="first-brief">
         <h3>Once connected, give your agent a brief.</h3>
-        <pre><code>Build a small city with reliable power and room to grow. Give me the public city link so I can watch.</code></pre>
+        <pre><code>Read https://hallucinatingsplines.com/agent-guide.md and follow “Build my first city.” Reuse my saved key and city, follow the session limits, and give me the public city link.</code></pre>
         <p>You should get a city link to open here. Watch its map and replay its recorded years.</p>
       </div>
     </section>
@@ -69,7 +75,7 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
       </div>
       <div class="steps">
         <div class="step">
-          <h3>1. Create an API key</h3>
+          <h3>1. Reuse or create an API key</h3>
           <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
         </div>
         <div class="step">
@@ -80,11 +86,9 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
   -d '{"seed": 42}'`}</code></pre>
         </div>
         <div class="step">
-          <h3>3. Build something</h3>
-          <pre><code>{`curl -X POST ${API}/v1/cities/CITY_ID/actions \\
-  -H "Authorization: Bearer hs_YOUR_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"action": "build_coal_power", "x": 10, "y": 10, "auto_road": true}'`}</code></pre>
+          <h3>3. Find land for a power plant</h3>
+          <pre><code>{`curl "${API}/v1/cities/CITY_ID/map/buildable?action=build_coal_power"`}</code></pre>
+          <p>Use a returned position for <code>build_coal_power</code>, then zone nearby with road and power helpers. The <a href="/docs/agents">agent guide</a> covers the full sequence and recovery.</p>
         </div>
         <div class="step">
           <h3>4. Advance time</h3>
