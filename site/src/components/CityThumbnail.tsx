@@ -14,6 +14,7 @@ let cachedSpriteSheet: HTMLImageElement | null = null;
 export default function CityThumbnail({ cityId, apiBase }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -27,7 +28,7 @@ export default function CityThumbnail({ cityId, apiBase }: Props) {
       ]);
 
       if (cancelled || !canvasRef.current) return;
-      if (!mapResponse.ok) return; // City has no game state (e.g. retired)
+      if (!mapResponse.ok) throw new Error('Map unavailable'); // City has no game state (e.g. retired)
 
       const mapRes = await mapResponse.json();
 
@@ -64,12 +65,15 @@ export default function CityThumbnail({ cityId, apiBase }: Props) {
       setLoaded(true);
     }
 
-    render();
+    render().catch(() => { if (!cancelled) setError(true); });
     return () => { cancelled = true; };
   }, [cityId, apiBase]);
 
   return (
+    <div className="thumbnail-content">
+    {!loaded && <span className="thumbnail-message">{error ? 'Map unavailable · Open city' : 'Loading map…'}</span>}
     <canvas
+      aria-hidden="true"
       ref={canvasRef}
       style={{
         width: '100%',
@@ -79,5 +83,6 @@ export default function CityThumbnail({ cityId, apiBase }: Props) {
         display: 'block',
       }}
     />
+    </div>
   );
 }

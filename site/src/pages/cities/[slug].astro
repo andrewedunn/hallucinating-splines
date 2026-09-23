@@ -69,6 +69,7 @@ const ogImageUrl = `${API_BASE}/v1/cities/${cityId}/og-image`;
   {hasGameState ? (
     <div class="city-layout">
       <div class="map-column">
+        <p id="view-context" class="view-context" role="status">Current city view · Detailed statistics describe the current state.</p>
         <div id="map-container" data-tiles={JSON.stringify(mapData.tiles)} data-width={mapData.width} data-height={mapData.height} data-city-id={cityId} data-api-base={API_BASE}>
         </div>
         <div id="scrubber-container"></div>
@@ -76,7 +77,12 @@ const ogImageUrl = `${API_BASE}/v1/cities/${cityId}/og-image`;
         <ActionLog actions={actionsData?.actions || []} total={actionsData?.total || 0} />
       </div>
       <div class="stats-column">
-        <StatsPanel stats={stats} />
+        <div id="recorded-summary" hidden></div>
+        <details id="current-statistics" open>
+          <summary>Current city statistics</summary>
+          <p class="stats-context">Current simulation state; recorded years are shown separately during playback.</p>
+          <StatsPanel stats={stats} />
+        </details>
       </div>
     </div>
   ) : (
@@ -141,11 +147,21 @@ const ogImageUrl = `${API_BASE}/v1/cities/${cityId}/og-image`;
   scrubberRoot.render(createElement(HistoryScrubber, {
     cityId,
     apiBase,
-    onSnapshotLoad: (snapshotTiles: number[]) => {
+    onSnapshotLoad: (snapshotTiles: number[], snapshot: { game_year: number; population: number; funds: number }) => {
       isUserScrubbing = true;
       currentTiles = snapshotTiles;
       renderMap(currentTiles);
+      document.getElementById('view-context')!.textContent = `Recorded year ${snapshot.game_year} · Historical map and recorded metrics`;
+      document.getElementById('current-statistics')!.hidden = true;
+      const summary = document.getElementById('recorded-summary')!;
+      summary.hidden = false;
+      summary.replaceChildren();
+      const title = document.createElement('h2'); title.textContent = `Recorded year ${snapshot.game_year}`;
+      const metrics = document.createElement('p'); metrics.textContent = `Population ${snapshot.population.toLocaleString()} · Funds $${snapshot.funds.toLocaleString()}`;
+      const note = document.createElement('p'); note.textContent = 'Other metrics were not recorded with this snapshot. Return to the current view to see current city statistics.';
+      summary.append(title, metrics, note);
     },
+    onReturnToCurrent: returnToLive,
   }));
 
   let gameYear = parseInt(headerEl.getAttribute('data-game-year') || '1900');
@@ -351,6 +367,9 @@ const ogImageUrl = `${API_BASE}/v1/cities/${cityId}/og-image`;
   function returnToLive() {
     isUserScrubbing = false;
     renderMap(liveTiles);
+    document.getElementById('view-context')!.textContent = 'Current city view · Detailed statistics describe the current state.';
+    document.getElementById('current-statistics')!.hidden = false;
+    document.getElementById('recorded-summary')!.hidden = true;
   }
 
   async function pollStats() {
@@ -500,20 +519,20 @@ const ogImageUrl = `${API_BASE}/v1/cities/${cityId}/og-image`;
 <style>
 .city-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem; }
 .city-header h1 { font-size: 1.3rem; }
-.name-row { display: flex; align-items: center; gap: 0.75rem; }
+.name-row { display: flex; flex-wrap:wrap; align-items: center; gap: 0.75rem; }
 .header-badges { display: flex; align-items: center; gap: 0.75rem; }
 @keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 .mayor { color: var(--text-muted); font-size: 0.85rem; }
 .mayor:hover { color: var(--accent-hover); }
-.city-layout { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; }
+.city-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,320px); gap: 1.5rem; }
 .map-column { min-width: 0; }
 @media (max-width: 900px) {
   .city-layout { grid-template-columns: 1fr; }
 }
 .ended-badge { font-family: var(--system); font-size: 0.7rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 2px; background: var(--border); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .city-action-wrap { position: relative; }
-.city-action-btn { font-family: var(--pixel-font); font-size: 0.5rem; padding: 0.4rem 0.8rem; background: var(--accent); color: var(--text); border: 1px solid var(--accent); border-radius: 2px; cursor: pointer; transition: background 0.15s, border-color 0.15s; white-space: nowrap; }
-.city-action-btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.city-action-btn { font-family: var(--system); font-size: var(--text-sm); min-height:44px; padding: 0.4rem 0.8rem; background: var(--accent); color: var(--text); border: 1px solid var(--accent); border-radius: 2px; cursor: pointer; transition: background 0.15s, border-color 0.15s; white-space: nowrap; }
+.city-action-btn:hover { background: var(--surface); border-color: var(--accent-hover); }
 .city-action-menu { position: absolute; top: calc(100% + 0.4rem); left: 0; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: 0.35rem 0; min-width: 180px; z-index: 100; box-shadow: 0 4px 12px var(--shadow); }
 .city-action-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.75rem; font-family: var(--system); font-size: 0.8rem; color: var(--text-muted); background: none; border: none; cursor: pointer; width: 100%; text-align: left; white-space: nowrap; text-decoration: none; }
 .city-action-item:hover { background: var(--surface); color: var(--text); }
@@ -525,4 +544,9 @@ const ogImageUrl = `${API_BASE}/v1/cities/${cityId}/og-image`;
   .city-header { flex-direction: column; gap: 0.5rem; }
   .city-header h1 { font-size: 1.1rem; }
 }
+.view-context,.stats-context{font-size:var(--text-sm);color:var(--text-muted);margin-bottom:var(--space-md)}
+#current-statistics summary{cursor:pointer;min-height:44px;font-weight:700;padding-bottom:var(--space-sm)}
+#recorded-summary{border-top:1px solid var(--border);padding-block:var(--space-md)}
+#recorded-summary p{margin-top:var(--space-sm);color:var(--text-muted)}
+.city-header h1{font-size:clamp(1.6rem,3vw,2.4rem)}.ended-badge{font-size:var(--text-xs);background:var(--surface);color:var(--text)}
 </style>

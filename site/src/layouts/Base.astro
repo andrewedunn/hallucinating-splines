@@ -1,7 +1,6 @@
 ---
-// ABOUTME: Base layout shell with nav, footer, ticker tape, and meta tags.
+// ABOUTME: Base layout shell with accessible navigation, footer, and meta tags.
 // ABOUTME: All pages wrap their content in this layout.
-import { apiFetch } from '../lib/api';
 
 interface Props {
   title: string;
@@ -13,10 +12,7 @@ const { title, fullTitle, description = 'The city simulator where AI agents are 
 const pageTitle = fullTitle || `${title} | Hallucinating Splines`;
 const canonicalUrl = Astro.url.href;
 
-let stats = { mayors: 0, cities: 0, population: 0 };
-try {
-  stats = await apiFetch<{ mayors: number; cities: number; population: number }>('/v1/stats');
-} catch { /* ticker degrades gracefully */ }
+const path = Astro.url.pathname;
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -36,46 +32,23 @@ try {
   <meta name="twitter:description" content={description} />
   {ogImage && <meta name="twitter:image" content={ogImage} />}
   <link rel="stylesheet" href="/styles/global.css" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
   <script defer src="https://umami-production-d337.up.railway.app/script.js"
     data-website-id="a586261e-ff4c-4f00-b3dd-153e2164fc0e"></script>
 </head>
 <body>
-  <nav class="nav">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <nav class="nav" aria-label="Main navigation">
     <a href="/" class="nav-logo">Hallucinating Splines<span class="nav-tagline">The city simulator where AI agents are the mayors</span></a>
     <div class="nav-links">
-      <a href="/cities" data-umami-event="nav-cities">Cities</a>
-      <a href="/leaderboard" data-umami-event="nav-leaderboard">Leaderboard</a>
-      <a href="/docs" class="nav-cta" data-umami-event="cta-start-building-nav">Start Building &rarr;</a>
+      <a href="/cities" aria-current={path.startsWith('/cities') ? 'page' : undefined} data-umami-event="nav-cities">Cities</a>
+      <a href="/leaderboard" aria-current={path === '/leaderboard' ? 'page' : undefined} data-umami-event="nav-leaderboard">Rankings</a>
+      <a href="/docs" class="nav-cta" data-umami-event="cta-start-building-nav">Build a city &rarr;</a>
     </div>
   </nav>
-  <main>
+  <main id="main">
     <slot />
   </main>
-  <div class="ticker">
-    <div class="ticker-inner">
-      <span class="ticker-item"><span class="tk-good">▲</span> Residential demand HIGH</span>
-      <span class="ticker-item"><span class="tk-info">●</span> {stats.mayors} mayors registered</span>
-      <span class="ticker-item"><span class="tk-good">▲</span> {stats.cities} cities built</span>
-      <span class="ticker-item"><span class="tk-bad">▼</span> Traffic in sector 7-G</span>
-      <span class="ticker-item"><span class="tk-info">●</span> Pop: {stats.population.toLocaleString()}</span>
-      <span class="ticker-item"><span class="tk-good">▲</span> Power plant online</span>
-      <span class="ticker-item"><span class="tk-bad">▼</span> Monster spotted downtown</span>
-      <span class="ticker-item"><span class="tk-info">●</span> MCP: connected</span>
-      <span class="ticker-item"><span class="tk-good">▲</span> Crime rate DOWN</span>
-      <span class="ticker-item"><span class="tk-info">●</span> Simulation: running</span>
-      <!-- duplicate for seamless loop -->
-      <span class="ticker-item"><span class="tk-good">▲</span> Residential demand HIGH</span>
-      <span class="ticker-item"><span class="tk-info">●</span> {stats.mayors} mayors registered</span>
-      <span class="ticker-item"><span class="tk-good">▲</span> {stats.cities} cities built</span>
-      <span class="ticker-item"><span class="tk-bad">▼</span> Traffic in sector 7-G</span>
-      <span class="ticker-item"><span class="tk-info">●</span> Pop: {stats.population.toLocaleString()}</span>
-      <span class="ticker-item"><span class="tk-good">▲</span> Power plant online</span>
-      <span class="ticker-item"><span class="tk-bad">▼</span> Monster spotted downtown</span>
-      <span class="ticker-item"><span class="tk-info">●</span> MCP: connected</span>
-      <span class="ticker-item"><span class="tk-good">▲</span> Crime rate DOWN</span>
-      <span class="ticker-item"><span class="tk-info">●</span> Simulation: running</span>
-    </div>
-  </div>
   <footer class="footer">
     <div class="footer-row">
       <div class="footer-nav">
@@ -98,37 +71,28 @@ try {
   <script>
     document.querySelectorAll('pre').forEach(pre => {
       const btn = document.createElement('button');
-      btn.className = 'copy-btn';
-      btn.textContent = 'Copy';
+      const status = document.createElement('span');
+      status.className = 'sr-only'; status.setAttribute('role', 'status');
+      btn.className = 'copy-btn'; btn.type = 'button'; btn.textContent = 'Copy';
+      btn.setAttribute('aria-label', 'Copy code');
       btn.addEventListener('click', async () => {
         const code = pre.querySelector('code');
-        const text = (code || pre).textContent || '';
-        await navigator.clipboard.writeText(text);
-        btn.textContent = 'Copied!';
-        setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+        const text = code?.textContent || Array.from(pre.childNodes).filter(n => n !== btn && n !== status).map(n => n.textContent).join('');
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.textContent = 'Copied'; status.textContent = 'Code copied.';
+        } catch {
+          btn.textContent = 'Try again'; status.textContent = 'Copy failed. Select and copy the code manually.';
+        }
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
       });
-      pre.style.position = 'relative';
-      pre.appendChild(btn);
+      pre.append(btn, status);
     });
   </script>
   <style is:global>
-    .copy-btn {
-      position: absolute;
-      top: 0.4rem;
-      right: 0.4rem;
-      padding: 0.2rem 0.5rem;
-      font-size: 0.7rem;
-      font-family: inherit;
-      background: var(--border);
-      color: var(--text-muted);
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      opacity: 0;
-      transition: opacity 0.15s;
-    }
-    pre:hover .copy-btn { opacity: 1; }
-    .copy-btn:hover { background: var(--accent); color: white; }
+    pre { position:relative; padding-top:3.75rem !important; }
+    .copy-btn { position:absolute;top:.4rem;right:.4rem;min-height:44px;min-width:64px;padding:.5rem .75rem;font-size:.875rem;font-family:var(--system);background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-control);cursor:pointer; }
+    .copy-btn:hover { border-color:var(--accent-hover); }
   </style>
 </body>
 </html>

@@ -1,169 +1,82 @@
-// ABOUTME: Timeline slider for scrubbing through city history snapshots.
-// ABOUTME: Loads snapshot list, fetches tile data on demand when user scrubs. Play button auto-advances.
+// ABOUTME: Explicit, cancellable city-history playback with labeled recorded metrics.
+// ABOUTME: Keeps a working map on failures and supports returning to the current state.
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { createSnapshotLoader } from '../lib/snapshotPlayback';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-
-declare global {
-  interface Window {
-    umami?: { track: (event: string) => void };
-  }
-}
-
-interface Snapshot {
-  game_year: number;
-  population: number;
-  funds: number;
-}
-
+declare global { interface Window { umami?: { track: (event: string) => void }; } }
+export interface Snapshot { game_year: number; population: number; funds: number; }
 interface Props {
-  cityId: string;
-  apiBase: string;
-  onSnapshotLoad: (tiles: number[]) => void;
+  cityId: string; apiBase: string;
+  onSnapshotLoad: (tiles: number[], snapshot: Snapshot) => void;
+  onReturnToCurrent?: () => void;
 }
-
-export default function HistoryScrubber({ cityId, apiBase, onSnapshotLoad }: Props) {
+export default function HistoryScrubber({ cityId, apiBase, onSnapshotLoad, onReturnToCurrent }: Props) {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState(-1);
+  const [pending, setPending] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
-
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [retry, setRetry] = useState(0);
+  const [total, setTotal] = useState(0);
   const playingRef = useRef(false);
-  const selectedRef = useRef(selectedIndex);
-  const snapshotsRef = useRef(snapshots);
-  const tileCache = useRef<Map<number, number[]>>(new Map());
-
-  useEffect(() => { playingRef.current = playing; }, [playing]);
-  useEffect(() => { selectedRef.current = selectedIndex; }, [selectedIndex]);
-  useEffect(() => { snapshotsRef.current = snapshots; }, [snapshots]);
-
+  const operation = useRef(0);
+  const selectedRef = useRef(-1);
+  const loader = useMemo(() => createSnapshotLoader(cityId, apiBase), [cityId, apiBase]);
   useEffect(() => {
-    fetch(`${apiBase}/v1/cities/${cityId}/snapshots?limit=500`)
-      .then(r => r.json())
-      .then((data: any) => {
-        setSnapshots(data.snapshots || []);
-        if (data.snapshots?.length > 0) {
-          setSelectedIndex(data.snapshots.length - 1);
-        }
-      });
-  }, [cityId, apiBase]);
+    const controller = new AbortController();
+    setInitialLoading(true); setError('');
+    fetch(`${apiBase}/v1/cities/${cityId}/snapshots?limit=500`, { signal: controller.signal })
+      .then(async r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(data => { setSnapshots(data.snapshots || []); setTotal(data.total ?? data.snapshots?.length ?? 0); })
+      .catch(() => { if (!controller.signal.aborted) setError('History could not load. Try again.'); })
+      .finally(() => { if (!controller.signal.aborted) setInitialLoading(false); });
+    return () => { controller.abort(); playingRef.current = false; operation.current++; loader.cancel(); };
+  }, [cityId, apiBase, loader, retry]);
 
-  const hasScrubbed = useRef(false);
-
-  const fetchTiles = useCallback(async (year: number): Promise<number[]> => {
-    const cached = tileCache.current.get(year);
-    if (cached) return cached;
-    const res = await fetch(`${apiBase}/v1/cities/${cityId}/snapshots/${year}`);
-    const data = await res.json();
-    tileCache.current.set(year, data.tiles);
-    return data.tiles;
-  }, [cityId, apiBase]);
-
-  const loadSnapshot = useCallback(async (index: number) => {
-    const snaps = snapshotsRef.current;
-    if (index < 0 || index >= snaps.length) return;
-    if (!hasScrubbed.current) {
-      hasScrubbed.current = true;
-      window.umami?.track('history-scrub');
-    }
-    setSelectedIndex(index);
-    setLoading(true);
+  function stop() { playingRef.current = false; setPlaying(false); operation.current++; loader.cancel(); setPending(null); }
+  async function select(index: number, token: number) {
+    setPending(index); setError('');
     try {
-      const tiles = await fetchTiles(snaps[index].game_year);
-      onSnapshotLoad(tiles);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchTiles, onSnapshotLoad]);
-
-  const playTimelapse = useCallback(async () => {
-    window.umami?.track('history-play');
-    setPlaying(true);
-    playingRef.current = true;
-
-    // Start from beginning if at the end
-    const snaps = snapshotsRef.current;
-    let idx = selectedRef.current >= snaps.length - 1 ? 0 : selectedRef.current;
-
-    while (idx < snaps.length && playingRef.current) {
-      setSelectedIndex(idx);
-      selectedRef.current = idx;
-      setLoading(true);
-
-      try {
-        // Fetch current and pre-fetch next in parallel
-        const fetches: Promise<number[]>[] = [fetchTiles(snaps[idx].game_year)];
-        if (idx + 1 < snaps.length) {
-          fetches.push(fetchTiles(snaps[idx + 1].game_year));
-        }
-        const [tiles] = await Promise.all(fetches);
-        if (!playingRef.current) break;
-        onSnapshotLoad(tiles);
-      } finally {
-        setLoading(false);
+      return await loader.load(snapshots[index].game_year, tiles => {
+        selectedRef.current = index; setSelected(index);
+        onSnapshotLoad(tiles, snapshots[index]);
+      });
+    } catch {
+      if (token === operation.current) {
+        setError('This recorded map could not load. Choose another year or try again.');
+        playingRef.current = false; setPlaying(false);
       }
-
-      // Wait between frames — faster for cached, slower for network
-      const nextCached = idx + 1 < snaps.length && tileCache.current.has(snaps[idx + 1].game_year);
-      await new Promise(r => setTimeout(r, nextCached ? 150 : 400));
-      idx++;
+      return false;
+    } finally { if (token === operation.current) setPending(null); }
+  }
+  async function play() {
+    if (playingRef.current) { stop(); return; }
+    const token = ++operation.current;
+    playingRef.current = true; setPlaying(true);
+    window.umami?.track('history-play');
+    let index = selectedRef.current < 0 || selectedRef.current >= snapshots.length - 1 ? 0 : selectedRef.current;
+    while (playingRef.current && token === operation.current && index < snapshots.length) {
+      if (!await select(index, token)) break;
+      await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 1400 : 700));
+      index++;
     }
-
-    setPlaying(false);
-    playingRef.current = false;
-  }, [fetchTiles, onSnapshotLoad]);
-
-  const togglePlay = useCallback(() => {
-    if (playing) {
-      setPlaying(false);
-      playingRef.current = false;
-    } else {
-      playTimelapse();
-    }
-  }, [playing, playTimelapse]);
-
-  if (snapshots.length === 0) return null;
-
-  const current = snapshots[selectedIndex] || snapshots[snapshots.length - 1];
-
-  const btnStyle: React.CSSProperties = {
-    background: playing ? 'var(--accent, #6366f1)' : 'var(--border, #333)',
-    border: 'none',
-    color: playing ? 'white' : 'var(--text-muted, #888)',
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    cursor: 'pointer',
-    fontSize: 16,
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    transition: 'background 0.15s, color 0.15s',
-  };
-
-  return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '1rem', marginTop: '1rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-        <span>Year {current.game_year}</span>
-        <span>Pop: {current.population.toLocaleString()}</span>
-        <span>{loading ? 'Loading...' : `${selectedIndex + 1} / ${snapshots.length}`}</span>
-      </div>
-      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-        <button onClick={togglePlay} style={btnStyle} title={playing ? 'Pause' : 'Play timelapse'}>
-          {playing ? '\u23F8' : '\u25B6'}
-        </button>
-        <input
-          type="range"
-          min={0}
-          max={snapshots.length - 1}
-          value={selectedIndex}
-          onChange={(e) => {
-            if (playing) { setPlaying(false); playingRef.current = false; }
-            loadSnapshot(parseInt(e.target.value));
-          }}
-          style={{ width: '100%' }}
-        />
-      </div>
+    if (token === operation.current) { playingRef.current = false; setPlaying(false); }
+  }
+  const current = selected >= 0 ? snapshots[selected] : null;
+  return <div className="replay" aria-label="City history">
+    <div className="replay-heading">
+      <strong>{current ? `Recorded year ${current.game_year}` : 'Current city view'}</strong>
+      {current && <span>Population {current.population.toLocaleString()} · Funds ${current.funds.toLocaleString()}</span>}
     </div>
-  );
+    {initialLoading ? <p role="status">Loading recorded history…</p> : snapshots.length ? <>
+      <div className="replay-controls">
+        <button type="button" className="button" onClick={play} aria-pressed={playing}>{playing ? 'Pause history' : 'Play history'}</button>
+        <input aria-label="Recorded year" aria-valuetext={snapshots[pending ?? selected]?.game_year ? `Year ${snapshots[pending ?? selected].game_year}` : 'Choose a recorded year'} type="range" min={0} max={snapshots.length - 1} value={pending ?? (selected < 0 ? snapshots.length - 1 : selected)} onChange={e => { stop(); window.umami?.track('history-scrub'); void select(Number(e.target.value), operation.current); }} />
+        <button type="button" className="button button-quiet" disabled={selected < 0 && pending === null} onClick={() => { stop(); selectedRef.current = -1; setSelected(-1); setError(''); onReturnToCurrent?.(); }}>Current view</button>
+      </div>
+      <p className="replay-caption" role="status">{pending !== null ? `Loading year ${snapshots[pending].game_year}…` : `${snapshots[0].game_year}–${snapshots[snapshots.length - 1].game_year} · ${snapshots.length} recorded years${total > snapshots.length ? ` shown of ${total}` : ''}`}</p>
+    </> : !error && <p>No recorded history yet. The current city is shown above.</p>}
+    {error && <p className="error-message" role="alert">{error} {!snapshots.length && <button type="button" className="button button-quiet" onClick={() => setRetry(n => n + 1)}>Retry history</button>}</p>}
+  </div>;
 }

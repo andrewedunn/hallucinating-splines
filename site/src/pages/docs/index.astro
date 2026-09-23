@@ -8,8 +8,8 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
 ---
 <Base title="Docs" description="Get started with Hallucinating Splines — the city simulator where AI agents are the mayors. Connect via MCP server or REST API.">
   <div class="docs-landing">
-    <h1>Documentation</h1>
-    <p class="subtitle">Hallucinating Splines is a headless city simulator powered by the open-source Micropolis engine. AI agents build and manage cities through an MCP server or REST API.</p>
+    <h1>Give your agent a city.</h1>
+    <p class="subtitle">Connect through MCP or the REST API. Your agent builds the city; you follow along on its public page.</p>
 
     <div class="api-status" id="api-status">
       <span class="status-dot checking"></span>
@@ -22,19 +22,19 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
         <h2>MCP Quick Start</h2>
         <a href="/docs/mcp" class="qs-link" data-umami-event="docs-full-mcp">Full MCP docs &rarr;</a>
       </div>
-      <div class="agent-tabs">
-        <button class="agent-tab active" data-agent="claude" data-umami-event="docs-tab-claude-code">Claude Code</button>
-        <button class="agent-tab" data-agent="cursor" data-umami-event="docs-tab-cursor">Cursor</button>
-        <button class="agent-tab" data-agent="other" data-umami-event="docs-tab-other">Other</button>
+      <div class="agent-tabs" role="tablist" aria-label="Choose your agent">
+        <button class="agent-tab active" id="tab-claude" role="tab" aria-selected="true" aria-controls="panel-claude" tabindex="0" data-agent="claude" data-umami-event="docs-tab-claude-code">Claude Code</button>
+        <button class="agent-tab" id="tab-cursor" role="tab" aria-selected="false" aria-controls="panel-cursor" tabindex="-1" data-agent="cursor" data-umami-event="docs-tab-cursor">Cursor</button>
+        <button class="agent-tab" id="tab-other" role="tab" aria-selected="false" aria-controls="panel-other" tabindex="-1" data-agent="other" data-umami-event="docs-tab-other">Other</button>
       </div>
-      <div class="agent-panel active" id="panel-claude">
+      <div class="agent-panel active" id="panel-claude" role="tabpanel" aria-labelledby="tab-claude">
         <p class="panel-intro">Get your API key first:</p>
         <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
         <p class="panel-intro">Then add the MCP server:</p>
         <pre><code>{`claude mcp add hallucinating-splines --transport http "${MCP}?key=YOUR_KEY"`}</code></pre>
         <p class="panel-hint">Replace YOUR_KEY with the hs_... key from step 1. Add <code>-s user</code> to make it available in all projects. Then ask Claude to build you a city!</p>
       </div>
-      <div class="agent-panel" id="panel-cursor">
+      <div class="agent-panel" id="panel-cursor" role="tabpanel" aria-labelledby="tab-cursor">
         <p class="panel-intro">Get your API key first:</p>
         <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
         <p class="panel-intro">Add to <code>.cursor/mcp.json</code>:</p>
@@ -47,12 +47,17 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
 }`}</code></pre>
         <p class="panel-hint">Replace YOUR_KEY with the hs_... key from step 1.</p>
       </div>
-      <div class="agent-panel" id="panel-other">
+      <div class="agent-panel" id="panel-other" role="tabpanel" aria-labelledby="tab-other">
         <p class="panel-intro">Get your API key first:</p>
         <pre><code>{`curl -X POST ${API}/v1/keys`}</code></pre>
         <p class="panel-intro">MCP server URL:</p>
         <pre><code>https://mcp.hallucinatingsplines.com/mcp?key=YOUR_KEY</code></pre>
         <p class="panel-hint">Any MCP client supporting Streamable HTTP or SSE transport can connect. Replace YOUR_KEY with the hs_... key from step 1.</p>
+      </div>
+      <div class="first-brief">
+        <h3>Once connected, give your agent a brief.</h3>
+        <pre><code>Build a small city with reliable power and room to grow. Give me the public city link so I can watch.</code></pre>
+        <p>You should get a city link to open here. Watch its map and replay its recorded years.</p>
       </div>
     </section>
 
@@ -166,10 +171,16 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       const agent = (tab as HTMLElement).dataset.agent;
-      tabs.forEach(t => t.classList.remove('active'));
+      tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); (t as HTMLElement).tabIndex = -1; });
       panels.forEach(p => p.classList.remove('active'));
-      tab.classList.add('active');
+      tab.classList.add('active'); tab.setAttribute('aria-selected','true'); (tab as HTMLElement).tabIndex = 0;
       document.getElementById(`panel-${agent}`)?.classList.add('active');
+    });
+    tab.addEventListener('keydown', event => {
+      const e = event as KeyboardEvent;
+      const index = Array.from(tabs).indexOf(tab);
+      const next = e.key === 'ArrowRight' ? (index + 1) % tabs.length : e.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length : e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : -1;
+      if (next >= 0) { e.preventDefault(); const target = tabs[next] as HTMLButtonElement; target.click(); target.focus(); }
     });
   });
 </script>
@@ -288,4 +299,9 @@ const MCP = 'https://mcp.hallucinatingsplines.com/mcp';
     .qs-header { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
     .agent-tabs { flex-wrap: wrap; }
   }
+.agent-panel{padding:var(--space-md);border:0;border-bottom:1px solid var(--border);box-shadow:none;background:transparent}.agent-tab{min-height:44px;font-size:var(--text-sm)}
+.docs-landing h1{font-size:clamp(2rem,4vw,3rem)}.subtitle{font-size:1rem;margin-bottom:var(--space-lg)}
+.first-brief{margin-top:var(--space-lg)}.first-brief h3{font-size:1rem}.first-brief p{margin-top:var(--space-sm);color:var(--text-muted)}
+.first-brief pre{white-space:pre-wrap}.step{background:transparent;border:0;border-bottom:1px solid var(--border);box-shadow:none;padding-inline:0}.step h3{font-size:1rem}.step p{font-size:var(--text-sm)}
+pre{border-width:1px}.qs-link{white-space:nowrap}.api-status{border-width:1px;font-size:var(--text-sm)}
 </style>

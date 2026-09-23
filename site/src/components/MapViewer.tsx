@@ -12,6 +12,7 @@ declare global {
 }
 
 interface Props {
+  label?: string;
   tiles: number[];
   width: number;
   height: number;
@@ -32,7 +33,7 @@ function getTouchCenter(touches: React.TouchList | TouchList): { x: number; y: n
 
 const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
-export default function MapViewer({ tiles, width, height }: Props) {
+export default function MapViewer({ tiles, width, height, label = 'City map. Use the zoom controls or drag to explore.' }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [spriteSheet, setSpriteSheet] = useState<HTMLImageElement | null>(null);
@@ -279,13 +280,13 @@ export default function MapViewer({ tiles, width, height }: Props) {
   }, [width, height]);
 
   const btnStyle: React.CSSProperties = {
-    width: 40, height: 40,
-    minWidth: 40, minHeight: 40,
+    width: 44, height: 44,
+    minWidth: 44, minHeight: 44,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'var(--surface, #1a1a2e)',
-    border: '1px solid var(--border, #333)',
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
     borderRadius: 8,
-    color: 'var(--text, #eee)',
+    color: 'var(--text)',
     fontSize: 20, fontWeight: 700,
     cursor: 'pointer',
     lineHeight: 1,
@@ -296,8 +297,10 @@ export default function MapViewer({ tiles, width, height }: Props) {
   const hintText = isTouchDevice ? 'Pinch to zoom \u00b7 Drag to pan' : 'Scroll to zoom \u00b7 Drag to pan';
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '500px', overflow: 'hidden', cursor: dragging ? 'grabbing' : 'grab', position: 'relative', touchAction: 'none' }}>
+    <div className="city-map" ref={containerRef} style={{ width: '100%', height: 'clamp(260px, 45vw, 500px)', overflow: 'hidden', cursor: dragging ? 'grabbing' : 'grab', position: 'relative', touchAction: 'none' }}>
       <canvas
+        role="img"
+        aria-label={label}
         ref={canvasRef}
         style={{ width: '100%', height: '100%', touchAction: 'none' }}
         onMouseDown={handleMouseDown}
@@ -311,7 +314,7 @@ export default function MapViewer({ tiles, width, height }: Props) {
         <button onClick={zoomOut} style={btnStyle} title="Zoom out">{'\u2212'}</button>
         <button onClick={resetView} style={{ ...btnStyle, fontSize: 14 }} title="Reset view">{'\u2302'}</button>
       </div>
-      <div style={{ position: 'absolute', bottom: 12, left: 12, fontSize: 11, color: 'var(--text-muted, #888)', background: 'var(--surface, #1a1a2e)', padding: '2px 8px', borderRadius: 4, border: '1px solid var(--border, #333)', opacity: 0.8 }}>
+      <div style={{ position: 'absolute', bottom: 12, left: 12, fontSize: 11, color: 'var(--text-muted)', background: 'var(--surface)', padding: '2px 8px', borderRadius: 4, border: '1px solid var(--border)', opacity: 0.8 }}>
         {hintText}
       </div>
     </div>

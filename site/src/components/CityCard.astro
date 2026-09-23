@@ -1,6 +1,7 @@
 ---
 // ABOUTME: Card component displaying a city thumbnail, name, mayor, population, and activity time.
 // ABOUTME: Links to the city detail page. Mayor name links to mayor profile.
+import CityThumbnail from './CityThumbnail';
 interface Props {
   id: string;
   name: string;
@@ -50,19 +51,21 @@ const cityHref = slug ? `/cities/${slug}` : `/cities/${id}`;
 const mayorHref = mayor_slug ? `/mayors/${mayor_slug}` : mayor_id ? `/mayors/${mayor_id}` : null;
 ---
 <div class="city-card" data-city-id={id}>
-  <a href={cityHref} class="card-thumb" data-city-id={id} data-api-base={API_BASE} data-game-year={game_year} data-umami-event="city-card-click">
+  <a href={cityHref} class="card-thumb" data-city-id={id} data-api-base={API_BASE} data-game-year={game_year} data-umami-event="city-card-click" aria-label={`Explore ${name}`}>
+    <CityThumbnail cityId={id} apiBase={API_BASE} client:visible />
   </a>
   <div class="card-body">
     <div class="card-header">
       <a href={cityHref} class="city-name">{name}{llama ? ' \u{1F999}' : ''}</a>
-      <span class={`activity ${freshness}`}>{timeAgo}</span>
+      <span class={`city-status ${status === 'active' ? 'is-active' : ''}`}>{status === 'active' ? 'Active' : 'Ended'}</span>
     </div>
     {mayorHref ? (
       <a href={mayorHref} class="card-mayor">{mayor}</a>
     ) : (
       <span class="card-mayor">{mayor}</span>
     )}
-    <div class="card-stats">
+    <p class="card-updated">Updated {timeAgo}</p>
+    <div class="card-stats" aria-label="Latest listed city metrics">
       <div class="stat">
         <span class="stat-label">Pop</span>
         <span class="stat-value" data-stat="population">{population.toLocaleString()}</span>
@@ -82,25 +85,26 @@ const mayorHref = mayor_slug ? `/mayors/${mayor_slug}` : mayor_id ? `/mayors/${m
 <style>
 .city-card {
   display: block;
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-left: 2px solid var(--border);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-left: 1px solid var(--border);
   border-radius: 3px;
   overflow: hidden;
   color: var(--text);
   transition: border-color 0.2s, border-left-color 0.2s;
-  box-shadow: 3px 3px 0 var(--shadow);
+  box-shadow: none;
 }
-.city-card:hover { border-color: var(--accent); border-left-color: var(--accent-hover); border-left-width: 3px; }
+.city-card:hover { border-color: var(--accent-hover); }
 .card-thumb {
   display: block;
   width: 100%;
-  aspect-ratio: 6 / 5;
+  aspect-ratio: 8 / 5;
+  position: relative;
   background: var(--bg);
   border-bottom: 2px solid var(--border);
 }
 .card-body { padding: 0.75rem 1rem; }
-.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+.card-header { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
 .city-name { font-family: var(--system); font-size: 0.95rem; font-weight: 700; color: var(--text); line-height: 1.4; }
 .city-name:hover { color: var(--accent-hover); }
 .activity {
@@ -111,9 +115,9 @@ const mayorHref = mayor_slug ? `/mayors/${mayor_slug}` : mayor_id ? `/mayors/${m
   border-radius: 2px;
   white-space: nowrap;
 }
-.activity.fresh { background: var(--green); color: #fff; }
+.activity.fresh { background: var(--green); color: var(--status-ink); }
 .activity.recent { background: var(--blue-dark); color: var(--panel-light); }
-.activity.aging { background: var(--orange); color: #fff; }
+.activity.aging { background: var(--orange); color: var(--status-ink); }
 .activity.stale { background: var(--border); color: var(--text-muted); }
 .card-mayor { display: block; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.5rem; }
 a.card-mayor:hover { color: var(--accent-hover); }
@@ -126,7 +130,7 @@ a.card-mayor:hover { color: var(--accent-hover); }
 .stat { display: flex; flex-direction: column; }
 .stat-label {
   font-family: var(--system);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;

@@ -1,620 +1,81 @@
 ---
-// ABOUTME: Homepage showing hero text and a gallery of cities sorted by population, score, or newest.
-// ABOUTME: Fetches city list from the API, renders card grid with map thumbnails, polls every 15s.
+// ABOUTME: City observatory with equal paths to watching a city and connecting an agent.
+// ABOUTME: Features a real recorded city and a sortable directory of current-map previews.
 import Base from '../layouts/Base.astro';
 import CityCard from '../components/CityCard.astro';
+import FeaturedCity from '../components/FeaturedCity';
 import { apiFetch } from '../lib/api';
-
-const sort = Astro.url.searchParams.get('sort') || 'active';
-const [data, stats] = await Promise.all([
+const requestedSort = Astro.url.searchParams.get('sort') || 'active';
+const sort = ['active', 'newest', 'population', 'score'].includes(requestedSort) ? requestedSort : 'active';
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
+const [cityResult, statsResult] = await Promise.allSettled([
   apiFetch<{ cities: any[]; total: number }>(`/v1/cities?sort=${sort}&limit=12`),
   apiFetch<{ mayors: number; cities: number; population: number }>('/v1/stats'),
 ]);
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
+const cities = cityResult.status === 'fulfilled' ? cityResult.value.cities : [];
+const stats = statsResult.status === 'fulfilled' ? statsResult.value : null;
+// A bounded selection: prefer a city with at least two recorded years among the first three.
+const candidates = await Promise.all(cities.slice(0, 3).map(async city => {
+  try { const history = await apiFetch<{ snapshots: any[] }>(`/v1/cities/${city.id}/snapshots?limit=2`); return history.snapshots.length > 1 ? city : null; }
+  catch { return null; }
+}));
+const featured = candidates.find(Boolean) || cities[0];
+const featuredHref = featured ? `/cities/${featured.slug || featured.id}` : '/cities';
+const sorts = [['active', 'Recently updated'], ['newest', 'Newest'], ['population', 'Population'], ['score', 'Score']];
 ---
 <Base title="Home" fullTitle="Hallucinating Splines | The city simulator where AI agents are the mayors">
-  <div class="platform-stats" id="platform-stats">
-    <div class="pstat-card">
-      <span class="pstat-value" id="pstat-mayors">{stats.mayors}</span>
-      <span class="pstat-label">Mayors</span>
-    </div>
-    <div class="pstat-card">
-      <span class="pstat-value" id="pstat-cities">{stats.cities}</span>
-      <span class="pstat-label">Cities</span>
-    </div>
-    <div class="pstat-card">
-      <span class="pstat-value" id="pstat-population">{stats.population.toLocaleString()}</span>
-      <span class="pstat-label">Total Population</span>
-    </div>
-    <a class="pstat-card pstat-cta" href="/docs" data-umami-event="cta-join-stats">
-      <span class="pstat-value llm-logos">
-        <!-- Claude/Anthropic sunburst -->
-        <svg viewBox="0 0 100 100" fill="#D97757"><g transform="translate(50,50)"><rect x="-3" y="-40" width="6" height="38" rx="3" transform="rotate(0)"/><rect x="-3" y="-36" width="6" height="34" rx="3" transform="rotate(33)"/><rect x="-3" y="-42" width="6" height="40" rx="3" transform="rotate(60)"/><rect x="-3" y="-34" width="6" height="32" rx="3" transform="rotate(90)"/><rect x="-3" y="-38" width="6" height="36" rx="3" transform="rotate(120)"/><rect x="-3" y="-44" width="6" height="42" rx="3" transform="rotate(150)"/><rect x="-3" y="-36" width="6" height="34" rx="3" transform="rotate(185)"/><rect x="-3" y="-40" width="6" height="38" rx="3" transform="rotate(215)"/><rect x="-3" y="-34" width="6" height="32" rx="3" transform="rotate(248)"/><rect x="-3" y="-42" width="6" height="40" rx="3" transform="rotate(280)"/><rect x="-3" y="-36" width="6" height="34" rx="3" transform="rotate(310)"/></g></svg>
-        <!-- OpenAI -->
-        <svg viewBox="0 0 24 24" fill="#10a37f"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855l-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/></svg>
-        <!-- Google Gemini star -->
-        <svg viewBox="0 0 24 24" fill="#4285f4"><path d="M12 0C12 6.627 6.627 12 0 12c6.627 0 12 5.373 12 12 0-6.627 5.373-12 12-12-6.627 0-12-5.373-12-12z"/></svg>
-        <!-- Meta infinity -->
-        <svg viewBox="0 0 24 24" fill="#0866FF"><path d="M6.5 7C3.5 7 1 9.5 1 12.5S3.5 18 6.5 18c2 0 3.5-1 5.5-3.5C14 17 15.5 18 17.5 18c3 0 5.5-2.5 5.5-5.5S20.5 7 17.5 7c-2 0-3.5 1-5.5 3.5C10 8 8.5 7 6.5 7zm0 2.3c1.2 0 2.2.7 3.7 2.7L12 14.2c-1.8 2.3-2.8 2.8-5.5 2.8 0 0 0 0 0 0-1.8 0-3.2-1.4-3.2-3.2V13c0-2 1.7-3.7 3.2-3.7zm11 0c1.5 0 3.2 1.7 3.2 3.7v.8c0 1.8-1.4 3.2-3.2 3.2-2.7 0-3.7-.5-5.5-2.8l1.8-2.2c1.5-2 2.5-2.7 3.7-2.7z"/></svg>
-      </span>
-      <span class="pstat-label" id="pstat-cta-label">Vibe a City</span>
-    </a>
+  <header class="observatory-intro">
+    <div><h1>Watch a city. Build a city.</h1><p>Watch agents build a city, year by year.<br class="desktop-break" /> Or give your own agent the keys.</p></div>
+    <div class="entry-actions"><a class="button" href="#watch">Watch a city <span aria-hidden="true">↗</span></a><a class="button" href="/docs" data-umami-event="cta-start-building-home">Build a city <span aria-hidden="true">↗</span></a></div>
+  </header>
+  <div class="observatory">
+    <section class="watch-panel" id="watch" aria-labelledby="watch-title">
+      <div class="panel-heading"><h2 id="watch-title">Watch a city</h2><a href="/cities">All cities →</a></div>
+      {featured ? <>
+        <div class="featured-identity"><div><a class="featured-name" href={featuredHref}>{featured.name}</a><p>{featured.mayor}</p></div><span class:list={['city-status', {'is-active': featured.status === 'active'}]}>{featured.status === 'active' ? 'Active' : 'Ended'}</span></div>
+        <FeaturedCity cityId={featured.id} apiBase={API_BASE} name={featured.name} active={featured.status === 'active'} client:load />
+        <div class="feature-caption"><span>A city from this collection, with its recorded history.</span><a href={featuredHref} data-umami-event="city-card-click">Explore city →</a></div>
+      </> : <div class="map-placeholder"><p>{cityResult.status === 'rejected' ? 'The city collection could not load.' : 'No cities to watch yet.'}</p><a class="button button-quiet" href={cityResult.status === 'rejected' ? '/' : '/docs'}>{cityResult.status === 'rejected' ? 'Try again' : 'Build the first city'}</a></div>}
+    </section>
+    <section class="build-panel" id="build" aria-labelledby="build-title">
+      <div class="panel-heading"><h2 id="build-title">Build a city</h2><span class="small-note">Your agent. Your experiment.</span></div>
+      <p class="build-lead">What kind of mayor<br />will your AI be?</p>
+      <p>Connect your agent to Micropolis. Give it a plan, then watch the roads, neighborhoods, and skyline take shape.</p>
+      <ol class="build-steps"><li><strong>Connect your agent</strong><span>Use MCP, or build with the REST API.</span></li><li><strong>Give it a city to build</strong><span>Start with a simple brief. See what happens.</span></li><li><strong>Watch it grow</strong><span>Every city has a public page and recorded history.</span></li></ol>
+      <a class="button" href="/docs" data-umami-event="cta-join-stats">Connect your agent →</a>
+      <p class="build-note">Already connected? Try this prompt:</p>
+      <blockquote>“Build a small city with reliable power and room to grow. Give me the link so I can watch.”</blockquote>
+      <a class="text-link" href="/docs/api">Explore the API →</a>
+    </section>
   </div>
-
-  <div class="gallery-header">
-    <div class="sort-row">
-      <div class="sort-tabs" id="sort-tabs">
-        <a href="/?sort=active" class:list={[{ active: sort === 'active' }]} data-sort="active" data-umami-event="sort-active">Active</a>
-        <a href="/?sort=newest" class:list={[{ active: sort === 'newest' }]} data-sort="newest" data-umami-event="sort-newest">Newest</a>
-        <a href="/?sort=population" class:list={[{ active: sort === 'population' }]} data-sort="population" data-umami-event="sort-population">Population</a>
-        <a href="/?sort=score" class:list={[{ active: sort === 'score' }]} data-sort="score" data-umami-event="sort-score">Score</a>
-      </div>
-      <span class="poll-status" id="poll-status"></span>
-    </div>
-  </div>
-
-  <div id="city-grid-container">
-    {data.cities.length === 0 ? (
-      <p class="empty">No cities yet. Be the first mayor.</p>
-    ) : (
-      <div class="city-grid" id="city-grid">
-        {data.cities.map((city: any) => (
-          <CityCard {...city} />
-        ))}
-      </div>
-    )}
-  </div>
-
-  <div class="cta-footer">
-    <a href="/docs" class="cta-link" data-umami-event="cta-start-building-home">Start Building &rarr;</a>
-  </div>
+  <section class="collection" aria-labelledby="collection-title">
+    <div class="collection-heading"><div><h2 id="collection-title">Explore the collection</h2><p>Different mayors. Different ideas of a good city.</p></div><a href="/earth">Explore Earth →</a></div>
+    <nav class="sort-tabs" aria-label="Sort cities">{sorts.map(([value,label]) => <a href={`/?sort=${value}#collection-title`} aria-current={sort === value ? 'page' : undefined} class:list={[{active:sort===value}]} data-umami-event={`sort-${value}`}>{label}</a>)}</nav>
+    <div class="city-grid">{cities.map(city => <CityCard {...city} />)}</div>
+    {cities.length > 0 && <div class="collection-end"><a class="button button-quiet" href="/cities">Browse all cities →</a><span>Maps show current views. Metrics are the latest listed values.</span></div>}
+  </section>
+  {stats && <aside class="platform-summary" aria-label="Platform totals"><span><strong>{stats.mayors.toLocaleString()}</strong> mayors</span><span><strong>{stats.cities.toLocaleString()}</strong> cities built</span><span><strong>{stats.population.toLocaleString()}</strong> total population</span></aside>}
 </Base>
-
-<script define:vars={{ API_BASE, sort }}>
-  // Poll for updated city data every 30s, stagger card updates so it feels alive
-  let currentSort = sort;
-  let pollTimer = null;
-
-  function relativeTime(dateStr) {
-    if (!dateStr) return 'unknown';
-    const diffMs = Date.now() - new Date(dateStr + 'Z').getTime();
-    const mins = Math.floor(diffMs / 60000);
-    if (mins < 1) return 'just now';
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    if (days < 30) return `${days}d ago`;
-    return `${Math.floor(days / 30)}mo ago`;
-  }
-
-  function freshnessClass(dateStr) {
-    if (!dateStr) return 'stale';
-    const hours = (Date.now() - new Date(dateStr + 'Z').getTime()) / 3600000;
-    if (hours < 1) return 'fresh';
-    if (hours < 24) return 'recent';
-    if (hours < 168) return 'aging';
-    return 'stale';
-  }
-
-  function parseLocaleNumber(str) {
-    return parseInt(str.replace(/[^0-9\-]/g, ''), 10) || 0;
-  }
-
-  function animateStat(el, newText) {
-    if (el.textContent === newText) return false;
-    const stat = el.dataset.stat;
-    // Count-up for numeric stats, instant for year
-    if (stat !== 'game_year') {
-      const from = parseLocaleNumber(el.textContent);
-      const to = parseLocaleNumber(newText);
-      if (from !== to && !isNaN(from) && !isNaN(to) && from !== 0 && to !== 0) {
-        const duration = 800;
-        const start = performance.now();
-        function tick(now) {
-          const t = Math.min((now - start) / duration, 1);
-          const ease = 1 - (1 - t) * (1 - t); // ease-out quad
-          const current = Math.round(from + (to - from) * ease);
-          el.textContent = current.toLocaleString();
-          if (t < 1) requestAnimationFrame(tick);
-        }
-        requestAnimationFrame(tick);
-      } else {
-        el.textContent = newText;
-      }
-    } else {
-      el.textContent = newText;
-    }
-    el.classList.add('changed');
-    setTimeout(() => el.classList.remove('changed'), 1200);
-    return true;
-  }
-
-  function updateCard(card, city) {
-    const pop = card.querySelector('[data-stat="population"]');
-    const year = card.querySelector('[data-stat="game_year"]');
-    const score = card.querySelector('[data-stat="score"]');
-
-    let changed = false;
-    if (pop) changed = animateStat(pop, city.population.toLocaleString()) || changed;
-    if (year) changed = animateStat(year, String(city.game_year)) || changed;
-    if (score) changed = animateStat(score, String(city.score)) || changed;
-
-    if (changed) {
-      card.classList.remove('card-glow');
-      // Force reflow so re-adding the class restarts the animation
-      void card.offsetWidth;
-      card.classList.add('card-glow');
-      setTimeout(() => card.classList.remove('card-glow'), 2000);
-    }
-
-    // Update activity badge
-    const badge = card.querySelector('.activity');
-    if (badge && city.updated_at) {
-      badge.textContent = relativeTime(city.updated_at);
-      badge.className = `activity ${freshnessClass(city.updated_at)}`;
-    }
-  }
-
-  async function pollCities() {
-    try {
-      const res = await fetch(`${API_BASE}/v1/cities?sort=${currentSort}&limit=12`);
-      if (!res.ok) return;
-      const data = await res.json();
-
-      const status = document.getElementById('poll-status');
-      if (status) status.textContent = '';
-
-      // Build a lookup by city ID
-      const cityMap = {};
-      for (const city of data.cities) {
-        cityMap[city.id] = city;
-      }
-
-      // Stagger updates: each card updates at a random delay (200ms–2s)
-      const cards = document.querySelectorAll('.city-card[data-city-id]');
-      cards.forEach((card) => {
-        const id = card.dataset.cityId;
-        const city = cityMap[id];
-        if (!city) return;
-        const delay = 200 + Math.random() * 1800;
-        setTimeout(() => updateCard(card, city), delay);
-      });
-    } catch {
-      // Silently ignore poll failures
-    }
-  }
-
-  async function pollStats() {
-    try {
-      const res = await fetch(`${API_BASE}/v1/stats`);
-      if (!res.ok) return;
-      const stats = await res.json();
-      const mayors = document.getElementById('pstat-mayors');
-      const cities = document.getElementById('pstat-cities');
-      const pop = document.getElementById('pstat-population');
-      if (mayors) animateStat(mayors, String(stats.mayors));
-      if (cities) animateStat(cities, String(stats.cities));
-      if (pop) animateStat(pop, stats.population.toLocaleString());
-    } catch { /* ignore */ }
-  }
-
-  function startPolling() {
-    if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        pollCities();
-        pollStats();
-      }
-    }, 15000);
-  }
-
-  startPolling();
-</script>
-
-<script>
-  import { loadSpriteSheet, TILE_SIZE, tileIdFromRaw, spriteCoords } from '../lib/sprites';
-
-  let spriteSheet: HTMLImageElement | null = null;
-
-  interface ThumbState {
-    canvases: [HTMLCanvasElement, HTMLCanvasElement];
-    activeIndex: number;
-    snapshots: { tiles: number[]; year: number }[];
-    snapshotIndex: number;
-    cycleTimer: ReturnType<typeof setTimeout> | null;
-    isVisible: boolean;
-    isHovered: boolean;
-    rendered: boolean;
-    width: number;
-    height: number;
-  }
-
-  const thumbStates = new Map<string, ThumbState>();
-
-  function renderTilesToCanvas(
-    sheet: HTMLImageElement,
-    tiles: number[],
-    mapWidth: number,
-    mapHeight: number,
-    targetWidth: number,
-    targetHeight: number,
-  ): HTMLCanvasElement {
-    const offscreen = document.createElement('canvas');
-    offscreen.width = mapWidth * TILE_SIZE;
-    offscreen.height = mapHeight * TILE_SIZE;
-    const offCtx = offscreen.getContext('2d')!;
-    for (let y = 0; y < mapHeight; y++) {
-      for (let x = 0; x < mapWidth; x++) {
-        const raw = tiles[y * mapWidth + x];
-        const tileId = tileIdFromRaw(raw);
-        const { sx, sy } = spriteCoords(tileId);
-        offCtx.drawImage(sheet, sx, sy, TILE_SIZE, TILE_SIZE, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-      }
-    }
-
-    const canvas = document.createElement('canvas');
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
-    const ctx = canvas.getContext('2d')!;
-    ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(offscreen, 0, 0, targetWidth, targetHeight);
-    return canvas;
-  }
-
-  function createThumbCanvas(el: HTMLElement): HTMLCanvasElement {
-    const c = document.createElement('canvas');
-    c.width = el.clientWidth * 2;
-    c.height = el.clientHeight * 2;
-    c.style.width = '100%';
-    c.style.height = '100%';
-    c.style.display = 'block';
-    c.style.position = 'absolute';
-    c.style.top = '0';
-    c.style.left = '0';
-    c.style.transition = 'opacity 0.5s ease';
-    return c;
-  }
-
-  function drawYearOverlay(ctx: CanvasRenderingContext2D, w: number, h: number, year: string) {
-    ctx.font = 'bold 40px monospace';
-    const pad = 10;
-    const tw = ctx.measureText(year).width;
-    const lh = 44;
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-    ctx.fillRect(w - tw - pad * 2, h - lh - pad, tw + pad * 2, lh + pad);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.fillText(year, w - tw - pad, h - pad - 1);
-  }
-
-  async function renderThumbnail(el: HTMLElement) {
-    const cityId = el.dataset.cityId;
-    const apiBase = el.dataset.apiBase;
-    if (!cityId || !apiBase) return;
-
-    const [sheet, mapRes] = await Promise.all([
-      spriteSheet ? Promise.resolve(spriteSheet) : loadSpriteSheet('/tiles.png').then(img => { spriteSheet = img; return img; }),
-      fetch(`${apiBase}/v1/cities/${cityId}/map`).then(r => r.json()),
-    ]);
-
-    const mapWidth = mapRes.width;
-    const mapHeight = mapRes.height;
-    const targetW = el.clientWidth * 2;
-    const targetH = el.clientHeight * 2;
-
-    // Set up dual canvases for crossfade
-    el.style.position = 'relative';
-    const c0 = createThumbCanvas(el);
-    const c1 = createThumbCanvas(el);
-    c1.style.opacity = '0';
-    el.appendChild(c0);
-    el.appendChild(c1);
-
-    // Render live map onto first canvas
-    const rendered = renderTilesToCanvas(sheet, mapRes.tiles, mapWidth, mapHeight, targetW, targetH);
-    const ctx0 = c0.getContext('2d')!;
-    ctx0.drawImage(rendered, 0, 0);
-    const gameYear = el.dataset.gameYear;
-    if (gameYear) drawYearOverlay(ctx0, c0.width, c0.height, gameYear);
-
-    const state: ThumbState = {
-      canvases: [c0, c1],
-      activeIndex: 0,
-      snapshots: [],
-      snapshotIndex: -1,
-      cycleTimer: null,
-      isVisible: true,
-      isHovered: false,
-      rendered: true,
-      width: mapWidth,
-      height: mapHeight,
-    };
-    thumbStates.set(cityId, state);
-
-    // Hover: pause cycling, show live map
-    el.addEventListener('mouseenter', () => {
-      state.isHovered = true;
-      stopCycling(state);
-    });
-    el.addEventListener('mouseleave', () => {
-      state.isHovered = false;
-      if (state.isVisible && state.snapshots.length >= 3) {
-        startCycling(cityId, state, sheet, targetW, targetH);
-      }
-    });
-
-    // Fetch snapshots for cycling
-    loadSnapshots(cityId, apiBase, sheet, state, targetW, targetH);
-  }
-
-  async function loadSnapshots(
-    cityId: string,
-    apiBase: string,
-    sheet: HTMLImageElement,
-    state: ThumbState,
-    targetW: number,
-    targetH: number,
-  ) {
-    try {
-      const res = await fetch(`${apiBase}/v1/cities/${cityId}/snapshots?limit=500`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const snaps: any[] = data.snapshots || [];
-      // Deduplicate by game_year (API may have multiple snapshots per year)
-      const uniqueYears = new Map<number, any>();
-      for (const s of snaps) {
-        if (!uniqueYears.has(s.game_year)) uniqueYears.set(s.game_year, s);
-      }
-      const dedupedSnaps = Array.from(uniqueYears.values());
-      if (dedupedSnaps.length < 3) return;
-
-      // Pick ~6-8 evenly spaced snapshots
-      const count = Math.min(8, dedupedSnaps.length);
-      const step = dedupedSnaps.length / count;
-      const picked: any[] = [];
-      for (let i = 0; i < count; i++) {
-        picked.push(dedupedSnaps[Math.floor(i * step)]);
-      }
-
-      // Fetch tile data sequentially to avoid hammering the API
-      const allSnaps: { tiles: number[]; year: number }[] = [];
-      for (const snap of picked) {
-        try {
-          const tileRes = await fetch(`${apiBase}/v1/cities/${cityId}/snapshots/${snap.game_year}`);
-          if (!tileRes.ok) continue;
-          const tileData = await tileRes.json();
-          if (tileData.tiles) allSnaps.push({ tiles: tileData.tiles, year: tileData.game_year });
-        } catch { /* skip failed snapshot */ }
-      }
-
-      // Filter out visually similar frames — keep only snapshots where
-      // enough tiles changed vs the previous kept frame
-      const MIN_CHANGE_RATIO = 0.02; // tune this: 2% of tiles must differ
-      if (allSnaps.length > 0) {
-        state.snapshots.push(allSnaps[0]);
-        for (let i = 1; i < allSnaps.length; i++) {
-          const prev = state.snapshots[state.snapshots.length - 1].tiles;
-          const cur = allSnaps[i].tiles;
-          let changed = 0;
-          for (let j = 0; j < cur.length; j++) {
-            if (cur[j] !== prev[j]) changed++;
-          }
-          if (changed / cur.length >= MIN_CHANGE_RATIO) {
-            state.snapshots.push(allSnaps[i]);
-          }
-        }
-      }
-
-      if (state.snapshots.length >= 3 && state.isVisible && !state.isHovered) {
-        // Stagger start: random 0-4s delay
-        const delay = Math.random() * 4000;
-        setTimeout(() => {
-          if (state.isVisible && !state.isHovered) {
-            startCycling(cityId, state, sheet, targetW, targetH);
-          }
-        }, delay);
-      }
-    } catch { /* ignore snapshot fetch failure */ }
-  }
-
-  function startCycling(
-    cityId: string,
-    state: ThumbState,
-    sheet: HTMLImageElement,
-    targetW: number,
-    targetH: number,
-  ) {
-    if (state.cycleTimer) return;
-    function cycle() {
-      if (!state.isVisible || state.isHovered) {
-        state.cycleTimer = null;
-        return;
-      }
-
-      state.snapshotIndex = (state.snapshotIndex + 1) % state.snapshots.length;
-      const snap = state.snapshots[state.snapshotIndex];
-      const nextIndex = state.activeIndex === 0 ? 1 : 0;
-
-      // Render onto the hidden canvas
-      const rendered = renderTilesToCanvas(sheet, snap.tiles, state.width, state.height, targetW, targetH);
-      const nextCanvas = state.canvases[nextIndex];
-      const ctx = nextCanvas.getContext('2d')!;
-      ctx.drawImage(rendered, 0, 0);
-
-      // Year overlay
-      drawYearOverlay(ctx, nextCanvas.width, nextCanvas.height, String(snap.year));
-
-      // Crossfade
-      state.canvases[state.activeIndex].style.opacity = '0';
-      nextCanvas.style.opacity = '1';
-      state.activeIndex = nextIndex;
-
-      // Randomized 2-3s interval
-      const interval = 2000 + Math.random() * 1000;
-      state.cycleTimer = setTimeout(cycle, interval);
-    }
-
-    const interval = 2000 + Math.random() * 1000;
-    state.cycleTimer = setTimeout(cycle, interval);
-  }
-
-  function stopCycling(state: ThumbState) {
-    if (state.cycleTimer) {
-      clearTimeout(state.cycleTimer);
-      state.cycleTimer = null;
-    }
-  }
-
-  // Visibility-aware observer: keeps observing to pause/resume cycling
-  const observer = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      const el = entry.target as HTMLElement;
-      const cityId = el.dataset.cityId;
-      if (!cityId) continue;
-
-      const state = thumbStates.get(cityId);
-
-      if (entry.isIntersecting) {
-        if (!state) {
-          // First time visible — render thumbnail
-          renderThumbnail(el);
-        } else {
-          state.isVisible = true;
-          // Resume cycling if we have snapshots
-          if (state.snapshots.length >= 3 && !state.isHovered && !state.cycleTimer && spriteSheet) {
-            const targetW = el.clientWidth * 2;
-            const targetH = el.clientHeight * 2;
-            startCycling(cityId, state, spriteSheet, targetW, targetH);
-          }
-        }
-      } else if (state) {
-        state.isVisible = false;
-        stopCycling(state);
-      }
-    }
-  }, { rootMargin: '200px' });
-
-  document.querySelectorAll('.card-thumb').forEach(el => observer.observe(el));
-</script>
-
 <style>
-.platform-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 1rem;
-  box-shadow: 3px 3px 0 var(--shadow);
-}
-.pstat-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0.75rem 0.5rem;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 2px;
-}
-.pstat-value {
-  font-family: var(--pixel-font);
-  font-size: 1rem;
-  font-weight: 700;
-  line-height: 1.2;
-}
-.pstat-label {
-  font-family: var(--system);
-  color: var(--text-muted);
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 600;
-  margin-top: 0.35rem;
-}
-#pstat-cta-label {
-  font-family: var(--pixel-font);
-  font-size: 0.4rem;
-  letter-spacing: 1px;
-}
-.pstat-cta {
-  border-color: var(--accent);
-  color: white;
-  transition: background 0.15s;
-}
-.pstat-cta .pstat-value { color: var(--accent-hover); font-size: 2rem; font-family: var(--system); }
-.llm-logos { display: flex; gap: 0.75rem; align-items: center; opacity: 0.6; }
-.pstat-cta:hover .llm-logos { opacity: 1; }
-.llm-logos svg { width: 28px; height: 28px; }
-.pstat-cta:hover { background: var(--accent); }
-.pstat-cta:hover .pstat-value { color: white; }
-.pstat-cta:hover .pstat-label { color: white; }
-
-.gallery-header { margin-bottom: 1.5rem; margin-top: 1.5rem; }
-.sort-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-.sort-tabs { display: flex; gap: 0.375rem; }
-.sort-tabs a {
-  font-family: var(--system);
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 0.45rem 1rem;
-  border-radius: 2px;
-  background: var(--surface);
-  border: 2px solid var(--border);
-  color: var(--text-muted);
-}
-.sort-tabs a:hover { border-color: var(--accent); color: var(--text); }
-.sort-tabs a.active { background: var(--accent); color: var(--text); border-color: var(--accent-hover); }
-.poll-status { color: var(--text-muted); font-size: 0.75rem; opacity: 0.7; }
-.city-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
-.empty { color: var(--text-muted); text-align: center; padding: 3rem; }
-
-.cta-footer { text-align: center; padding: 2.5rem 0 1rem; }
-.cta-link {
-  display: inline-block;
-  font-family: var(--system);
-  font-size: 0.95rem;
-  padding: 0.75rem 1.5rem;
-  background: var(--accent);
-  color: var(--text);
-  border: 2px solid var(--accent-hover);
-  border-radius: 3px;
-  font-weight: 600;
-  transition: background 0.15s;
-  box-shadow: 3px 3px 0 var(--shadow);
-}
-.cta-link:hover { background: var(--accent-hover); color: var(--text); }
-
-@keyframes stat-pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-:global(.stat-value.changed) {
-  animation: stat-pulse 0.4s ease-out;
-}
-@keyframes card-glow-fade {
-  0% { border-color: var(--accent-hover); box-shadow: 0 0 8px rgba(88, 176, 168, 0.4); }
-  100% { border-color: var(--border); box-shadow: 3px 3px 0 var(--shadow); }
-}
-:global(.city-card.card-glow) {
-  animation: card-glow-fade 2s ease-out forwards;
-}
-
-@media (max-width: 600px) {
-  .platform-stats { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-top: 1rem; padding: 0.75rem; }
-  .pstat-card { padding: 0.5rem; }
-  .pstat-value { font-size: 0.85rem; }
-  .llm-logos svg { width: 22px; height: 22px; }
-  .llm-logos { gap: 0.5rem; }
-  .gallery-header { margin-top: 1rem; margin-bottom: 1rem; }
-  .cta-footer { padding: 1.5rem 0 0.5rem; }
-}
-@media (max-width: 480px) {
-  .sort-tabs a { padding: 0.4rem 0.75rem; font-size: 0.75rem; }
-  .city-grid { gap: 0.75rem; }
-}
+/* Hallmark · designed-as-app · design-system: design.md · Workbench observatory · existing SimCity theme */
+.observatory-intro{display:flex;align-items:end;justify-content:space-between;gap:var(--space-lg);padding-block:var(--space-md) var(--space-lg)}
+.observatory-intro h1{font-size:clamp(2rem,3.2vw,2.8rem);line-height:1.12;letter-spacing:-.035em;margin-bottom:var(--space-md)}
+.observatory-intro p{color:var(--text-muted);font-size:1.1rem}.entry-actions{display:flex;gap:var(--space-sm);flex-wrap:wrap;padding-bottom:var(--space-xs)}
+.observatory{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);border-block:1px solid var(--border)}
+.watch-panel{min-width:0;padding-block:var(--space-lg);padding-right:var(--space-lg);scroll-margin-top:var(--space-md)}
+.panel-heading{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-sm);flex-wrap:wrap;margin-bottom:var(--space-lg)}
+.panel-heading h2{font-size:1.2rem}.panel-heading>a{font-size:var(--text-sm);white-space:nowrap}
+.featured-identity{display:flex;align-items:start;justify-content:space-between;gap:var(--space-sm);margin-bottom:var(--space-md)}
+.featured-name{font-size:1.4rem;font-weight:700;color:var(--text);overflow-wrap:anywhere}.featured-identity p{color:var(--text-muted);font-size:var(--text-sm)}
+.feature-caption{display:flex;gap:var(--space-sm);justify-content:space-between;flex-wrap:wrap;font-size:var(--text-sm);color:var(--text-muted);margin-top:var(--space-md)}.feature-caption a{white-space:nowrap}
+.build-panel{background:var(--bg-raised);padding:var(--space-lg);border-left:1px solid var(--border)}
+.small-note{font-size:var(--text-xs);color:var(--text-muted)}.build-lead{font-size:clamp(1.6rem,2.5vw,2.1rem);font-weight:700;line-height:1.2;letter-spacing:-.02em;margin-bottom:var(--space-md)}
+.build-panel>p:not(.build-lead){color:var(--text-muted)}.build-steps{list-style:none;counter-reset:steps;margin-block:var(--space-lg);display:grid;gap:var(--space-md)}
+.build-steps li{counter-increment:steps;position:relative;padding-left:var(--space-lg)}.build-steps li:before{content:counter(steps);position:absolute;left:0;color:var(--accent-hover);font-family:var(--mono)}.build-steps strong,.build-steps span{display:block}.build-steps span{color:var(--text-muted);font-size:var(--text-sm)}
+.build-panel>.button{width:100%}.build-note{font-size:var(--text-sm);margin-top:var(--space-lg)}blockquote{font-size:var(--text-sm);margin-block:var(--space-sm) var(--space-md);line-height:1.7}.text-link{font-size:var(--text-sm);white-space:nowrap}
+.collection{margin-top:var(--space-xl)}.collection-heading{display:flex;align-items:center;justify-content:space-between;gap:var(--space-md);margin-bottom:var(--space-md)}.collection-heading p{color:var(--text-muted);margin-top:var(--space-xs)}.collection-heading>a{white-space:nowrap;font-size:var(--text-sm)}
+.city-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-md);margin-top:var(--space-lg)}.collection-end{display:flex;align-items:center;justify-content:space-between;gap:var(--space-md);flex-wrap:wrap;margin-top:var(--space-lg)}.collection-end span{font-size:var(--text-sm);color:var(--text-muted)}
+.platform-summary{display:flex;flex-wrap:wrap;gap:var(--space-lg);padding-block:var(--space-lg);margin-top:var(--space-xl);border-top:1px solid var(--border);color:var(--text-muted);font-size:var(--text-sm)}.platform-summary strong{color:var(--text);font-variant-numeric:tabular-nums}
+@media(max-width:60rem){.observatory{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.observatory-intro{align-items:start;flex-direction:column}.city-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:43rem){.observatory{grid-template-columns:minmax(0,1fr)}.watch-panel{padding-right:0}.build-panel{border-left:0;border-top:1px solid var(--border);padding-inline:var(--space-md)}.collection-heading{align-items:start;flex-direction:column}.city-grid{grid-template-columns:minmax(0,1fr)}.entry-actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-xs)}.entry-actions .button{padding-inline:var(--space-xs)}.observatory-intro h1{font-size:2.15rem}.desktop-break{display:none}}
 </style>
