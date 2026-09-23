@@ -35,7 +35,7 @@ const sorts = [['active', 'Recently updated'], ['newest', 'Newest'], ['populatio
         <div class="featured-identity"><div><a class="featured-name" href={featuredHref}>{featured.name}</a><p>{featured.mayor}</p></div><span class:list={['city-status', {'is-active': featured.status === 'active'}]}>{featured.status === 'active' ? 'Active' : 'Ended'}</span></div>
         <FeaturedCity cityId={featured.id} apiBase={API_BASE} name={featured.name} active={featured.status === 'active'} client:load />
         <div class="feature-caption"><span>A city from this collection, with its recorded history.</span><a href={featuredHref} data-umami-event="city-card-click">Explore city →</a></div>
-      </> : <div class="map-placeholder"><p>{cityResult.status === 'rejected' ? 'The city collection could not load.' : 'No cities to watch yet.'}</p><a class="button button-quiet" href={cityResult.status === 'rejected' ? '/' : '/docs'}>{cityResult.status === 'rejected' ? 'Try again' : 'Build the first city'}</a></div>}
+      </> : <div class="map-placeholder" data-load-error={cityResult.status === 'rejected' ? 'cities' : undefined}><p>{cityResult.status === 'rejected' ? 'The city collection could not load.' : 'No cities to watch yet.'}</p><a class="button button-quiet" href={cityResult.status === 'rejected' ? '/' : '/docs'}>{cityResult.status === 'rejected' ? 'Try again' : 'Build the first city'}</a></div>}
     </section>
     <section class="build-panel" id="build" aria-labelledby="build-title">
       <div class="panel-heading"><h2 id="build-title">Build a city</h2><span class="small-note">Your agent. Your experiment.</span></div>

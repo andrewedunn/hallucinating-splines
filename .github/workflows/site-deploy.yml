@@ -1,0 +1,110 @@
+# ABOUTME: Tests every pull request and publishes successful main builds to Pages.
+# ABOUTME: Production credentials are isolated from pull-request validation jobs.
+name: Website CI and deploy
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Website checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci --no-audit --no-fund
+        working-directory: site
+      - run: npm run typecheck && npm test && npm run build
+        working-directory: site
+      - run: python3 -m unittest discover -s scripts/tests -p 'test_site_smoke.py'
+      - name: Identify the build
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const { version } = JSON.parse(fs.readFileSync('site/package.json', 'utf8'));
+          fs.writeFileSync('site/dist/release.json', JSON.stringify({ sha: process.env.RELEASE_SHA, version }) + '\n');
+          const routes = JSON.parse(fs.readFileSync('site/dist/_routes.json', 'utf8'));
+          routes.exclude = [...new Set([...routes.exclude, '/release.json'])];
+          fs.writeFileSync('site/dist/_routes.json', JSON.stringify(routes));
+          JS
+      - name: Store the tested build
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: website-${{ github.sha }}
+          path: site/dist
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    name: Deploy website
+    needs: check
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://hallucinatingsplines.com
+    concurrency:
+      group: website-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci --no-audit --no-fund
+        working-directory: site
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: website-${{ github.sha }}
+          path: site/dist
+      - name: Skip superseded commits
+        id: current
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          latest=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
+          if [ "$latest" = "$RELEASE_SHA" ]; then
+            echo 'deploy=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'deploy=false' >> "$GITHUB_OUTPUT"
+            echo 'A newer commit is on main; its run will deploy.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Publish the tested build
+        if: steps.current.outputs.deploy == 'true'
+        working-directory: site
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          RELEASE_SHA: ${{ github.sha }}
+          WRANGLER_SEND_METRICS: 'false'
+        run: |
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo 'Missing production CLOUDFLARE_ACCOUNT_ID variable'; exit 1; }
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo 'Missing production CLOUDFLARE_API_TOKEN secret'; exit 1; }
+          ./node_modules/.bin/wrangler pages deploy dist --project-name hallucinating-splines-site --branch main --commit-hash "$RELEASE_SHA"
+      - name: Verify production
+        if: steps.current.outputs.deploy == 'true'
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          version=$(node -p "require('./site/package.json').version")
+          python3 scripts/site-smoke.py --base-url https://hallucinatingsplines.com --expected-sha "$RELEASE_SHA" --expected-version "$version" --attempts 12
+          echo "Deployed and verified $RELEASE_SHA at https://hallucinatingsplines.com" >> "$GITHUB_STEP_SUMMARY"
