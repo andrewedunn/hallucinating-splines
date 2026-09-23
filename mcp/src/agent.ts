@@ -314,9 +314,9 @@ Action types and their sizes/costs:
 - build_fire_station (3×3, $500) — reduces fire risk
 - build_police_station (3×3, $500) — reduces crime
 - build_park (1×1, $10) — raises land value
-- build_seaport (4×4, $5000) — enables sea trade
+- build_seaport (4×4, $3000) — enables sea trade
 - build_airport (6×6, $10000) — enables air trade
-- build_stadium (4×4, $3000) — boosts happiness`,
+- build_stadium (4×4, $5000) — boosts happiness`,
       {
         city_id: z.string().describe('City ID'),
         action: z.string().describe('Action type (e.g., zone_residential, build_coal_power)'),
@@ -345,9 +345,9 @@ Action types and their sizes/costs:
 - build_fire_station (3×3, $500) — covers ~15 tile radius
 - build_police_station (3×3, $500) — covers ~15 tile radius
 - build_park (1×1, $10) — raises land value
-- build_seaport (4×4, $5000) — sea trade (needs waterfront)
+- build_seaport (4×4, $3000) — sea trade (needs waterfront)
 - build_airport (6×6, $10000) — air trade
-- build_stadium (4×4, $3000) — boosts happiness
+- build_stadium (4×4, $5000) — boosts happiness
 - bulldoze (1×1, $1) — clear rubble or demolish
 
 IMPORTANT: Coordinates are CENTER-BASED for multi-tile buildings. A 3×3 zone at (10, 10) occupies (9-11, 9-11). A 4×4 plant at (10, 10) occupies (9-12, 9-12). Plan coordinates accordingly to avoid overlapping existing tiles.
@@ -356,12 +356,12 @@ IMPORTANT: Roads do NOT conduct power on their own. Power requires a contiguous 
 
 A zone only needs ONE adjacent powered tile to receive power. Do NOT wire each zone individually — that wastes money. Instead, run a single wire backbone (e.g., build_wire_line along a road) connecting back to the power plant, and all zones adjacent to that powered road will receive power.
 
-auto_power places a single wire adjacent to the zone but does NOT trace a full path back to the power plant. For reliable power, manually run a wire line from the plant along your main road.
+auto_power finds a cost-aware path to a powered tile or power plant. Inspect auto-infrastructure failures: a successful building placement does not guarantee road or power connection. After advancing, check power coverage. Do not repeat a failed placement unchanged; inspect get_buildable or get_map_region first.
 
 Recommended flags for easier building:
-- auto_bulldoze: true — clears rubble before placing
-- auto_power: true — places one wire adjacent to zone (still need contiguous path to plant)
-- auto_road: true — places one road adjacent to zone
+- auto_bulldoze: true — clears trees and rubble in the building footprint before placing
+- auto_power: true — attempts a full power connection
+- auto_road: true — connects to the nearest reachable road, or starts a road stub if none is reachable
 
 Rate limit: 30 actions per minute per city.`,
       {
@@ -391,7 +391,7 @@ Rate limit: 30 actions per minute per city.`,
 
 Use this for repetitive operations like laying a road grid, placing multiple zones, or any sequence of placements. Much more efficient than individual perform_action calls.
 
-Each action in the batch supports the same action types and auto_* flags as perform_action.`,
+Each action supports point-placement action types and auto_* flags from perform_action. For continuous roads/wires, use build_line or build_rect. Choose non-overlapping footprints; get_buildable returns individual candidates, not a collision-free batch. Earlier successes stay applied after a failure: retry only failed/skipped work, never replay the whole batch.`,
       {
         city_id: z.string().describe('City ID'),
         actions: z.array(z.object({

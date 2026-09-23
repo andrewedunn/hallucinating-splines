@@ -219,12 +219,9 @@ export function formatActionResult(data: Record<string, unknown>): string {
   const fundsRemaining = data.funds_remaining as number | undefined;
   const autoActions = data.auto_actions as Array<Record<string, unknown>> | undefined;
 
-  if (!success) {
-    const reason = (data.reason as string) || (data.error as string) || 'unknown';
-    return `Action failed: ${reason}`;
-  }
-
-  const lines = [`Action succeeded.`];
+  const reason = (data.reason as string) || (data.error as string) || 'unknown';
+  const lines = [success ? 'Action succeeded.' : `Action failed: ${reason}`];
+  if (!success) lines.push('  Inspect the map/buildable positions before retrying; earlier clearing may already have cost money.');
   if (cost !== undefined) lines.push(`  Cost: $${cost}`);
   if (fundsRemaining !== undefined) lines.push(`  Funds remaining: $${fundsRemaining}`);
 
@@ -234,7 +231,9 @@ export function formatActionResult(data: Record<string, unknown>): string {
       const tilesOrPath = (a.path || a.tiles) as Array<[number, number]> | undefined;
       const count = tilesOrPath?.length || 0;
       const typeName = a.type === 'bulldoze' ? 'cleared' : (a.type as string || 'infra');
-      lines.push(`    ${typeName}: ${count} placed (cost: $${a.cost || 0})`);
+      lines.push(a.failed
+        ? `    ${typeName}: FAILED (${a.reason || 'unknown'}) — ${count} tiles processed, cost: $${a.cost || 0}`
+        : `    ${typeName}: ${count} tiles processed (cost: $${a.cost || 0})`);
     }
   }
 
@@ -265,7 +264,10 @@ export function formatBatchResult(data: Record<string, unknown>): string {
   const total = data.total as number;
   const fundsRemaining = data.funds_remaining as number | undefined;
 
-  const lines = [`Batch: ${completed}/${total} actions completed.`];
+  const succeeded = results?.filter(r => r.success).length ?? 0;
+  const failed = results?.filter(r => !r.success).length ?? 0;
+  const lines = [`Batch: ${succeeded}/${total} actions succeeded; ${failed} failed; ${total - completed} skipped.`];
+  if (failed) lines.push('  Earlier successful actions remain applied. Inspect the failed position; retry only failed/skipped work.');
   lines.push(`  Total cost: $${totalCost}`);
   if (fundsRemaining !== undefined) lines.push(`  Funds remaining: $${fundsRemaining}`);
 
@@ -275,6 +277,10 @@ export function formatBatchResult(data: Record<string, unknown>): string {
       const r = results[i];
       const status = r.success ? 'ok' : `FAILED${r.reason ? ` (${r.reason})` : ''}`;
       lines.push(`  ${i + 1}. ${status} — $${r.cost || 0}`);
+      const auto = r.auto_actions as Array<Record<string, unknown>> | undefined;
+      for (const a of auto || []) {
+        if (a.failed) lines.push(`     ${a.type}: FAILED (${a.reason || 'unknown'}) — cost: $${a.cost || 0}`);
+      }
     }
   }
 

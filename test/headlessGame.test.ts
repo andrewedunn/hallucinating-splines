@@ -2,6 +2,7 @@
 // ABOUTME: Verifies game creation, tool placement, ticking, stats queries, and disaster disabling.
 
 import { HeadlessGame } from '../src/headlessGame';
+import { withSeed } from '../src/seededRandom';
 
 describe('HeadlessGame', () => {
   describe('fromSeed', () => {
@@ -244,7 +245,7 @@ describe('HeadlessGame', () => {
       expect(statsAfter.census.roadTotal).toBe(statsBefore.census.roadTotal);
     });
 
-    test('resPop is not doubled after save/load with normalization', () => {
+    test('resPop is not doubled after save/load with normalization', () => withSeed(42, () => {
       const game = HeadlessGame.fromSeed(42);
 
       // Build a small city
@@ -270,7 +271,7 @@ describe('HeadlessGame', () => {
       restored.normalizeCensus();
       const statsAfter = restored.getFullStats();
       expect(statsAfter.census.resPop).toBe(statsBefore.census.resPop);
-    });
+    }));
   });
 
   describe('getCensusHistory', () => {
