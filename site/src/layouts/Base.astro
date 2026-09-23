@@ -1,6 +1,7 @@
 ---
 // ABOUTME: Base layout shell with accessible navigation, footer, and meta tags.
 // ABOUTME: All pages wrap their content in this layout.
+import { version as siteVersion } from '../../package.json';
 
 interface Props {
   title: string;
@@ -39,8 +40,8 @@ const path = Astro.url.pathname;
   <meta name="twitter:title" content={pageTitle} />
   <meta name="twitter:description" content={description} />
   {ogImage && <meta name="twitter:image" content={ogImage} />}
-  <link rel="stylesheet" href="/styles/global.css" />
-  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href={`/styles/global.css?v=${siteVersion}`} />
+  <link rel="stylesheet" href={`/styles/tokens.css?v=${siteVersion}`} />
   <script defer src="https://umami.dunn.us/script.js"
     data-website-id="a586261e-ff4c-4f00-b3dd-153e2164fc0e"></script>
 </head>
