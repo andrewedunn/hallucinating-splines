@@ -30,6 +30,13 @@ class SmokeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             smoke.verify_sitemap('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/</loc></url></urlset>')
 
+    def test_successful_shell_with_failed_data_is_rejected(self):
+        html = '<h1>Rankings</h1><link rel="canonical" href="https://hallucinatingsplines.com/leaderboard">'
+        html += '<link rel="stylesheet" href="/styles/global.css?v=0.1.2"><link rel="stylesheet" href="/styles/tokens.css?v=0.1.2">'
+        html += '<p data-load-error="rankings">Rankings could not load.</p>'
+        with self.assertRaises(ValueError):
+            smoke.verify_html(html, '/leaderboard', '0.1.2')
+
     def test_sitemap_accepts_current_file(self):
         smoke.verify_sitemap((Path(__file__).parents[2] / 'site/public/sitemap.xml').read_text())
 

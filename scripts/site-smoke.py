@@ -15,10 +15,13 @@ class Page(HTMLParser):
         self.headings = 0
         self.canonicals = []
         self.styles = []
+        self.data_load_errors = []
         self.feed(html)
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
+        if 'data-load-error' in attrs:
+            self.data_load_errors.append(attrs['data-load-error'])
         if tag == 'h1':
             self.headings += 1
         if tag == 'link' and attrs.get('rel') == 'canonical':
@@ -29,6 +32,8 @@ class Page(HTMLParser):
 
 def verify_html(html, path, version):
     page = Page(html)
+    if page.data_load_errors:
+        raise ValueError(f'{path}: data failed to load: {page.data_load_errors}')
     if page.headings != 1:
         raise ValueError(f'{path}: expected one H1, got {page.headings}')
     if page.canonicals != [f'https://hallucinatingsplines.com{path}']:
