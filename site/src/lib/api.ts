@@ -4,7 +4,7 @@
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 
 export async function apiFetch<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`);
+  const res = await fetch(`${API_BASE}${path}`, { signal: AbortSignal.timeout(8000) });
   if (!res.ok) {
     throw new Error(`API error ${res.status}: ${path}`);
   }

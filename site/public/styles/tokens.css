@@ -1,0 +1,19 @@
+/* ABOUTME: Shared observatory design tokens, preserving the SimCity navy/cream/teal identity. */
+/* ABOUTME: Imported after legacy styles so existing pages inherit accessible surface colors. */
+:root {
+  --bg: #1b2238; --bg-raised: #242e47; --surface: #2b3652;
+  --panel: #c8b888; --panel-light: #ece2c7; --panel-dark: #a89868;
+  --border: #475575; --text: #f2ecdf; --text-muted: #b1bfd4;
+  --text-dark: #202a32; --text-mid: #505068;
+  --accent: #285f60; --accent-hover: #95d8ca; --focus: #f0cc83;
+  --green: #35784a; --green-light: #9ad9a6; --red: #e9a19a;
+  --blue: #80b8ec; --blue-dark: #284878; --orange: #ebbd73; --yellow: #e8d040;
+  --status-ink: #1b2238; --status-bg: #31413e;
+  --chart-purple: #c5a8ef; --chart-cyan: #86d5df;
+  --shadow: #10172833;
+  --pixel-font: 'Press Start 2P', monospace; --mono: 'Space Mono', monospace;
+  --system: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --space-xs: .5rem; --space-sm: .75rem; --space-md: 1rem; --space-lg: 2rem; --space-xl: 3.5rem;
+  --text-xs: .75rem; --text-sm: .875rem; --text-base: 1rem;
+  --ease-out: cubic-bezier(.16,1,.3,1); --dur-short: 150ms; --radius-control: 3px;
+}

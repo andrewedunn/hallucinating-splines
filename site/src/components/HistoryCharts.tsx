@@ -41,12 +41,12 @@ interface ChartDef {
 }
 
 const CHARTS: ChartDef[] = [
-  { key: 'residential', label: 'Residential', color: '#22c55e' },
-  { key: 'commercial', label: 'Commercial', color: '#3b82f6' },
-  { key: 'industrial', label: 'Industrial', color: '#eab308' },
-  { key: 'crime', label: 'Crime', color: '#ef4444' },
-  { key: 'pollution', label: 'Pollution', color: '#a855f7' },
-  { key: 'funds', label: 'Funds', color: '#06b6d4', isMoney: true },
+  { key: 'residential', label: 'Residential', color: 'var(--green-light)' },
+  { key: 'commercial', label: 'Commercial', color: 'var(--blue)' },
+  { key: 'industrial', label: 'Industrial', color: 'var(--yellow)' },
+  { key: 'crime', label: 'Crime', color: 'var(--red)' },
+  { key: 'pollution', label: 'Pollution', color: 'var(--chart-purple)' },
+  { key: 'funds', label: 'Funds', color: 'var(--chart-cyan)', isMoney: true },
 ];
 
 /** Trim trailing zeros from a newest-first history array and reverse to oldest-first for plotting. */
@@ -136,6 +136,8 @@ function Sparkline({
         ) : null}
       </div>
       <svg
+        role="img"
+        aria-label={`${label}: ${data.length ? `first ${formatValue(data[0], isMoney)}, latest ${formatValue(data[data.length - 1], isMoney)}` : 'no recorded data'}`}
         ref={svgRef}
         viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
         style={{ display: 'block', width: '100%', height: 'auto', cursor: 'crosshair' }}
@@ -225,7 +227,7 @@ export default function HistoryCharts({ cityId, apiBase, gameYear = 1900, histor
     setHoverFraction(fraction);
   }, []);
 
-  if (error) return null;
+  if (error) return <p className="error-message">Census history could not load. Reload the page to try again.</p>;
   if (!history || !snapshots) {
     return (
       <div style={containerStyle}>
@@ -291,7 +293,7 @@ const titleStyle: React.CSSProperties = {
 
 const gridStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
+  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
   gap: '0.75rem',
 };
 

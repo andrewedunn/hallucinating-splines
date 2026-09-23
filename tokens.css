@@ -1,0 +1,3 @@
+/* ABOUTME: Portable entry point for the existing project's observatory design tokens. */
+/* ABOUTME: The served source of truth lives alongside the site's public styles. */
+@import './site/public/styles/tokens.css';
