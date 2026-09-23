@@ -1,5 +1,10 @@
 # Changelog
 
+## Deployment automation — 2026-09-23
+
+- Website pull requests run checks in GitHub Actions; successful main builds deploy to Cloudflare Pages and verify the exact release on production.
+- Production deployment credentials are isolated from pull requests and restricted to the main branch.
+
 ## Site 0.1.1 — 2026-09-23
 
 - Returning visitors receive current shared styles after a release, even when the previous stylesheet remains cached in their browser.

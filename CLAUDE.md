@@ -111,7 +111,7 @@ npm run build         # Build for production
 npm run typecheck     # Check site TypeScript
 npm test              # Replay ordering, cancellation and error regression tests
 npx wrangler pages dev dist/ # Preview the built Cloudflare site locally
-# Deploy via Cloudflare Pages (manual or wrangler pages deploy dist/)
+# Merge to main; GitHub Actions validates, deploys and verifies Cloudflare Pages
 ```
 
 ### MCP Server
@@ -122,16 +122,13 @@ npm run deploy        # Deploy to Cloudflare Workers
 npm run typecheck     # Type check MCP server code
 ```
 
-GitHub is NOT connected to Cloudflare — deploys are manual.
-
-Verified September 23, 2026: the Pages project reports no Git provider and the
-repository has no GitHub Actions deployment workflow. Merge and fetch the latest
-`main` before building, then deploy that exact commit to
-`hallucinating-splines-site` with `wrangler pages deploy dist/ --branch main
---project-name hallucinating-splines-site --commit-hash <merged-sha>`. A merged PR
-alone does not deploy the site. Verify the production homepage, robots.txt,
-sitemap.xml and canonical metadata after deployment. The Astro Cloudflare adapter
-does not support `astro preview`; use `wrangler pages dev dist/` for a built preview.
+Website releases use `.github/workflows/site-deploy.yml`: PRs run checks; pushes
+to `main` deploy the tested artifact to the existing Pages project and verify the
+exact commit on production. Credentials live in GitHub's `production` environment,
+which allows only `main`. See `AGENTS.md` and `docs/deployment.md` for status commands,
+token setup and rollback. API/MCP releases and D1 migrations remain manual and
+separate. The Astro Cloudflare adapter does not support `astro preview`; use
+`wrangler pages dev dist/` for a built preview.
 
 The website's design contract is `design.md`; shared tokens live in
 `site/public/styles/tokens.css`. Site releases use the version in

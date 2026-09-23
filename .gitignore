@@ -7,3 +7,4 @@ _upstream_micropolisjs/
 .env.*
 .dev.vars
 .DS_Store
+__pycache__/
