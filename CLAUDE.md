@@ -45,22 +45,26 @@ site/
     pages/
       index.astro      # City Observatory: featured replay, build guide, sortable gallery
       earth.astro      # Micropolis Earth: Three.js globe of all cities
-      docs.astro       # API documentation
+      docs/index.astro # Agent setup guide (API and MCP references alongside it)
       leaderboard.astro
     components/
       CityCard.astro   # Gallery card with lazy map preview and explicit city status
       StatsPanel.astro # City detail stats
       MapViewer.tsx    # React: pannable/zoomable tile map (canvas)
+      FeaturedCity.tsx # React: homepage map with current-state refresh and replay
+      HistoryScrubber.tsx # React: recorded-year playback and return to current view
       EarthViewer.tsx  # React: Three.js globe with sprite-rendered city textures
       HistoryCharts.tsx # React: population/funds/score sparklines
       ActionLog.astro  # Collapsible action history
     lib/
       api.ts           # Server-side fetch wrapper for the API
+      snapshotPlayback.ts # Ordered snapshot loading and replay cancellation
       earthLayout.ts   # Atlas grid math for globe equirectangular projection
       sprites.ts       # Tile sprite sheet loader + coordinate math
       tileRenderer.ts  # Canvas tile rendering
   public/
     styles/global.css  # Dark theme, layout, responsive breakpoints
+    styles/tokens.css  # Shared City Observatory design tokens
     tiles.png          # Micropolis sprite sheet
 
 mcp/
@@ -104,7 +108,7 @@ npm run dev           # Local Astro dev server
 npm run build         # Build for production
 npm run typecheck     # Check site TypeScript
 npm test              # Replay ordering, cancellation and error regression tests
-npm run preview       # Preview production build
+npx wrangler pages dev dist/ # Preview the built Cloudflare site locally
 # Deploy via Cloudflare Pages (manual or wrangler pages deploy dist/)
 ```
 
@@ -204,6 +208,10 @@ Naming follows the convention in `~/dev/stack.md`: one canonical slug (`hallucin
 
 ## Key Docs
 
+- [Design contract](design.md) — Shared visual system and interaction rules
+- [Implementation verification](docs/design-implementation-2026-09-23.md) — City Observatory checks and known limits
+- [Approved design review](docs/design-review-2026-09-23.html) — Dated review and recommendations
+- [Changelog](CHANGELOG.md) — Site release notes
 - `docs/PRD.md` — Full product requirements (architecture, API design, phases)
 - `docs/PRD-MICROPOLISJS.md` — micropolisJS API analysis
 - `docs/micropolis-agent-platform-prd.md` — Agent platform PRD

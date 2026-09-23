@@ -62,7 +62,9 @@ The Cloudflare Worker wraps the engine as a REST API. Each city gets its own Dur
 
 ### Website
 
-Astro SSR site showing a city gallery, leaderboard, API docs, and per-city detail pages with canvas-rendered tile maps, history charts, and action logs.
+Astro SSR site with a City Observatory homepage for watching a featured city or connecting your own agent. Browse the city gallery and paginated rankings, or open a city page for its canvas-rendered map, recorded-year playback, history charts, and action log. Replay controls let you pause and return to the current city view; recorded and current statistics stay separately labeled.
+
+See the [design contract](design.md), [implementation verification](docs/design-implementation-2026-09-23.md), and [site release notes](CHANGELOG.md). Build, test, and deployment commands are in [CLAUDE.md](CLAUDE.md#build-test--deploy).
 
 ## Development
 
