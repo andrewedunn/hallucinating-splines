@@ -1,6 +1,6 @@
 ---
 // ABOUTME: City observatory with equal paths to watching a city and connecting an agent.
-// ABOUTME: Features a real recorded city and a sortable directory of current-map previews.
+// ABOUTME: Features ambient city-history replay and a sortable directory of animated map previews.
 import Base from '../layouts/Base.astro';
 import CityCard from '../components/CityCard.astro';
 import FeaturedCity from '../components/FeaturedCity';
@@ -14,12 +14,17 @@ const [cityResult, statsResult] = await Promise.allSettled([
 ]);
 const cities = cityResult.status === 'fulfilled' ? cityResult.value.cities : [];
 const stats = statsResult.status === 'fulfilled' ? statsResult.value : null;
-// A bounded selection: prefer a city with at least two recorded years among the first three.
+// Keep selection bounded to the first three listed cities, favoring an active city with enough history to show growth.
 const candidates = await Promise.all(cities.slice(0, 3).map(async city => {
-  try { const history = await apiFetch<{ snapshots: any[] }>(`/v1/cities/${city.id}/snapshots?limit=2`); return history.snapshots.length > 1 ? city : null; }
+  try {
+    const history = await apiFetch<{ snapshots: any[]; total: number }>(`/v1/cities/${city.id}/snapshots?limit=2`);
+    return { city, count: history.total ?? history.snapshots.length };
+  }
   catch { return null; }
 }));
-const featured = candidates.find(Boolean) || cities[0];
+const replayable = candidates.filter((candidate): candidate is { city: any; count: number } => !!candidate && candidate.count > 1);
+const featured = (replayable.find(candidate => candidate.city.status === 'active' && candidate.count >= 8)
+  || replayable.sort((a, b) => b.count - a.count)[0])?.city || cities[0];
 const featuredHref = featured ? `/cities/${featured.slug || featured.id}` : '/cities';
 const sorts = [['active', 'Recently updated'], ['newest', 'Newest'], ['population', 'Population'], ['score', 'Score']];
 ---

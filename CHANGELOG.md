@@ -3,6 +3,7 @@
 ## Site 0.1.3 — 2026-09-24
 
 - Restore staggered, looping homepage city previews using recorded maps and the current view, with visible labels and reduced-motion support.
+- Animate the featured city's real map through sampled recorded years and back to its current view, while keeping manual replay controls available.
 - Refresh visible card metrics and active city maps while the page is open.
 
 ## Site 0.1.2 and agent documentation — 2026-09-23

@@ -29,7 +29,7 @@ export default function FeaturedCity({ cityId, apiBase, name, active = false }: 
   }, [cityId, apiBase, retry, active]);
   return <div className="featured-viewer">
     {map ? <MapViewer tiles={map.tiles} width={map.width} height={map.height} label={`Map of ${name}`} /> : <div className="map-placeholder" role="status">{error ? <><p>The city map could not load.</p><button className="button button-quiet" onClick={() => setRetry(n => n + 1)}>Retry map</button></> : 'Loading the city map…'}</div>}
-    {map && <HistoryScrubber cityId={cityId} apiBase={apiBase} onSnapshotLoad={tiles => { recorded.current = true; setMap(previous => previous ? { ...previous, tiles } : previous); }} onReturnToCurrent={() => { recorded.current = false; setMap(current.current); }} />}
+    {map && <HistoryScrubber cityId={cityId} apiBase={apiBase} autoPlay onSnapshotLoad={tiles => { recorded.current = true; setMap(previous => previous ? { ...previous, tiles } : previous); }} onReturnToCurrent={() => { recorded.current = false; setMap(current.current); }} />}
     {map && error && <p className="error-message" role="status">The current map could not refresh. Showing the last available view.</p>}
   </div>;
 }
