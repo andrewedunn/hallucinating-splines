@@ -1,6 +1,6 @@
 ---
 // ABOUTME: City observatory with equal paths to watching a city and connecting an agent.
-// ABOUTME: Features a real recorded city and a sortable directory of current-map previews.
+// ABOUTME: Features ambient city-history replay and a sortable directory of animated map previews.
 import Base from '../layouts/Base.astro';
 import CityCard from '../components/CityCard.astro';
 import FeaturedCity from '../components/FeaturedCity';
@@ -14,12 +14,17 @@ const [cityResult, statsResult] = await Promise.allSettled([
 ]);
 const cities = cityResult.status === 'fulfilled' ? cityResult.value.cities : [];
 const stats = statsResult.status === 'fulfilled' ? statsResult.value : null;
-// A bounded selection: prefer a city with at least two recorded years among the first three.
+// Keep selection bounded to the first three listed cities, favoring an active city with enough history to show growth.
 const candidates = await Promise.all(cities.slice(0, 3).map(async city => {
-  try { const history = await apiFetch<{ snapshots: any[] }>(`/v1/cities/${city.id}/snapshots?limit=2`); return history.snapshots.length > 1 ? city : null; }
+  try {
+    const history = await apiFetch<{ snapshots: any[]; total: number }>(`/v1/cities/${city.id}/snapshots?limit=2`);
+    return { city, count: history.total ?? history.snapshots.length };
+  }
   catch { return null; }
 }));
-const featured = candidates.find(Boolean) || cities[0];
+const replayable = candidates.filter((candidate): candidate is { city: any; count: number } => !!candidate && candidate.count > 1);
+const featured = (replayable.find(candidate => candidate.city.status === 'active' && candidate.count >= 8)
+  || replayable.sort((a, b) => b.count - a.count)[0])?.city || cities[0];
 const featuredHref = featured ? `/cities/${featured.slug || featured.id}` : '/cities';
 const sorts = [['active', 'Recently updated'], ['newest', 'Newest'], ['population', 'Population'], ['score', 'Score']];
 ---
@@ -51,11 +56,62 @@ const sorts = [['active', 'Recently updated'], ['newest', 'Newest'], ['populatio
   <section class="collection" aria-labelledby="collection-title">
     <div class="collection-heading"><div><h2 id="collection-title">Explore the collection</h2><p>Different mayors. Different ideas of a good city.</p></div><a href="/earth">Explore Earth →</a></div>
     <nav class="sort-tabs" aria-label="Sort cities">{sorts.map(([value,label]) => <a href={`/?sort=${value}#collection-title`} aria-current={sort === value ? 'page' : undefined} class:list={[{active:sort===value}]} data-umami-event={`sort-${value}`}>{label}</a>)}</nav>
-    <div class="city-grid">{cities.map(city => <CityCard {...city} />)}</div>
-    {cities.length > 0 && <div class="collection-end"><a class="button button-quiet" href="/cities">Browse all cities →</a><span>Maps show current views. Metrics are the latest listed values.</span></div>}
+    <div class="city-grid">{cities.map(city => <CityCard {...city} animatePreview />)}</div>
+    {cities.length > 0 && <div class="collection-end"><a class="button button-quiet" href="/cities">Browse all cities →</a><span>Maps cycle through labeled recorded years and the current view. Metrics show the latest listed values.</span></div>}
   </section>
   {stats && <aside class="platform-summary" aria-label="Platform totals"><span><strong>{stats.mayors.toLocaleString()}</strong> mayors</span><span><strong>{stats.cities.toLocaleString()}</strong> cities built</span><span><strong>{stats.population.toLocaleString()}</strong> total population</span></aside>}
 </Base>
+<script define:vars={{ API_BASE, sort }}>
+  function timeAgo(value) {
+    const timestamp = Date.parse(/(?:Z|[+-]\d\d:\d\d)$/i.test(value) ? value : `${value}Z`);
+    if (!Number.isFinite(timestamp)) return 'unknown';
+    const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+    if (minutes < 1) return 'just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return days < 30 ? `${days}d ago` : `${Math.floor(days / 30)}mo ago`;
+  }
+
+  function updateNumber(card, name, value) {
+    const element = card.querySelector(`[data-stat="${name}"]`);
+    if (!element) return;
+    const next = Number(value).toLocaleString();
+    if (element.textContent === next) return;
+    element.textContent = next;
+    element.classList.remove('changed');
+    void element.offsetWidth;
+    element.classList.add('changed');
+  }
+
+  async function refreshCards() {
+    if (document.hidden) return;
+    try {
+      const response = await fetch(`${API_BASE}/v1/cities?sort=${sort}&limit=12`);
+      if (!response.ok) return;
+      const data = await response.json();
+      const byId = new Map(data.cities.map(city => [city.id, city]));
+      document.querySelectorAll('.city-grid .city-card[data-city-id]').forEach(card => {
+        const city = byId.get(card.dataset.cityId);
+        if (!city) return;
+        updateNumber(card, 'population', city.population);
+        updateNumber(card, 'game_year', city.game_year);
+        updateNumber(card, 'score', city.score);
+        const updated = card.querySelector('.card-updated');
+        if (updated && city.updated_at) updated.textContent = `Updated ${timeAgo(city.updated_at)}`;
+        const status = card.querySelector('.city-status');
+        if (status) {
+          status.textContent = city.status === 'active' ? 'Active' : 'Ended';
+          status.classList.toggle('is-active', city.status === 'active');
+        }
+      });
+    } catch { /* Keep the last rendered values while the API is unavailable. */ }
+  }
+
+  const timer = setInterval(refreshCards, 30000);
+  document.addEventListener('astro:before-swap', () => clearInterval(timer), { once: true });
+</script>
 <style>
 /* Hallmark · designed-as-app · design-system: design.md · Workbench observatory · existing SimCity theme */
 .observatory-intro{display:flex;align-items:end;justify-content:space-between;gap:var(--space-lg);padding-block:var(--space-md) var(--space-lg)}
