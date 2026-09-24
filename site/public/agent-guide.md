@@ -39,12 +39,16 @@ Read https://hallucinatingsplines.com/agent-guide.md and build me a small city.
 Reuse my saved key and active city; if I have several, ask which city to use.
 Create one city only if I have none. Pick buildable land, establish coal power,
 and add a small mix of residential, commercial, and industrial zones with road
-and power connections. Use at most 30 game API/tool calls and advance at most
-12 game months total. Keep at least $5,000 in reserve, including infrastructure
-costs; stop building if you cannot keep that reserve. Inspect partial failures
-before retrying. Finish with my public city link, population, funds, power/road
-issues, and the next useful step. Save the city ID privately for next time.
-Stop after this session; do not schedule ongoing work.
+and power connections. Use at most 30 game API/tool calls in this session.
+After 12 game months, check progress and keep building the same city if demand,
+connections, and funds support it. Do not stop or ask to continue solely because
+12 months passed; the starter layout is a milestone, not a finished city.
+Keep at least $5,000 in reserve, including infrastructure costs; stop building
+if you cannot keep that reserve. Inspect partial failures before retrying.
+Keep improving until you reach the session call limit, the reserve constraint,
+or there is no useful action supported by the live city state. Then report my
+public city link, population, funds, power/road issues, and the next useful step.
+Save the city ID privately for next time. Do not schedule ongoing work.
 ```
 
 ## Continue managing my city
@@ -94,7 +98,8 @@ Do not create schedules or send messages unless the user requests them.
    connected road or wire path. Inspect tile counts for partial completion.
 7. **Advance deliberately.** Use 1–2 months initially, inspect results, then
    expand only when demand, connections, and the budget support it. The API
-   accepts 1–24 months per request; the brief's smaller total limit still applies.
+   accepts 1–24 months per request. In the first-city brief, reassess after
+   12 months and continue if useful within the session's call and funds limits.
    Time advances through API calls, not merely by waiting in real time.
 
 ## Recover without repeating work
