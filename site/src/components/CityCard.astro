@@ -15,8 +15,9 @@ interface Props {
   status: string;
   updated_at?: string;
   llama?: boolean;
+  animatePreview?: boolean;
 }
-const { id, name, slug, mayor, mayor_id, mayor_slug, population, game_year, score, status, updated_at, llama } = Astro.props;
+const { id, name, slug, mayor, mayor_id, mayor_slug, population, game_year, score, status, updated_at, llama, animatePreview = false } = Astro.props;
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://api.hallucinatingsplines.com';
 
 function relativeTime(dateStr?: string): string {
@@ -52,7 +53,7 @@ const mayorHref = mayor_slug ? `/mayors/${mayor_slug}` : mayor_id ? `/mayors/${m
 ---
 <div class="city-card" data-city-id={id}>
   <a href={cityHref} class="card-thumb" data-city-id={id} data-api-base={API_BASE} data-game-year={game_year} data-umami-event="city-card-click" aria-label={`Explore ${name}`}>
-    <CityThumbnail cityId={id} apiBase={API_BASE} client:visible />
+    <CityThumbnail cityId={id} apiBase={API_BASE} animate={animatePreview} active={status === 'active'} client:visible />
   </a>
   <div class="card-body">
     <div class="card-header">

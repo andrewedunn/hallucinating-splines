@@ -1,5 +1,10 @@
 # Changelog
 
+## Site 0.1.3 — 2026-09-24
+
+- Restore staggered, looping homepage city previews using recorded maps and the current view, with visible labels and reduced-motion support.
+- Refresh visible card metrics and active city maps while the page is open.
+
 ## Site 0.1.2 and agent documentation — 2026-09-23
 
 - Add one agent guide with bounded first-city and continuing-care prompts, a portable mayor skill, and personal-agent compatibility notes.
