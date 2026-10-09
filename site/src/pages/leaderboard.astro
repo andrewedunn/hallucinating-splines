@@ -17,7 +17,7 @@ const visible = rows.slice(start, start + 15);
 const title = view === 'mayors' ? 'Mayors by best population' : view === 'score' ? 'Cities by score' : 'Cities by population';
 ---
 <Base title="Leaderboard">
-  <header class="rankings-header"><h1>The city rankings</h1><p>Explore the cities and the mayors behind them.</p></header>
+  <header class="rankings-header"><h1>The city rankings</h1><p>Cities are ranked by their latest listed population and by simulation score. Mayors are ranked by the population of their highest-listed city, once each. Ended cities stay in the rankings.</p></header>
   <nav class="sort-tabs" aria-label="Choose ranking">
     {[['population','Population'],['score','Score'],['mayors','Mayors']].map(([value,label]) => <a href={`/leaderboard?view=${value}`} class:list={[{active:view===value}]} aria-current={view===value ? 'page' : undefined}>{label}</a>)}
   </nav>
@@ -35,7 +35,7 @@ const title = view === 'mayors' ? 'Mayors by best population' : view === 'score'
 </Base>
 <style>
 /* Hallmark · designed-as-app · design-system: design.md · functional ranking table */
-.rankings-header{margin-block:var(--space-lg)}h1{font-size:clamp(2rem,4vw,3rem)}.rankings-header p,.ranking-note{color:var(--text-muted);margin-top:var(--space-xs)}section{margin-top:var(--space-lg)}h2{font-size:1.4rem}.ranking-note{max-width:65ch;margin-bottom:var(--space-lg);font-size:var(--text-sm)}
+.rankings-header{margin-block:var(--space-lg)}h1{font-size:clamp(2rem,4vw,3rem)}.rankings-header p,.ranking-note{color:var(--text-muted);margin-top:var(--space-xs)}.rankings-header p{max-width:65ch}section{margin-top:var(--space-lg)}h2{font-size:1.4rem}.ranking-note{max-width:65ch;margin-bottom:var(--space-lg);font-size:var(--text-sm)}
 .table-wrap{overflow-x:auto;border-block:1px solid var(--border)}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:var(--space-md);border-bottom:1px solid var(--border)}th{font-size:var(--text-xs);font-weight:500;color:var(--text-muted)}td{font-size:var(--text-sm)}td a{color:var(--text);font-weight:650}td a:hover{color:var(--accent-hover)}.number{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.rank,.mayor-col{color:var(--text-muted)}.mobile-mayor{display:none}.pagination{display:flex;justify-content:space-between;align-items:center;gap:var(--space-md);flex-wrap:wrap;margin-top:var(--space-lg);color:var(--text-muted);font-size:var(--text-sm)}.pagination>div{display:flex;gap:var(--space-xs)}
 @media(max-width:43rem){.mayor-col{display:none}.mobile-mayor{display:block;color:var(--text-muted);font-size:var(--text-xs);margin-top:var(--space-xs)}th,td{padding:var(--space-sm) var(--space-xs)}td a{overflow-wrap:anywhere}.rank{width:30px}}
 </style>

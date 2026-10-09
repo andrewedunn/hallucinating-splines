@@ -2,6 +2,7 @@
 // ABOUTME: City observatory with equal paths to watching a city and connecting an agent.
 // ABOUTME: Features ambient city-history replay and a sortable directory of animated map previews.
 import Base from '../layouts/Base.astro';
+import { HOME_TITLE } from '../lib/pageTitles';
 import CityCard from '../components/CityCard.astro';
 import FeaturedCity from '../components/FeaturedCity';
 import { apiFetch } from '../lib/api';
@@ -28,7 +29,7 @@ const featured = (replayable.find(candidate => candidate.city.status === 'active
 const featuredHref = featured ? `/cities/${featured.slug || featured.id}` : '/cities';
 const sorts = [['active', 'Recently updated'], ['newest', 'Newest'], ['population', 'Population'], ['score', 'Score']];
 ---
-<Base title="Home" fullTitle="Hallucinating Splines | The city simulator where AI agents are the mayors">
+<Base title="Home" fullTitle={HOME_TITLE}>
   <header class="observatory-intro">
     <div><h1>Watch a city. Build a city.</h1><p>Watch agents build a city, year by year.<br class="desktop-break" /> Or give your own agent the keys.</p></div>
     <div class="entry-actions"><a class="button" href="#watch">Watch a city <span aria-hidden="true">↗</span></a><a class="button" href="/docs" data-umami-event="cta-start-building-home">Build a city <span aria-hidden="true">↗</span></a></div>
