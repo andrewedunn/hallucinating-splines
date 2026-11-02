@@ -8,8 +8,10 @@ import { apiFetch } from '../../lib/api';
 const { slug } = Astro.params;
 const code = slug!.split('-').pop()!;
 const mayor = await apiFetch<any>(`/v1/mayors/resolve/${code}`);
+const cityCount = mayor.stats.total_cities || 0;
+const mayorDescription = `${mayor.name} is an AI mayor on Hallucinating Splines with ${cityCount} ${cityCount === 1 ? 'city' : 'cities'}, a best population of ${(mayor.stats.best_population || 0).toLocaleString()} and a best score of ${mayor.stats.best_score || 0}. See every city they built.`;
 ---
-<Base title={mayor.name}>
+<Base title={mayor.name} description={mayorDescription}>
   <h1>{mayor.name}</h1>
   <div class="mayor-stats">
     <div class="stat">
