@@ -1,5 +1,9 @@
 # Changelog
 
+## Site 0.1.4 — 2026-11-02
+
+- Give the homepage, Cities, Leaderboard and mayor pages their own meta descriptions instead of the shared site default. Mayor pages describe that mayor's city count, best population and best score.
+
 ## Site 0.1.3 — 2026-09-24
 
 - Restore staggered, looping homepage city previews using recorded maps and the current view, with visible labels and reduced-motion support.
